@@ -397,6 +397,11 @@ FodyWeavers.xsd
 # JetBrains Rider
 *.sln.iml
 
+
 synchronous-multisplitting-norm2
 synchronous-multisplitting/synchronous-multisplitting-norm2.dSYM
 synchronous-multisplitting/synchronous-multisplitting-norm2.dSYM/** 
+synchronous-multisplitting-synchronous-minimization/synchronous-multisplitting-synchronous-minimization-norm2.dSYM
+synchronous-multisplitting-synchronous-minimization/synchronous-multisplitting-synchronous-minimization-norm2.dSYM/** 
+synchronous-multisplitting-synchronous-minimization-norm2
+
