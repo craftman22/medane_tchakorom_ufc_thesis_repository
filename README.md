@@ -10,15 +10,12 @@ This repository is dedicated to the implementation of different numerical iterat
 - [Installation](#installation)
 - [Usage](#usage)
 - [Configuration](#configuration)
-- [Contributing](#contributing)
 - [License](#license)
 - [Contact](#contact)
 
 ## Features
 
-- List the main features or benefits of your project here.
-- Feature 1: Brief description of the feature.
-- Feature 2: Another cool feature you want to highlight.
+
 
 ## Installation
 ### Pre-requirements
@@ -67,10 +64,11 @@ cd medane_tchakorom_ufc_thesis_repository
 
 ## Usage
 
+## Configuration
 
+## License
 
-
-
+## Contact
 
 
 
