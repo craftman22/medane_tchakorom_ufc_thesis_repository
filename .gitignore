@@ -397,6 +397,7 @@ FodyWeavers.xsd
 # JetBrains Rider
 *.sln.iml
 
+.DS_Store
 synchronous-multisplitting-synchronous-minimization/synchronous-multisplitting-synchronous-minimization-norm2.dSYM
 synchronous-multisplitting-synchronous-minimization/synchronous-multisplitting-synchronous-minimization-norm2.dSYM/** 
 synchronous-multisplitting-synchronous-minimization-norm2
