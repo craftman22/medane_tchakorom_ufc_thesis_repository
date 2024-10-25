@@ -27,7 +27,7 @@ x86/
 [Aa][Rr][Mm]/
 [Aa][Rr][Mm]64/
 bld/
-[Bb]in/
+#[Bb]in/
 [Oo]bj/
 [Ll]og/
 [Ll]ogs/
@@ -398,11 +398,7 @@ FodyWeavers.xsd
 *.sln.iml
 
 
-.DS_Store
-
-synchronous-multisplitting-norm2
-synchronous-multisplitting/synchronous-multisplitting-norm2.dSYM
-synchronous-multisplitting/synchronous-multisplitting-norm2.dSYM/** 
+ 
 synchronous-multisplitting-synchronous-minimization/synchronous-multisplitting-synchronous-minimization-norm2.dSYM
 synchronous-multisplitting-synchronous-minimization/synchronous-multisplitting-synchronous-minimization-norm2.dSYM/** 
 synchronous-multisplitting-synchronous-minimization-norm2
@@ -413,4 +409,5 @@ synchronous-multisplitting-synchronous-minimization-norm2
 synchronous-multisplitting-norm2
 synchronous-multisplitting/synchronous-multisplitting-norm2.dSYM
 synchronous-multisplitting/synchronous-multisplitting-norm2.dSYM/** 
+
 
