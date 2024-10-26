@@ -227,7 +227,9 @@ PetscErrorCode minimizerSolver(MPI_Comm comm_jacobi_block, Vec x_minimized, Mat 
 
   PetscCall(MatTransposeMatMult(R, R, MAT_INITIAL_MATRIX, PETSC_DEFAULT, &R_transpose_R));
   PetscCall(VecCreate(comm_jacobi_block, &vec_R_transpose_b_block_jacobi));
+  PetscCall(VecSetType(vec_R_transpose_b_block_jacobi,VECMPI));
   PetscCall(VecSetSizes(vec_R_transpose_b_block_jacobi, PETSC_DECIDE, s));
+  PetscCall(VecSetFromOptions(vec_R_transpose_b_block_jacobi));
   PetscCall(VecSetUp(vec_R_transpose_b_block_jacobi));
   PetscCall(MatMultTranspose(R, b_block_jacobi[rank_jacobi_block], vec_R_transpose_b_block_jacobi));
 
@@ -254,7 +256,9 @@ PetscErrorCode minimizerSolver(MPI_Comm comm_jacobi_block, Vec x_minimized, Mat 
 
   Vec alpha = NULL;
   PetscCall(VecCreate(comm_jacobi_block, &alpha));
+  PetscCall(VecSetType(alpha,VECMPI));
   PetscCall(VecSetSizes(alpha, PETSC_DECIDE, s));
+  PetscCall(VecSetFromOptions(alpha));
   PetscCall(VecSetUp(alpha));
   PetscCall(KSPSolve(ksp_minimizer, vec_R_transpose_b_block_jacobi, alpha));
 
@@ -360,6 +364,7 @@ int main(int argc, char **argv)
   for (PetscInt i = 0; i < njacobi_blocks; i++)
   {
     PetscCall(VecCreate(comm_jacobi_block, &x_block_jacobi[i]));
+    PetscCall(VecSetType(x_block_jacobi[i], VECMPI));
     PetscCall(VecSetSizes(x_block_jacobi[i], PETSC_DECIDE, jacobi_block_size));
     PetscCall(VecSetType(x_block_jacobi[i], VECMPI));
     PetscCall(VecSetFromOptions(x_block_jacobi[i]));
@@ -427,7 +432,9 @@ int main(int argc, char **argv)
   Vec x_minimized = NULL;
 
   PetscCall(VecCreate(comm_jacobi_block, &x_minimized));
+  PetscCall(VecSetType(x_minimized,VECMPI));
   PetscCall(VecSetSizes(x_minimized, PETSC_DECIDE, n_grid_points));
+  PetscCall(VecSetFromOptions(x_minimized));
   PetscCall(VecSetUp(x_minimized));
 
   PetscCall(MatCreate(comm_jacobi_block, &R));
@@ -437,9 +444,9 @@ int main(int argc, char **argv)
   PetscCall(MatSetUp(R));
 
   PetscCall(MatCreate(comm_jacobi_block, &S));
+  PetscCall(MatSetType(S, MATMPIDENSE));
   PetscCall(MatSetFromOptions(S));
   PetscCall(MatSetSizes(S, PETSC_DECIDE, PETSC_DECIDE, n_grid_points, s));
-  PetscCall(MatSetType(S, MATDENSE));
   PetscCall(MatSetUp(S));
 
   PetscInt *vec_local_idx = NULL;
