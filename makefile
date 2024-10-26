@@ -59,10 +59,43 @@ CUDA_LIB := $(shell pkg-config --variable=cudalib $(PACKAGES))
 CUDA_INCLUDE := $(shell pkg-config --variable=cudainclude $(PACKAGES))
 
 # This lines below were added to the default PETSc makefile
+###########################################################
+###########################################################
+###########################################################
+
+
+# List the source directories you want to compile from
+SRC_DIRS := src/synchronous-multisplitting src/synchronous-multisplitting-synchronous-minimization
+
+# Define the directory where binaries will be stored
+BIN_DIR := bin
+
+# List of source files in chosen directories
+SOURCES := $(wildcard $(foreach dir, $(SRC_DIRS), $(dir)/*.c))
+
+# Corresponding binaries in the bin directory
+BINARIES := $(patsubst src/%.c,$(BIN_DIR)/%, $(SOURCES))
+
+# Compiler and flags
+CC := gcc
+CFLAGS := -O2 -Wall
+
+
+
 help:
-	@echo To build the project, run the make all command
+	@echo To build the project, run the "make all" command ...
 
 
+# Default rule to build all binaries
+all: $(BINARIES)
+
+
+print1:
+	@echo $(SOURCES)
+
+###########################################################
+###########################################################
+###########################################################
 # end of line added
 
 print:
@@ -95,4 +128,26 @@ print:
 	$(CUDAC) -c $(CPPFLAGS) $(CUDAC_FLAGS) $(CUDA_INCLUDE) -o $@ $<
 
 
+
+# Rule to compile each binary
+$(BIN_DIR)/%: src/%.c | $(BIN_DIR)
+	$(COMPILE.cc) $(OUTPUT_OPTION) $<
+
+# $(CC) $(CFLAGS) -o $@ $<
+
+
+
+# Ensure the bin directory exists
+$(BIN_DIR):
+	mkdir -p $(BIN_DIR)
+
+# Clean up all binaries
+clean:
+	rm -rf $(BIN_DIR)/*
+
+
+check:
+
+
+.PHONY: all clean check help
 
