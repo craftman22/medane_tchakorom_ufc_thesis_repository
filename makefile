@@ -58,12 +58,7 @@ CUDAC_FLAGS := $(shell pkg-config --variable=cudaflags_extra $(PACKAGES))
 CUDA_LIB := $(shell pkg-config --variable=cudalib $(PACKAGES))
 CUDA_INCLUDE := $(shell pkg-config --variable=cudainclude $(PACKAGES))
 
-# This lines below were added to the default PETSc makefile
-help:
-	@echo To build the project, run the make all command
 
-
-# end of line added
 
 print:
 	@echo CC=$(CC)
