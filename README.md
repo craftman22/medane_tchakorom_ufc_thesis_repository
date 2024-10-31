@@ -19,6 +19,8 @@ This repository is dedicated to the implementation of different numerical iterat
 
 
 ## Installation
+
+<!-- 
 ### Pre-requirements
 
 This implementations of numerical iteratives methods is based on PETSc (Portable, Extensible Toolkit for Scientific Computation), a suite of data structures and routines for scalable (parallel) solution of scientific applications modeled by parallel differential equations (PDEs) and other related problems.
@@ -30,40 +32,6 @@ PETSc application is hosted on petsc.org website along with manual and tutorials
 ```bash
 # Clone the repository
 git clone -b release https://gitlab.com/petsc/petsc.git petsc
-
-=======
-
-
-# medane_tchakorom_ufc_thesis_repository
-This repository is dedicated to the implementation of the framework of algorithms derived from my thesis at University of Franche-Comté
-=======
-=======
->>>>>>> Stashed changes
-# Thesis: Design of asynchronous iterative methods for domain decomposition with asynchronous minimization
-
-A comprehensive collection of numerical iterative methods implemented using the [PETSc](https://petsc.org) (Portable, Extensible Toolkit for Scientific Computation) library. This repository serves as a resource for researchers, students, and developers working on scalable scientific computing and numerical linear algebra problems.
-
-## Table of Contents
-
-- [Introduction](#introduction)
-- [Implemented methods](#implemented-methods)
-- [Installation](#installation)
-    * [Clone the repository](#clone-the-repository)
-    * [Install the required dependencies](#install-the-required-dependencies)
-    * [Build the project](#build-the-project)
-- [Usage](#usage)
-- [Example](#example)
-- [License](#license)
-- [Contact](#contact)
-
-
-## Introduction
-
-This repository contains implementations of various numerical iterative methods, optimized and parallelized using the PETSc framework. PETSc is widely used in large-scale scientific computations and provides a robust, scalable infrastructure for solving linear, nonlinear, and time-dependent problems.
-
-## Implemented methods
-
-The following numerical methods are implemented:
 
 
 ## Installation
@@ -77,20 +45,18 @@ git clone https://github.com/craftman22/medane_tchakorom_ufc_thesis_repository.g
 
 #### Install the required dependencies
 
-<!-- - [make](https://www.gnu.org/software/make/)
+- [make](https://www.gnu.org/software/make/)
 - [Python3](https://www.python.org)
 - C and C++ compilers (e.g. gcc or clang)
-- [OPTIONAL] Fortran compiler (e.g. gfortran) -->
+- [OPTIONAL] Fortran compiler (e.g. gfortran)
 
 Installating PETSc is pretty forward process. Here is a quick start tutorial for doing so. An in-place installation is recommended for all-in-one folder manageable installation. After installing PETSc, remember to checkout the PETSc v3.22.0 or above.
 
 ```bash
->>>>>>> Stashed changes
 # Change directory into the cloned repository
 cd petsc
 
 # To anchor to a release version (without intermediate fixes), use
-<<<<<<< Updated upstream
 git checkout vMAJOR.MINOR.PATCH
 ```
 
@@ -116,20 +82,14 @@ git clone git@github.com:craftman22/medane_tchakorom_ufc_thesis_repository.git
 
 # Change directory into the application repository
 cd medane_tchakorom_ufc_thesis_repository
-```
+``` -->
 
 
 ## Usage
 
-## Configuration
 
-## License
+<!-- 
 
-## Contact
-
-
-=======
-git checkout v3.22.0
 ```
 
 In order to be able to build the project, one need to configure PETSc with minimal options. Below is an example of basic configuration command. This should be sufficient for building the project.
@@ -142,30 +102,28 @@ cd petsc
 ./configure --with-cc=gcc --with-cxx=g++ --with-fc=gfortran --download-mpich --download-f2cblaslapack --download-hypre --with-debugging=no
 ```
 
-**Warning** : For best performances, one should turn off PETSc debugging option by setting configuration option *--with-debugging=no*.
+**Warning** : For best performances, one should turn off PETSc debugging option by setting configuration option *--with-debugging=no*. -->
 
 
-#### Build the project
-
+<!-- 
 ```bash
 # Change directory into the project directory
 cd medane_tchakorom_ufc_thesis_repository
 
 # Run the command make for building the project
 make
-```
+``` -->
 
 
 
-## Usage
 
 
-## Example
+## Configuration
 
 
 ## License
 
-This project is licensed under the MIT License. See the LICENSE file for more information.
+<!-- This project is licensed under the MIT License. See the LICENSE file for more information. -->
 
 ## Contact
 
