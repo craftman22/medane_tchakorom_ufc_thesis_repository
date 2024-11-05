@@ -1,0 +1,58 @@
+# Name of the file where to read variables values from
+DEFAULT_FILENAME="default_run_variables"
+
+# Number of processes
+DEFAULT_NP=2
+
+# Number of processes per block
+DEFAULT_NPB=1
+
+# Mesh size M x N
+DEFAULT_M=100
+DEFAULT_N=100
+
+# Number of inner iterations before minimization
+DEFAULT_S=2
+
+# RELATIVE ERROR FOR OUTER ITERATIONS
+DEFAULT_RELATIVE_TOLERANCE=1e-10
+
+# ALGORITHM TO USE
+# SM --> Synchronous Multisplitting with direct residual computing (r = Ax - b)
+# AM --> Asynchronous Multisplitting with with approximate residual computing (r = Xk - Xk-1)
+# SMSM --> Synchronous Multisplitting and Synchronous Minimization with approximate residual computing (r = Xk - Xk-1)
+# AMAM --> Asynchronous Multisplitting and Asynchronous Minimization with approximate residual computing (r = Xk - Xk-1)
+DEFAULT_ALGORITHM="SM"
+
+# Solver to use for inner iterations (Multisplitting)
+DEFAULT_INNER_SOLVER="CG"
+# Maximum iterations for inner iterations
+DEFAULT_INNER_MAX_ITERATIONS=1000
+# Relative tolerance used in default determination of convergence
+DEFAULT_INNER_RELATIVE_TOLERANCE=1e-7
+# Inner iterations KSP prefix (DO NOT MODIFY THIS OPTION UNLESS YOU KNOW WHAT YOU ARE DOING)
+DEFAULT_INNER_KSP_PREFIX="inner"
+
+
+# Solver to use for outer iterations (Multisplitting)
+DEFAULT_OUTER_SOLVER="GMRES"
+# Maximum iterations for outer iterations
+DEFAULT_OUTER_MAX_ITERATIONS=1000
+# Relative tolerance used in default determination of convergence
+DEFAULT_OUTER_RELATIVE_TOLERANCE=1e-7
+# Inner iterations KSP prefix (DO NOT MODIFY THIS OPTION UNLESS YOU KNOW WHAT YOU ARE DOING)
+DEFAULT_OUTER_KSP_PREFIX="outer"
+
+
+#OTHER PETSC RUNTIME OPTIONS
+DEFAULT_OTHER_PETSC_OPTIONS=
+
+# MPI implementation dependent options
+#DEFAULT_OTHER_MPI_OPTIONS=
+
+
+# Option for verbose mode
+#DEFAULT_VERBOSE_MODE=1
+
+
+#DEFAULT_TIMER_OPTION=1
