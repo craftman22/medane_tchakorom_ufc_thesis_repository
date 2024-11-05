@@ -60,6 +60,8 @@ CUDA_INCLUDE := $(shell pkg-config --variable=cudainclude $(PACKAGES))
 
 
 
+
+
 print:
 	@echo CC=$(CC)
 	@echo CXX=$(CXX)
@@ -88,6 +90,71 @@ print:
 	$(COMPILE.cc) $(OUTPUT_OPTION) $<
 %.o : %.cu
 	$(CUDAC) -c $(CPPFLAGS) $(CUDAC_FLAGS) $(CUDA_INCLUDE) -o $@ $<
+# %: %.c
+# $(LINK.c) $^ $(LOADLIBES) $(LDLIBS) -o $@
 
+
+
+
+
+.PHONY: all clean build help
+.DEFAULT_GOAL:= all
+
+
+
+# List the source directories you want to compile from
+SRC_DIRS := src/synchronous-multisplitting src/synchronous-multisplitting-synchronous-minimization
+
+# Define the directory where binaries will be stored
+BIN_DIR := bin
+
+# List of source files in chosen directories
+SOURCES := $(wildcard $(foreach dir, $(SRC_DIRS), $(dir)/*.c))
+
+# Corresponding binaries in the bin directory
+#BINARIES := $(patsubst src/%.c, $(BIN_DIR)/% ,  $(SOURCES))
+
+
+BINARIES := $(patsubst src/%.c, $(BIN_DIR)/%,   $(SOURCES))
+
+
+# Default rule to build all binaries
+all: $(BINARIES) 
+	@echo Build finish!
+
+
+build: all
+
+# Rule to compile each binary
+$(BIN_DIR)/%: src/%.c | $(BIN_DIR)
+	@$(LINK.c) $^ $(LOADLIBES) $(LDLIBS) -o $(BIN_DIR)/$(notdir $@)
+	
+	
+# Ensure the bin directory exists
+$(BIN_DIR):
+	@mkdir -p $(BIN_DIR)
+
+
+
+run:
+	@echo Not implemented yet...
+	@echo Future feature
+
+check:
+	@echo Not implemented yet...
+	@echo Future feature
+
+docs:
+	@echo Not implemented yet...
+	@echo Future feature
+
+rebuild: clean all
+
+# Clean up all binaries
+clean:
+	@echo Removing all build files from bin...
+	@rm -rf $(BIN_DIR)/*
+	@echo Finish!	
+	
 
 
