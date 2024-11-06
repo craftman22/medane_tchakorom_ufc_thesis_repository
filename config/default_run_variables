@@ -25,23 +25,27 @@ DEFAULT_RELATIVE_TOLERANCE=1e-10
 DEFAULT_ALGORITHM="SM"
 
 # Solver to use for inner iterations (Multisplitting)
-DEFAULT_INNER_SOLVER="CG"
+DEFAULT_INNER_SOLVER="gmres"
 # Maximum iterations for inner iterations
 DEFAULT_INNER_MAX_ITERATIONS=1000
 # Relative tolerance used in default determination of convergence
 DEFAULT_INNER_RELATIVE_TOLERANCE=1e-7
+# Preconditionner type for inner ksp
+DEFAULT_INNER_PRECONDITIONNER_TYPE="hypre"
 # Inner iterations KSP prefix (DO NOT MODIFY THIS OPTION UNLESS YOU KNOW WHAT YOU ARE DOING)
-DEFAULT_INNER_KSP_PREFIX="inner"
+DEFAULT_INNER_KSP_PREFIX="inner_"
 
 
 # Solver to use for outer iterations (Multisplitting)
-DEFAULT_OUTER_SOLVER="GMRES"
+DEFAULT_OUTER_SOLVER="gmres"
 # Maximum iterations for outer iterations
 DEFAULT_OUTER_MAX_ITERATIONS=1000
 # Relative tolerance used in default determination of convergence
 DEFAULT_OUTER_RELATIVE_TOLERANCE=1e-7
+# Preconditionner type for outer ksp
+DEFAULT_OUTER_PRECONDITIONNER_TYPE="hypre"
 # Inner iterations KSP prefix (DO NOT MODIFY THIS OPTION UNLESS YOU KNOW WHAT YOU ARE DOING)
-DEFAULT_OUTER_KSP_PREFIX="outer"
+DEFAULT_OUTER_KSP_PREFIX="outer_"
 
 
 #OTHER PETSC RUNTIME OPTIONS

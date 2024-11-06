@@ -39,10 +39,13 @@ algorithm_flag=${DEFAULT_ALGORITHM}
 inner_ksp_flag=${DEFAULT_INNER_SOLVER}
 inner_rtol_flag=${DEFAULT_INNER_RELATIVE_TOLERANCE}
 inner_max_iter_flag=${DEFAULT_INNER_MAX_ITERATIONS}
+inner_pc_type_flag=${DEFAULT_INNER_PRECONDITIONNER_TYPE}
 
 outer_ksp_flag=${DEFAULT_OUTER_SOLVER}
 outer_rtol_flag=${DEFAULT_OUTER_RELATIVE_TOLERANCE}
 outer_max_iter_flag=${DEFAULT_OUTER_MAX_ITERATIONS}
+outer_pc_type_flag=${DEFAULT_OUTER_PRECONDITIONNER_TYPE}
+
 
 other_petsc_options_flag=${DEFAULT_OTHER_MPI_OPTIONS}
 
@@ -67,9 +70,11 @@ show_help() {
     echo "  --inner-ksp                  inner solver to use"
     echo "  --inner-rtol                 relative tolerance for inner solver"
     echo "  --inner-max-iters            max iterations for inner solver"
+    echo "  --inner-pc-type              preconditionner type for inner solver"
     echo "  --outer-ksp                  outer solver to use"
     echo "  --outer-rtol                 relative tolerance for outer solver"
     echo "  --outer-max-iters            max iterations for outer solver"
+    echo "  --outer-pc-type              preconditionner type for outer solver"
     echo "  --other-petsc-options        other PETSc options"
     exit 1
 }
@@ -87,9 +92,11 @@ while [[ "$#" -gt 0 ]]; do
         --inner-ksp) inner_ksp_flag="$2"; shift 2 ;;
         --inner-rtol) inner_rtol_flag="$2"; shift 2 ;;
         --inner-max-iters) inner_max_iter_flag="$2"; shift 2 ;;
+        --inner-pc-type) inner_pc_type_flag="$2"; shift 2 ;;
         --outer-ksp) outer_ksp_flag="$2"; shift 2 ;;
         --outer-rtol) outer_rtol_flag="$2"; shift 2 ;;
         --outer-max-iters) outer_max_iter_flag="$2"; shift 2 ;;
+        --outer-pc-type) outer_pc_type_flag="$2"; shift 2 ;;
         --other-petsc-options) other_petsc_options_flag="$2"; shift 2 ;;
         --help) show_help ;;  # Show usage if --help is provided
         *) echo "Unknown option: $1"; show_help ;;  # Catch unknown options
@@ -103,8 +110,8 @@ done
 # print help function in case parameters are empty
 if [ -z "$np_flag" ] || [ -z "$m_flag" ] || [ -z "$n_flag" ] || [ -z "$npb_flag" ] \
  || [ -z "$s_flag" ] || [ -z "$relative_tolerance_flag" ] || [ -z "$algorithm_flag" ] \
- || [ -z "$inner_ksp_flag" ] || [ -z "$inner_rtol_flag" ] || [ -z "$inner_max_iter_flag" ] \
- || [ -z "$outer_ksp_flag" ] || [ -z "$outer_rtol_flag" ] || [ -z "$outer_max_iter_flag" ]  ; then
+ || [ -z "$inner_ksp_flag" ] || [ -z "$inner_rtol_flag" ] || [ -z "$inner_max_iter_flag" ] || [ -z "$inner_pc_type_flag" ]  \
+ || [ -z "$outer_ksp_flag" ] || [ -z "$outer_rtol_flag" ] || [ -z "$outer_max_iter_flag" ] || [ -z "$outer_pc_type_flag" ] ; then
     echo "Error: Missing required values for one of the options." >&2
     show_help
     exit 1
@@ -135,13 +142,15 @@ echo -e "Solving 2D Poisson Equation with options \n\
 echo -e "\
 \t INNER solver : $inner_ksp_flag \n\
 \t INNER solver relative tolerance : $inner_rtol_flag \n\
-\t INNER solver max iterations : $inner_max_iter_flag \n"
+\t INNER solver max iterations : $inner_max_iter_flag \n\
+\t INNER solver preconditionner : $inner_pc_type_flag \n"
 
 if [ "$algorithm_flag" = "SMSM" ]; then
     echo -e "\
     \t OUTER solver : $outer_ksp_flag \n\
     \t OUTER solver relative tolerance : $outer_rtol_flag \n\
-    \t OUTER solver max iterations : $outer_max_iter_flag \n"
+    \t OUTER solver max iterations : $outer_max_iter_flag \n\
+    \t OUTER solver preconditionner : $outer_pc_type_flag \n"
 fi
 
 echo -e "\
@@ -154,20 +163,18 @@ echo -e "\
 if [ -x "$(command -v $binary)" ]; then
 
     if [ "$algorithm_flag" = "SM" ]; then
-        ${PETSC_MPI_EXEC} \
-        -n ${np_flag} ${binary} \
-        -m ${m_flag} -n ${n_flag} -s ${s_flag} -npb ${npb_flag} \
-        -${DEFAULT_INNER_KSP_PREFIX}_ksp_type ${inner_ksp_flag} -${DEFAULT_INNER_KSP_PREFIX}_ksp_rtol ${inner_rtol_flag} -${DEFAULT_INNER_KSP_PREFIX}_ksp_max_it ${inner_max_iter_flag} \
-        ${other_petsc_options_flag}
+    
+        command="${PETSC_MPI_EXEC} -n ${np_flag} ${binary} -m ${m_flag} -n ${n_flag} -s ${s_flag} -npb ${npb_flag} -${DEFAULT_INNER_KSP_PREFIX}ksp_type ${inner_ksp_flag} -${DEFAULT_INNER_KSP_PREFIX}ksp_rtol ${inner_rtol_flag} -${DEFAULT_INNER_KSP_PREFIX}ksp_max_it ${inner_max_iter_flag} -${DEFAULT_INNER_KSP_PREFIX}pc_type ${inner_pc_type_flag} ${other_petsc_options_flag}"
+        
+        echo -e "RUNNING COMMAND: ${command} \n"
+        eval "${command}"
+
     fi
     
     if [ "$algorithm_flag" = "SMSM" ]; then
-        ${PETSC_MPI_EXEC} \
-        -n ${np_flag} ${binary} \
-        -m ${m_flag} -n ${n_flag} -s ${s_flag} -npb ${npb_flag} \
-        -${DEFAULT_INNER_KSP_PREFIX}_ksp_type ${inner_ksp_flag} -${DEFAULT_INNER_KSP_PREFIX}_ksp_rtol ${inner_rtol_flag} -${DEFAULT_INNER_KSP_PREFIX}_ksp_max_it ${inner_max_iter_flag} \
-        -${DEFAULT_OUTER_KSP_PREFIX}_ksp-type ${outer_ksp_flag} -${DEFAULT_OUTER_KSP_PREFIX}_ksp_rtol ${outer_rtol_flag} -${DEFAULT_OUTER_KSP_PREFIX}_ksp_max_it ${outer_max_iter_flag} \
-        ${other_petsc_options_flag}
+        ${PETSC_MPI_EXEC} -n ${np_flag} ${binary} -m ${m_flag} -n ${n_flag} -s ${s_flag} -npb ${npb_flag} -${DEFAULT_INNER_KSP_PREFIX}ksp_type ${inner_ksp_flag} -${DEFAULT_INNER_KSP_PREFIX}ksp_rtol ${inner_rtol_flag} -${DEFAULT_INNER_KSP_PREFIX}ksp_max_it ${inner_max_iter_flag} -${DEFAULT_INNER_KSP_PREFIX}pc_type ${inner_pc_type_flag} -${DEFAULT_OUTER_KSP_PREFIX}ksp-type ${outer_ksp_flag} -${DEFAULT_OUTER_KSP_PREFIX}ksp_rtol ${outer_rtol_flag} -${DEFAULT_OUTER_KSP_PREFIX}ksp_max_it ${outer_max_iter_flag} -${DEFAULT_OUTER_KSP_PREFIX}pc_type ${outer_pc_type_flag} ${other_petsc_options_flag}
+        echo -e "RUNNING COMMAND: ${command} \n"
+        eval "${command}"
     fi 
 
 else
