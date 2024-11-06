@@ -1,12 +1,23 @@
 #!/bin/bash
 
+
+# synchronous-multisplitting-direct-residual-computation
+# synchronous-multisplitting-synchronous-minimization-direct-residual
+# synchronous-multisplitting-synchronous-minimization-approximate-residual
+# synchronous-multisplitting-approximate-residual
+
+
 # Get default values for all options
 source "./config/default_run_variables"
 
 # Set file path for each algorithm binary
-SM_BINARY="./bin/synchronous-multisplitting-norm2"
+SM_BINARY_DIRECT_RESIDUAL="./bin/synchronous-multisplitting-direct-residual-computation"
+SM_BINARY_APPROXIMATE_RESIDUAL="./bin/synchronous-multisplitting-approximate-residual"
 SM_PROGRAM_NAME="Synchronous Multisplitting"
-SMSM_BINARY="./bin/synchronous-multisplitting-synchronous-minimization-norm2"
+
+
+SMSM_BINARY_DIRECT_RESIDUAL="./bin/synchronous-multisplitting-synchronous-minimization-direct-residual"
+SMSM_BINARY_APPROXIMATE_RESIDUAL="./bin/synchronous-multisplitting-synchronous-minimization-approximate-residual"
 SMSM_PROGRAM_NAME="Synchronous Multisplitting & Synchronous Minimization"
 
 # Set file path for petscmpiexec runner
@@ -104,12 +115,12 @@ fi
 program_name=
 binary=
 if [ "$algorithm_flag" = "SM" ]; then
-    binary=$SM_BINARY
+    binary=$SM_BINARY_DIRECT_RESIDUAL
     program_name=${SM_PROGRAM_NAME}
 fi
 
 if [ "$algorithm_flag" = "SMSM" ]; then
-    binary=${SMSM_BINARY}
+    binary=${SMSM_BINARY_DIRECT_RESIDUAL}
     program_name=${SMSM_PROGRAM_NAME}
 fi
 

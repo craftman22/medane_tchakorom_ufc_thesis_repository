@@ -398,9 +398,10 @@ FodyWeavers.xsd
 *.sln.iml
 
 
+ 
+.vscode
 .DS_Store
-synchronous-multisplitting-norm2
-synchronous-multisplitting/synchronous-multisplitting-norm2.dSYM
-synchronous-multisplitting/synchronous-multisplitting-norm2.dSYM/** 
+bin
+bin/**
 
 scripts/ideas.txt
