@@ -7,6 +7,11 @@
 #define ZERO 0
 #define ONE 1
 #define ERROR 1.e-10
+
+#define INNER_KSP_PREFIX "inner_"
+#define INNER_PC_PREFIX "inner_"
+
+
 // Generate one block of jacobi blocks
 
 PetscErrorCode loadMatrix(Mat *A_block_jacobi, PetscInt n_grid_lines, PetscInt n_grid_columns, PetscInt rank_jacobi_block, PetscInt njacobi_blocks)
@@ -137,9 +142,10 @@ PetscErrorCode initialiazeKSP(MPI_Comm comm_jacobi_block, KSP *ksp, Mat A_block_
   PetscFunctionBeginUser;
   PetscCall(KSPCreate(comm_jacobi_block, ksp));
   PetscCall(KSPSetOperators(*ksp, A_block_jacobi_subMat, A_block_jacobi_subMat));
-  PetscCall(KSPSetType(*ksp, KSPCG));
+  // PetscCall(KSPSetType(*ksp, KSPCG));
+  // PetscCall(KSPSetTolerances(*ksp, 0.0000000001, PETSC_DETERMINE, PETSC_DETERMINE, PETSC_DETERMINE));
+  PetscCall(KSPSetOptionsPrefix(*ksp,INNER_KSP_PREFIX));
   PetscCall(KSPSetFromOptions(*ksp));
-  PetscCall(KSPSetTolerances(*ksp, 0.0000000001, PETSC_DETERMINE, PETSC_DETERMINE, PETSC_DETERMINE));
   PetscCall(KSPSetUp(*ksp));
 
   PetscFunctionReturn(PETSC_SUCCESS);
@@ -322,8 +328,10 @@ int main(int argc, char **argv)
 
   PC ksp_preconditionnner = NULL;
   PetscCall(PCCreate(comm_jacobi_block, &ksp_preconditionnner));
-  PetscCall(PCSetType(ksp_preconditionnner, PCNONE));
+  //PetscCall(PCSetType(ksp_preconditionnner, PCHYPRE));
   PetscCall(PCSetOperators(ksp_preconditionnner, A_block_jacobi_subMat[rank_jacobi_block], A_block_jacobi_subMat[rank_jacobi_block]));
+  PetscCall(PCSetOptionsPrefix(ksp_preconditionnner,INNER_PC_PREFIX));
+  PetscCall(PCSetFromOptions(ksp_preconditionnner));
   PetscCall(PCSetUp(ksp_preconditionnner));
   PetscCall(KSPSetPC(ksp, ksp_preconditionnner));
 
@@ -344,6 +352,9 @@ int main(int argc, char **argv)
   PetscCall(PetscPrintf(MPI_COMM_WORLD, "Initial value of norm 2  =  %g\n", global_residual_norm2));
   PetscCall(PetscPrintf(MPI_COMM_WORLD, "*******************************************\n"));
   PetscCall(PetscPrintf(MPI_COMM_WORLD, "*******************************************\n\n"));
+
+
+
 
   PetscScalar *send_buffer = NULL;
   PetscScalar *rcv_buffer = NULL;
