@@ -20,6 +20,15 @@ SMSM_BINARY_DIRECT_RESIDUAL="./bin/synchronous-multisplitting-synchronous-minimi
 SMSM_BINARY_APPROXIMATE_RESIDUAL="./bin/synchronous-multisplitting-synchronous-minimization-approximate-residual"
 SMSM_PROGRAM_NAME="Synchronous Multisplitting & Synchronous Minimization"
 
+
+
+AM_BINARY_APPROXIMATE_RESIDUAL="./bin/asynchronous-multisplitting-approximate-residual"
+AM_PROGRAM_NAME="Asynchronous Multisplitting"
+
+
+AMAM_BINARY_APPROXIMATE_RESIDUAL="./bin/asynchronous-multisplitting-asynchronous-minimization-approximate-residual"
+AMAM_PROGRAM_NAME="Aynchronous Multisplitting & Aynchronous Minimization"
+
 # Set file path for petscmpiexec runner
 PETSC_MPI_EXEC="$PETSC_DIR/lib/petsc/bin/petscmpiexec"
 
@@ -119,6 +128,7 @@ fi
 
 
 
+
 program_name=
 binary=
 if [ "$algorithm_flag" = "SM" ]; then
@@ -129,6 +139,16 @@ fi
 if [ "$algorithm_flag" = "SMSM" ]; then
     binary=${SMSM_BINARY_DIRECT_RESIDUAL}
     program_name=${SMSM_PROGRAM_NAME}
+fi
+
+if [ "$algorithm_flag" = "AM" ]; then
+    binary=$AM_BINARY_APPROXIMATE_RESIDUAL
+    program_name=${AM_PROGRAM_NAME}
+fi
+
+if [ "$algorithm_flag" = "AMAM" ]; then
+    binary=${AMAM_BINARY_APPROXIMATE_RESIDUAL}
+    program_name=${AMAM_PROGRAM_NAME}
 fi
 
 
