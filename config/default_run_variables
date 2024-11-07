@@ -25,13 +25,13 @@ DEFAULT_RELATIVE_TOLERANCE=1e-10
 DEFAULT_ALGORITHM="SM"
 
 # Solver to use for inner iterations (Multisplitting)
-DEFAULT_INNER_SOLVER="gmres"
+DEFAULT_INNER_SOLVER="cg"
 # Maximum iterations for inner iterations
 DEFAULT_INNER_MAX_ITERATIONS=1000
 # Relative tolerance used in default determination of convergence
-DEFAULT_INNER_RELATIVE_TOLERANCE=1e-7
+DEFAULT_INNER_RELATIVE_TOLERANCE=1e-10
 # Preconditionner type for inner ksp
-DEFAULT_INNER_PRECONDITIONNER_TYPE="hypre"
+DEFAULT_INNER_PRECONDITIONNER_TYPE="none"
 # Inner iterations KSP prefix (DO NOT MODIFY THIS OPTION UNLESS YOU KNOW WHAT YOU ARE DOING)
 DEFAULT_INNER_KSP_PREFIX="inner_"
 
