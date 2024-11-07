@@ -1,11 +1,9 @@
 #!/bin/bash
 
-
 # synchronous-multisplitting-direct-residual-computation
 # synchronous-multisplitting-synchronous-minimization-direct-residual
 # synchronous-multisplitting-synchronous-minimization-approximate-residual
 # synchronous-multisplitting-approximate-residual
-
 
 # Get default values for all options
 source "./config/default_run_variables"
@@ -15,16 +13,12 @@ SM_BINARY_DIRECT_RESIDUAL="./bin/synchronous-multisplitting-direct-residual-comp
 SM_BINARY_APPROXIMATE_RESIDUAL="./bin/synchronous-multisplitting-approximate-residual"
 SM_PROGRAM_NAME="Synchronous Multisplitting"
 
-
 SMSM_BINARY_DIRECT_RESIDUAL="./bin/synchronous-multisplitting-synchronous-minimization-direct-residual"
 SMSM_BINARY_APPROXIMATE_RESIDUAL="./bin/synchronous-multisplitting-synchronous-minimization-approximate-residual"
 SMSM_PROGRAM_NAME="Synchronous Multisplitting & Synchronous Minimization"
 
-
-
 AM_BINARY_APPROXIMATE_RESIDUAL="./bin/asynchronous-multisplitting-approximate-residual"
 AM_PROGRAM_NAME="Asynchronous Multisplitting"
-
 
 AMAM_BINARY_APPROXIMATE_RESIDUAL="./bin/asynchronous-multisplitting-asynchronous-minimization-approximate-residual"
 AMAM_PROGRAM_NAME="Aynchronous Multisplitting & Aynchronous Minimization"
@@ -44,7 +38,6 @@ relative_tolerance_flag=${DEFAULT_RELATIVE_TOLERANCE}
 algorithm_flag=${DEFAULT_ALGORITHM}
 #timer_flag=${DEFAULT_TIMER_OPTION}
 
-
 inner_ksp_flag=${DEFAULT_INNER_SOLVER}
 inner_rtol_flag=${DEFAULT_INNER_RELATIVE_TOLERANCE}
 inner_max_iter_flag=${DEFAULT_INNER_MAX_ITERATIONS}
@@ -55,7 +48,6 @@ outer_rtol_flag=${DEFAULT_OUTER_RELATIVE_TOLERANCE}
 outer_max_iter_flag=${DEFAULT_OUTER_MAX_ITERATIONS}
 outer_pc_type_flag=${DEFAULT_OUTER_PRECONDITIONNER_TYPE}
 
-
 other_petsc_options_flag=${DEFAULT_OTHER_MPI_OPTIONS}
 
 # 15 options
@@ -63,7 +55,6 @@ other_petsc_options_flag=${DEFAULT_OTHER_MPI_OPTIONS}
 #other_mpi_options_flag=${DEFAULT_OTHER_MPI_OPTIONS}
 
 #timer_flag=${DEFAULT_TIMER_OPTION}
-
 
 # Function to display the script usage
 show_help() {
@@ -91,43 +82,89 @@ show_help() {
 # Parse options using getopts
 while [[ "$#" -gt 0 ]]; do
     case "$1" in
-        --np) np_flag="$2"; shift 2 ;;
-        --m) m_flag="$2"; shift 2 ;;
-        --n) n_flag="$2"; shift 2 ;;
-        --npb) npb_flag="$2"; shift 2 ;;
-        --s) s_flag="$2"; shift 2 ;;
-        --rtol) relative_tolerance_flag="$2"; shift 2 ;;
-        --alg) algorithm_flag="$2"; shift 2 ;;
-        --inner-ksp) inner_ksp_flag="$2"; shift 2 ;;
-        --inner-rtol) inner_rtol_flag="$2"; shift 2 ;;
-        --inner-max-iters) inner_max_iter_flag="$2"; shift 2 ;;
-        --inner-pc-type) inner_pc_type_flag="$2"; shift 2 ;;
-        --outer-ksp) outer_ksp_flag="$2"; shift 2 ;;
-        --outer-rtol) outer_rtol_flag="$2"; shift 2 ;;
-        --outer-max-iters) outer_max_iter_flag="$2"; shift 2 ;;
-        --outer-pc-type) outer_pc_type_flag="$2"; shift 2 ;;
-        --other-petsc-options) other_petsc_options_flag="$2"; shift 2 ;;
-        --help) show_help ;;  # Show usage if --help is provided
-        *) echo "Unknown option: $1"; show_help ;;  # Catch unknown options
+    --np)
+        np_flag="$2"
+        shift 2
+        ;;
+    --m)
+        m_flag="$2"
+        shift 2
+        ;;
+    --n)
+        n_flag="$2"
+        shift 2
+        ;;
+    --npb)
+        npb_flag="$2"
+        shift 2
+        ;;
+    --s)
+        s_flag="$2"
+        shift 2
+        ;;
+    --rtol)
+        relative_tolerance_flag="$2"
+        shift 2
+        ;;
+    --alg)
+        algorithm_flag="$2"
+        shift 2
+        ;;
+    --inner-ksp)
+        inner_ksp_flag="$2"
+        shift 2
+        ;;
+    --inner-rtol)
+        inner_rtol_flag="$2"
+        shift 2
+        ;;
+    --inner-max-iters)
+        inner_max_iter_flag="$2"
+        shift 2
+        ;;
+    --inner-pc-type)
+        inner_pc_type_flag="$2"
+        shift 2
+        ;;
+    --outer-ksp)
+        outer_ksp_flag="$2"
+        shift 2
+        ;;
+    --outer-rtol)
+        outer_rtol_flag="$2"
+        shift 2
+        ;;
+    --outer-max-iters)
+        outer_max_iter_flag="$2"
+        shift 2
+        ;;
+    --outer-pc-type)
+        outer_pc_type_flag="$2"
+        shift 2
+        ;;
+    --other-petsc-options)
+        other_petsc_options_flag="$2"
+        shift 2
+        ;;
+    --help) show_help ;; # Show usage if --help is provided
+    *)
+        echo "Unknown option: $1"
+        show_help
+        ;; # Catch unknown options
     esac
 done
 
 #shift $((OPTIND - 1))
 
-
-
 # print help function in case parameters are empty
-if [ -z "$np_flag" ] || [ -z "$m_flag" ] || [ -z "$n_flag" ] || [ -z "$npb_flag" ] \
- || [ -z "$s_flag" ] || [ -z "$relative_tolerance_flag" ] || [ -z "$algorithm_flag" ] \
- || [ -z "$inner_ksp_flag" ] || [ -z "$inner_rtol_flag" ] || [ -z "$inner_max_iter_flag" ] || [ -z "$inner_pc_type_flag" ]  \
- || [ -z "$outer_ksp_flag" ] || [ -z "$outer_rtol_flag" ] || [ -z "$outer_max_iter_flag" ] || [ -z "$outer_pc_type_flag" ] ; then
+if [ -z "$np_flag" ] || [ -z "$m_flag" ] || [ -z "$n_flag" ] || [ -z "$npb_flag" ] ||
+    [ -z "$s_flag" ] || [ -z "$relative_tolerance_flag" ] || [ -z "$algorithm_flag" ] ||
+    [ -z "$inner_ksp_flag" ] || [ -z "$inner_rtol_flag" ] || [ -z "$inner_max_iter_flag" ] || [ -z "$inner_pc_type_flag" ] ||
+    [ -z "$outer_ksp_flag" ] || [ -z "$outer_rtol_flag" ] || [ -z "$outer_max_iter_flag" ] || [ -z "$outer_pc_type_flag" ]; then
     echo "Error: Missing required values for one of the options." >&2
     show_help
     exit 1
 fi
-
-
-
 
 program_name=
 binary=
@@ -150,7 +187,6 @@ if [ "$algorithm_flag" = "AMAM" ]; then
     binary=${AMAM_BINARY_APPROXIMATE_RESIDUAL}
     program_name=${AMAM_PROGRAM_NAME}
 fi
-
 
 echo -e "Solving 2D Poisson Equation with options \n\
 \t Program : $program_name \n\
@@ -176,26 +212,35 @@ fi
 echo -e "\
 \t Other petsc options : ${other_petsc_options_flag} \n"
 
-
-
-
-
 if [ -x "$(command -v $binary)" ]; then
 
     if [ "$algorithm_flag" = "SM" ]; then
-    
+
         command="${PETSC_MPI_EXEC} -n ${np_flag} ${binary} -m ${m_flag} -n ${n_flag} -s ${s_flag} -npb ${npb_flag} -${DEFAULT_INNER_KSP_PREFIX}ksp_type ${inner_ksp_flag} -${DEFAULT_INNER_KSP_PREFIX}ksp_rtol ${inner_rtol_flag} -${DEFAULT_INNER_KSP_PREFIX}ksp_max_it ${inner_max_iter_flag} -${DEFAULT_INNER_KSP_PREFIX}pc_type ${inner_pc_type_flag} ${other_petsc_options_flag}"
-        
         echo -e "RUNNING COMMAND: ${command} \n"
         eval "${command}"
 
     fi
-    
+
     if [ "$algorithm_flag" = "SMSM" ]; then
         ${PETSC_MPI_EXEC} -n ${np_flag} ${binary} -m ${m_flag} -n ${n_flag} -s ${s_flag} -npb ${npb_flag} -${DEFAULT_INNER_KSP_PREFIX}ksp_type ${inner_ksp_flag} -${DEFAULT_INNER_KSP_PREFIX}ksp_rtol ${inner_rtol_flag} -${DEFAULT_INNER_KSP_PREFIX}ksp_max_it ${inner_max_iter_flag} -${DEFAULT_INNER_KSP_PREFIX}pc_type ${inner_pc_type_flag} -${DEFAULT_OUTER_KSP_PREFIX}ksp-type ${outer_ksp_flag} -${DEFAULT_OUTER_KSP_PREFIX}ksp_rtol ${outer_rtol_flag} -${DEFAULT_OUTER_KSP_PREFIX}ksp_max_it ${outer_max_iter_flag} -${DEFAULT_OUTER_KSP_PREFIX}pc_type ${outer_pc_type_flag} ${other_petsc_options_flag}
         echo -e "RUNNING COMMAND: ${command} \n"
         eval "${command}"
-    fi 
+    fi
+
+    if [ "$algorithm_flag" = "AM" ]; then
+
+        command="${PETSC_MPI_EXEC} -n ${np_flag} ${binary} -m ${m_flag} -n ${n_flag} -s ${s_flag} -npb ${npb_flag} -${DEFAULT_INNER_KSP_PREFIX}ksp_type ${inner_ksp_flag} -${DEFAULT_INNER_KSP_PREFIX}ksp_rtol ${inner_rtol_flag} -${DEFAULT_INNER_KSP_PREFIX}ksp_max_it ${inner_max_iter_flag} -${DEFAULT_INNER_KSP_PREFIX}pc_type ${inner_pc_type_flag} ${other_petsc_options_flag}"
+        echo -e "RUNNING COMMAND: ${command} \n"
+        eval "${command}"
+
+    fi
+
+    if [ "$algorithm_flag" = "AMAM" ]; then
+        ${PETSC_MPI_EXEC} -n ${np_flag} ${binary} -m ${m_flag} -n ${n_flag} -s ${s_flag} -npb ${npb_flag} -${DEFAULT_INNER_KSP_PREFIX}ksp_type ${inner_ksp_flag} -${DEFAULT_INNER_KSP_PREFIX}ksp_rtol ${inner_rtol_flag} -${DEFAULT_INNER_KSP_PREFIX}ksp_max_it ${inner_max_iter_flag} -${DEFAULT_INNER_KSP_PREFIX}pc_type ${inner_pc_type_flag} -${DEFAULT_OUTER_KSP_PREFIX}ksp-type ${outer_ksp_flag} -${DEFAULT_OUTER_KSP_PREFIX}ksp_rtol ${outer_rtol_flag} -${DEFAULT_OUTER_KSP_PREFIX}ksp_max_it ${outer_max_iter_flag} -${DEFAULT_OUTER_KSP_PREFIX}pc_type ${outer_pc_type_flag} ${other_petsc_options_flag}
+        echo -e "RUNNING COMMAND: ${command} \n"
+        eval "${command}"
+    fi
 
 else
     echo "Warning: $binary not found or not executable." >&2
