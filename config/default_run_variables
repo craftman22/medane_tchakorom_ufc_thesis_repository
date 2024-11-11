@@ -15,7 +15,7 @@ DEFAULT_N=100
 DEFAULT_S=2
 
 # RELATIVE ERROR FOR OUTER ITERATIONS
-DEFAULT_RELATIVE_TOLERANCE=1.e-5
+DEFAULT_RELATIVE_TOLERANCE=1e-1
 
 # ALGORITHM TO USE
 # SM --> Synchronous Multisplitting with direct residual computing (r = Ax - b)
@@ -29,7 +29,7 @@ DEFAULT_INNER_SOLVER="cg"
 # Maximum iterations for inner iterations
 DEFAULT_INNER_MAX_ITERATIONS=1000
 # Relative tolerance used in default determination of convergence
-DEFAULT_INNER_RELATIVE_TOLERANCE=1e-7
+DEFAULT_INNER_RELATIVE_TOLERANCE=1e-5
 # Preconditionner type for inner ksp
 DEFAULT_INNER_PRECONDITIONNER_TYPE="hypre"
 # Inner iterations KSP prefix (DO NOT MODIFY THIS OPTION UNLESS YOU KNOW WHAT YOU ARE DOING)
