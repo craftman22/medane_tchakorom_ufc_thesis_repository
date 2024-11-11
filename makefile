@@ -61,10 +61,15 @@ CUDA_INCLUDE := $(shell pkg-config --variable=cudainclude $(PACKAGES))
 
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 
 
 >>>>>>> feature/build-system
+=======
+
+
+>>>>>>> feature/synchronous-multisplitting/direct-residual-computation
 print:
 	@echo CC=$(CC)
 	@echo CXX=$(CXX)
@@ -106,7 +111,9 @@ print:
 
 
 # List the source directories you want to compile from
+
 SRC_DIRS := src/synchronous-multisplitting src/synchronous-multisplitting-synchronous-minimization src/asynchronous-multisplitting
+
 
 # Define the directory where binaries will be stored
 BIN_DIR := bin

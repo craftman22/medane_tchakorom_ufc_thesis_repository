@@ -404,3 +404,11 @@ synchronous-multisplitting/synchronous-multisplitting-norm2.dSYM
 synchronous-multisplitting/synchronous-multisplitting-norm2.dSYM/** 
 bin
 
+
+
+.vscode
+.DS_Store
+bin
+bin/**
+
+scripts/ideas.txt
