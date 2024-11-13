@@ -288,8 +288,8 @@ int main(int argc, char **argv)
   PetscCall(PetscSubcommSetFromOptions(sub_comm_context));
   MPI_Comm comm_jacobi_block = PetscSubcommChild(sub_comm_context);
 
-  PetscInt signal = NO_SIGNAL;
-  MPI_Request request;
+  //PetscInt signal = NO_SIGNAL;
+  //MPI_Request request;
 
   // MAIN NODE
   if (rank_jacobi_block == BLOCK_RANK_TWO)
@@ -333,7 +333,7 @@ int main(int argc, char **argv)
     // PetscCallMPI(MPI_Waitall(nprocs, send_requests, MPI_STATUSES_IGNORE));
     // free(send_requests);
     // PetscCall(PetscPrintf(comm_jacobi_block, "Termination signal send to all other processes !\n"));
-    PetscCall(PetscSleep(60 * 10));
+    PetscCall(PetscSleep(60 * 30));
   }
 
   // Workers nodes
@@ -450,77 +450,85 @@ int main(int argc, char **argv)
     PetscReal *temp_buffer = NULL;
     send_buffer = (PetscReal *)malloc(vec_local_size * sizeof(PetscReal));
     rcv_buffer = (PetscReal *)malloc(vec_local_size * sizeof(PetscReal));
-    //temp_buffer = (PetscReal *)malloc(vec_local_size * sizeof(PetscReal));
-
+    // temp_buffer = (PetscReal *)malloc(vec_local_size * sizeof(PetscReal));
 
     Vec approximation_residual;
     PetscCall(VecDuplicate(x, &approximation_residual));
 
     PetscInt reduced_signal = NO_SIGNAL;
-    MPI_Status status;
-    PetscInt message;
+    //MPI_Status status;
+    //PetscInt message;
     PetscInt send_flag = 0;
+    PetscInt rcv_flag = 0;
 
     MPI_Request rcv_request;
     MPI_Request send_request;
     // MPI_Status rcv_status;
 
-    PetscCallMPI(MPI_Recv_init(rcv_buffer, vec_local_size, MPIU_SCALAR, (idx_non_current_block * nprocs_per_jacobi_block) + proc_local_rank, TAG_DATA, MPI_COMM_WORLD, &rcv_request));
-    PetscCallMPI(MPI_Send_init(send_buffer, vec_local_size, MPIU_SCALAR, (idx_non_current_block * nprocs_per_jacobi_block) + proc_local_rank, TAG_DATA, MPI_COMM_WORLD, &send_request));
-    // PetscCallMPI(MPI_Recv(rcv_buffer, vec_local_size, MPIU_SCALAR, (idx_non_current_block * nprocs_per_jacobi_block) + proc_local_rank, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE));
+    Vec x_block_jacobi_previous_iteration;
+    PetscCall(VecDuplicate(x_block_jacobi[rank_jacobi_block] , x_block_jacobi_previous_iteration));
+
+    PetscInt message_source = (idx_non_current_block * nprocs_per_jacobi_block) + proc_local_rank;
+    PetscInt message_dest = (idx_non_current_block * nprocs_per_jacobi_block) + proc_local_rank;
+    PetscCallMPI(MPI_Recv_init(rcv_buffer, vec_local_size, MPIU_SCALAR, message_source , TAG_DATA, MPI_COMM_WORLD, &rcv_request));
+    PetscCallMPI(MPI_Send_init(send_buffer, vec_local_size, MPIU_SCALAR, message_dest , TAG_DATA, MPI_COMM_WORLD, &send_request));
 
     PetscCallMPI(MPI_Barrier(comm_jacobi_block)); // TODO: voir si il est possible de faire la barriere pour les 2 blocs de travail ensemble
 
     do
     {
 
-      PetscCall(VecCopy(x, x_previous_iteration)); // copy approximation solution at iteration k into approximation solution at iteration (k-1)
+      PetscCall(VecCopy(x_block_jacobi[rank_jacobi_block] , x_block_jacobi_previous_iteration));
       PetscCall(subDomainsSolver(ksp, A_block_jacobi_subMat, x_block_jacobi, b_block_jacobi, rank_jacobi_block));
 
       if (rank_jacobi_block == BLOCK_RANK_ZERO)
       {
-        // PetscCallMPI(MPI_Send(send_buffer, vec_local_size, MPIU_SCALAR, (idx_non_current_block * nprocs_per_jacobi_block) + proc_local_rank, TAG_DATA, MPI_COMM_WORLD));
-        PetscCall(VecGetArray(x_block_jacobi[rank_jacobi_block], &temp_buffer));
-        memcpy(send_buffer, temp_buffer, vec_local_size * sizeof(PetscReal));
-        PetscCall(VecRestoreArray(x_block_jacobi[rank_jacobi_block], &temp_buffer));
-        MPI_Start(&send_request);
-        MPI_Wait(&send_request, MPI_STATUS_IGNORE);
 
+        MPI_Test(&send_request, &send_flag, MPI_STATUS_IGNORE);
+        if (send_flag)
+        {
+          PetscCall(VecGetArray(x_block_jacobi[rank_jacobi_block], &temp_buffer));
+          memcpy(send_buffer, temp_buffer, vec_local_size * sizeof(PetscReal));
+          PetscCall(VecRestoreArray(x_block_jacobi[rank_jacobi_block], &temp_buffer));
+          MPI_Start(&send_request);
+        }
 
-
-
-        MPI_Start(&rcv_request);
-        MPI_Wait(&rcv_request, MPI_STATUS_IGNORE);
-        PetscCall(VecGetArray(x_block_jacobi[idx_non_current_block], &temp_buffer));
-        memcpy(temp_buffer, rcv_buffer, vec_local_size * sizeof(PetscReal));
-        PetscCall(VecRestoreArray(x_block_jacobi[idx_non_current_block], &temp_buffer));
+        //MPI_Test(&rcv_request, &rcv_flag, MPI_STATUS_IGNORE);
+        MPI_Iprobe(message_source,TAG_DATA,MPI_COMM_WORLD,&rcv_flag,MPI_STATUS_IGNORE);
+        if (rcv_flag)
+        {
+          MPI_Start(&rcv_request);
+          MPI_Wait(&rcv_request, MPI_STATUS_IGNORE);
+          PetscCall(VecGetArray(x_block_jacobi[idx_non_current_block], &temp_buffer));
+          memcpy(temp_buffer, rcv_buffer, vec_local_size * sizeof(PetscReal));
+          PetscCall(VecRestoreArray(x_block_jacobi[idx_non_current_block], &temp_buffer));
+        }
       }
       else if (rank_jacobi_block == BLOCK_RANK_ONE)
       {
-        
-        MPI_Start(&rcv_request);
-        MPI_Wait(&rcv_request, MPI_STATUS_IGNORE);
-        PetscCall(VecGetArray(x_block_jacobi[idx_non_current_block], &temp_buffer));
-        memcpy(temp_buffer, rcv_buffer, vec_local_size * sizeof(PetscReal));
-        PetscCall(VecRestoreArray(x_block_jacobi[idx_non_current_block], &temp_buffer));
 
+        MPI_Test(&send_request, &send_flag, MPI_STATUS_IGNORE);
+        if (send_flag)
+        {
+          PetscCall(VecGetArray(x_block_jacobi[rank_jacobi_block], &temp_buffer));
+          memcpy(send_buffer, temp_buffer, vec_local_size * sizeof(PetscReal));
+          PetscCall(VecRestoreArray(x_block_jacobi[rank_jacobi_block], &temp_buffer));
+          MPI_Start(&send_request);
+        }
 
-
-
-        // PetscCallMPI(MPI_Send(send_buffer, vec_local_size, MPIU_SCALAR, (idx_non_current_block * nprocs_per_jacobi_block) + proc_local_rank, TAG_DATA, MPI_COMM_WORLD));
-        PetscCall(VecGetArray(x_block_jacobi[rank_jacobi_block], &temp_buffer));
-        memcpy(send_buffer, temp_buffer, vec_local_size * sizeof(PetscReal));
-        PetscCall(VecRestoreArray(x_block_jacobi[rank_jacobi_block], &temp_buffer));
-        MPI_Start(&send_request);
-        MPI_Wait(&send_request, MPI_STATUS_IGNORE);
+        //MPI_Test(&rcv_request, &rcv_flag, MPI_STATUS_IGNORE);
+        MPI_Iprobe(message_source,TAG_DATA,MPI_COMM_WORLD,&rcv_flag,MPI_STATUS_IGNORE);
+        if (rcv_flag)
+        {
+          MPI_Start(&rcv_request);
+          MPI_Wait(&rcv_request, MPI_STATUS_IGNORE);
+          PetscCall(VecGetArray(x_block_jacobi[idx_non_current_block], &temp_buffer));
+          memcpy(temp_buffer, rcv_buffer, vec_local_size * sizeof(PetscReal));
+          PetscCall(VecRestoreArray(x_block_jacobi[idx_non_current_block], &temp_buffer));
+        }
       }
 
-      PetscCall(VecScatterBegin(scatter_jacobi_vec_part_to_merged_vec[rank_jacobi_block], x_block_jacobi[rank_jacobi_block], x, INSERT_VALUES, SCATTER_FORWARD));
-      PetscCall(VecScatterEnd(scatter_jacobi_vec_part_to_merged_vec[rank_jacobi_block], x_block_jacobi[rank_jacobi_block], x, INSERT_VALUES, SCATTER_FORWARD));
-      PetscCall(VecScatterBegin(scatter_jacobi_vec_part_to_merged_vec[idx_non_current_block], x_block_jacobi[idx_non_current_block], x, INSERT_VALUES, SCATTER_FORWARD));
-      PetscCall(VecScatterEnd(scatter_jacobi_vec_part_to_merged_vec[idx_non_current_block], x_block_jacobi[idx_non_current_block], x, INSERT_VALUES, SCATTER_FORWARD));
-
-      PetscCall(VecWAXPY(approximation_residual, -1, x_previous_iteration, x));
+      PetscCall(VecWAXPY(approximation_residual, -1, x_block_jacobi_previous_iteration, x_block_jacobi[rank_jacobi_block]));
       PetscCall(VecNorm(approximation_residual, NORM_2, &approximation_residual_norm2));
       PetscCall(PetscPrintf(MPI_COMM_WORLD, "Approximation residual norm 2 ==== %g \n", approximation_residual_norm2));
 
@@ -529,7 +537,7 @@ int main(int argc, char **argv)
       if (PetscApproximateLTE(approximation_residual_norm2, relative_tolerance))
       {
         reduced_signal = TERMINATE_SIGNAL;
-      }
+      } 
 
       // if (PetscApproximateLTE(approximation_residual_norm2, relative_tolerance))
       // {
@@ -560,6 +568,8 @@ int main(int argc, char **argv)
 
     PetscCall(PetscPrintf(MPI_COMM_WORLD, " Total number of iterations: %d   ====  Final norm 2 %g \n", number_of_iterations, (double)approximation_residual_norm2));
 
+
+    PetscSleep(60 * 30);
     PetscCall(ISDestroy(&is_jacobi_vec_parts));
     for (int i = 0; i < njacobi_blocks; i++)
     {
