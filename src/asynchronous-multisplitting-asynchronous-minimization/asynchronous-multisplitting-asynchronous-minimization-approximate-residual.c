@@ -25,6 +25,10 @@
 
 #define INNER_KSP_PREFIX "inner_"
 #define INNER_PC_PREFIX "inner_"
+
+#define OUTER_KSP_PREFIX "outer_"
+#define OUTER_PC_PREFIX "outer_"
+
 // Generate one block of jacobi blocks
 
 #define NO_SIGNAL -2
@@ -41,6 +45,8 @@
 #define BLOCK_RANK_ZERO 0
 #define BLOCK_RANK_ONE 1
 #define BLOCK_RANK_TWO 2
+
+#define INNER_LOOP_LIMIT 10
 
 PetscErrorCode loadMatrix(Mat *A_block_jacobi, PetscInt n_grid_lines, PetscInt n_grid_columns, PetscInt rank_jacobi_block, PetscInt njacobi_blocks)
 {
@@ -171,9 +177,11 @@ PetscErrorCode initialiazeKSPMinimizer(MPI_Comm comm_jacobi_block, KSP *ksp, Mat
     PetscFunctionBeginUser;
     PetscCall(KSPCreate(comm_jacobi_block, ksp));
     PetscCall(KSPSetOperators(*ksp, R, R));
-    PetscCall(KSPSetType(*ksp, KSPGMRES));
+    // PetscCall(KSPSetType(*ksp, KSPGMRES));
+    // PetscCall(KSPSetFromOptions(*ksp));
+    // PetscCall(KSPSetTolerances(*ksp, 0.0000000001, PETSC_DETERMINE, PETSC_DETERMINE, PETSC_DETERMINE));
+    PetscCall(KSPSetOptionsPrefix(*ksp, OUTER_KSP_PREFIX));
     PetscCall(KSPSetFromOptions(*ksp));
-    PetscCall(KSPSetTolerances(*ksp, 0.0000000001, PETSC_DETERMINE, PETSC_DETERMINE, PETSC_DETERMINE));
     PetscCall(KSPSetUp(*ksp));
 
     PetscFunctionReturn(PETSC_SUCCESS);
@@ -200,8 +208,10 @@ PetscErrorCode minimizerSolver(MPI_Comm comm_jacobi_block, Vec x_minimized, Mat 
 
     PC ksp_minimizer_preconditionnner = NULL;
     PetscCall(PCCreate(comm_jacobi_block, &ksp_minimizer_preconditionnner));
-    PetscCall(PCSetType(ksp_minimizer_preconditionnner, PCNONE));
     PetscCall(PCSetOperators(ksp_minimizer_preconditionnner, R_transpose_R, R_transpose_R));
+    // PetscCall(PCSetType(ksp_minimizer_preconditionnner, PCNONE));
+    PetscCall(PCSetOptionsPrefix(ksp_minimizer_preconditionnner, OUTER_PC_PREFIX));
+    PetscCall(PCSetFromOptions(ksp_minimizer_preconditionnner));
     PetscCall(PCSetUp(ksp_minimizer_preconditionnner));
     PetscCall(KSPSetPC(ksp_minimizer, ksp_minimizer_preconditionnner));
 
@@ -557,7 +567,8 @@ int main(int argc, char **argv)
         // Minimization variables
         Mat R = NULL;
         Mat S = NULL;
-        int n_vectors_inserted;
+        PetscInt n_vectors_inserted;
+        PetscInt n_loop_iterations;
         Vec x_minimized = NULL;
         Vec x_minimized_prev_iteration = NULL;
 
@@ -600,7 +611,7 @@ int main(int argc, char **argv)
         {
 
             n_vectors_inserted = 0;
-            PetscCall(VecCopy(x_minimized, x_minimized_prev_iteration)); // todo: ça sert a quoi ?
+            n_loop_iterations = 0;
             while (n_vectors_inserted < s)
             {
 
@@ -655,7 +666,6 @@ int main(int argc, char **argv)
 
                 if (inner_solver_iterations > 0) // todo: faire ceci condamne le programme a être un programme synchrone
                 {
-
                     PetscCall(VecScatterBegin(scatter_jacobi_vec_part_to_merged_vec[rank_jacobi_block], x_block_jacobi[rank_jacobi_block], x, INSERT_VALUES, SCATTER_FORWARD));
                     PetscCall(VecScatterEnd(scatter_jacobi_vec_part_to_merged_vec[rank_jacobi_block], x_block_jacobi[rank_jacobi_block], x, INSERT_VALUES, SCATTER_FORWARD));
 
@@ -664,27 +674,47 @@ int main(int argc, char **argv)
 
                     PetscCall(VecGetValues(x, x_local_size, vec_local_idx, vector_to_insert_into_S));
                     PetscCall(MatSetValuesLocal(S, x_local_size, vec_local_idx, ONE, &n_vectors_inserted, vector_to_insert_into_S, INSERT_VALUES));
-
                     n_vectors_inserted++;
+                }
+
+                n_loop_iterations++;
+                if (n_loop_iterations > INNER_LOOP_LIMIT && send_signal == CONVERGENCE_SIGNAL)
+                {
+                    //printf("UN BREAK ICI !!!!!!!!!!!!!  block %d\n", rank_jacobi_block);
+                    break;
                 }
             }
 
-            PetscCall(MatAssemblyBegin(S, MAT_FINAL_ASSEMBLY));
-            PetscCall(MatAssemblyEnd(S, MAT_FINAL_ASSEMBLY));
+            if (n_vectors_inserted >= s)
+            {
+                PetscCall(MatAssemblyBegin(S, MAT_FINAL_ASSEMBLY));
+                PetscCall(MatAssemblyEnd(S, MAT_FINAL_ASSEMBLY));
 
-            PetscCall(MatMatMult(A_block_jacobi, S, MAT_INITIAL_MATRIX, PETSC_DETERMINE, &R););
-            PetscCall(minimizerSolver(comm_jacobi_block, x_minimized, R, S, b_block_jacobi, rank_jacobi_block, s));
+                PetscCall(MatMatMult(A_block_jacobi, S, MAT_INITIAL_MATRIX, PETSC_DETERMINE, &R););
+                PetscCall(minimizerSolver(comm_jacobi_block, x_minimized, R, S, b_block_jacobi, rank_jacobi_block, s));
 
-            PetscCall(VecWAXPY(approximate_residual, -1, x_minimized_prev_iteration, x_minimized));
+                PetscCall(VecWAXPY(approximate_residual, -1, x_minimized_prev_iteration, x_minimized));
 
-            // PetscCall(computeResidualNorm2(A_block_jacobi, x_minimized, b_block_jacobi, &global_residual_norm2, rank_jacobi_block, proc_local_rank));
-            PetscCall(VecNorm(approximate_residual, NORM_2, &approximate_residual_norm2));
-            PetscCall(PetscPrintf(MPI_COMM_WORLD, "Approximate residual Norm 2 ==== %g \n", approximate_residual_norm2));
+                // PetscCall(computeResidualNorm2(A_block_jacobi, x_minimized, b_block_jacobi, &global_residual_norm2, rank_jacobi_block, proc_local_rank));
+                PetscCall(VecNorm(approximate_residual, NORM_2, &approximate_residual_norm2));
+                PetscCall(PetscPrintf(MPI_COMM_WORLD, "Approximate residual Norm 2 ==== %g \n", approximate_residual_norm2));
 
-            PetscCall(VecScatterBegin(scatter_jacobi_vec_part_to_merged_vec[idx_non_current_block], x_minimized, x_block_jacobi[idx_non_current_block], INSERT_VALUES, SCATTER_REVERSE));
-            PetscCall(VecScatterEnd(scatter_jacobi_vec_part_to_merged_vec[idx_non_current_block], x_minimized, x_block_jacobi[idx_non_current_block], INSERT_VALUES, SCATTER_REVERSE));
+                PetscCall(VecScatterBegin(scatter_jacobi_vec_part_to_merged_vec[idx_non_current_block], x_minimized, x_block_jacobi[idx_non_current_block], INSERT_VALUES, SCATTER_REVERSE));
+                PetscCall(VecScatterEnd(scatter_jacobi_vec_part_to_merged_vec[idx_non_current_block], x_minimized, x_block_jacobi[idx_non_current_block], INSERT_VALUES, SCATTER_REVERSE));
 
-            // todo: est ce qu'il ne serait pas judicieux de mettre egalement à jour la partie [current_block]
+                PetscCall(VecScatterBegin(scatter_jacobi_vec_part_to_merged_vec[rank_jacobi_block], x_minimized, x_block_jacobi[rank_jacobi_block], INSERT_VALUES, SCATTER_REVERSE));
+                PetscCall(VecScatterEnd(scatter_jacobi_vec_part_to_merged_vec[rank_jacobi_block], x_minimized, x_block_jacobi[rank_jacobi_block], INSERT_VALUES, SCATTER_REVERSE));
+                // todo: est ce qu'il ne serait pas judicieux de mettre egalement à jour la partie [current_block]
+
+                PetscCall(VecCopy(x_minimized, x_minimized_prev_iteration)); // todo: ça sert a quoi ?
+
+
+                //todo: est ce qu'il ne faudrait pas envoyer la partie du block à l'autre ?
+            }
+            else
+            {
+                PetscCall(PetscPrintf(MPI_COMM_WORLD, "Approximate residual Norm 2 (no new data) ==== %g \n", approximate_residual_norm2));
+            }
 
             if (PetscApproximateLTE(approximate_residual_norm2, relative_tolerance))
             {
@@ -843,7 +873,3 @@ int main(int argc, char **argv)
 
     return 0;
 }
-
-
-
-
