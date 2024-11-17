@@ -309,6 +309,9 @@ int main(int argc, char **argv)
     MPI_Status status;
     PetscBool work_done = PETSC_FALSE;
     PetscInt message;
+    MPI_Request rcv_request = MPI_REQUEST_NULL;
+    
+    PetscCallMPI(MPI_Recv_init(&rcv_signal,ONE,MPIU_INT,MPI_ANY_SOURCE,MPI_ANY_TAG,MPI_COMM_WORLD,&rcv_request));
 
     while (!work_done)
     {
@@ -316,7 +319,9 @@ int main(int argc, char **argv)
       PetscCallMPI(MPI_Iprobe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &message, &status));
       if (message)
       {
-        PetscCallMPI(MPI_Recv(&rcv_signal, ONE, MPIU_INT, status.MPI_SOURCE, status.MPI_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE));
+        //PetscCallMPI(MPI_Recv(&rcv_signal, ONE, MPIU_INT, status.MPI_SOURCE, status.MPI_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE));
+        PetscCallMPI(MPI_Start(&rcv_request));
+        PetscCallMPI(MPI_Wait(&rcv_request, &status));
         if (status.MPI_TAG == TAG_STATUS)
         {
           // printf("message received from process %d \n", status.MPI_SOURCE);
@@ -326,21 +331,31 @@ int main(int argc, char **argv)
       work_done = (PetscBool)(signals[ZERO] == CONVERGENCE_SIGNAL && signals[ONE] == CONVERGENCE_SIGNAL);
     }
 
+   // PetscCall(MPI_Test(&rcv_request, ))
+    PetscCallMPI(MPI_Request_free(&rcv_request));
+
     send_signal = TERMINATE_SIGNAL;
     MPI_Request *send_requests;
     PetscMalloc1((size_t)nprocs, &send_requests);
-
     for (int proc_rank = ZERO; proc_rank < nprocs; proc_rank++)
     {
       PetscCallMPI(MPI_Isend(&message, ONE, MPIU_INT, proc_rank, TAG_TERMINATE, MPI_COMM_WORLD, &send_requests[proc_rank]));
     }
-
     PetscCallMPI(MPI_Waitall(nprocs, send_requests, MPI_STATUSES_IGNORE));
     PetscCall(PetscFree(send_requests));
     // PetscCall(PetscPrintf(comm_jacobi_block, "Termination signal send to all other processes !\n"));
-    //  PetscPrintf(comm_jacobi_block, " Sleeping state ... block number [%d]\n", rank_jacobi_block);
-    //  PetscSleep(60 * 10);
   }
+
+
+
+
+
+
+
+
+
+
+
 
   // Workers nodes
   if (rank_jacobi_block == BLOCK_RANK_ZERO || rank_jacobi_block == BLOCK_RANK_ONE)
@@ -577,17 +592,12 @@ int main(int argc, char **argv)
 
     } while (reduced_signal != TERMINATE_SIGNAL);
 
+
+    PetscCall(MPI_Cancel(&request));
+    PetscCallMPI(MPI_Test(&send_request, &send_flag, MPI_STATUS_IGNORE));
+    PetscCallMPI(MPI_Test(&rcv_request, &rcv_flag, MPI_STATUS_IGNORE));
+
     PetscCallMPI(MPI_Barrier(comm_worker_node));
-
-    ////////////////
-    MPI_Test(&send_request, &send_flag, MPI_STATUS_IGNORE);
-    if (!send_flag)
-      PetscCallMPI(MPI_Cancel(&send_request));
-
-    MPI_Test(&rcv_request, &rcv_flag, MPI_STATUS_IGNORE);
-    if (!rcv_flag)
-      PetscCallMPI(MPI_Cancel(&rcv_request));
-
     if (rank_jacobi_block == BLOCK_RANK_ZERO)
     {
       PetscCall(VecGetArray(x_block_jacobi[rank_jacobi_block], &temp_buffer));
@@ -680,6 +690,8 @@ int main(int argc, char **argv)
     PetscCallMPI(MPI_Iprobe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &message, &status));
     if (message)
     {
+
+     //printf("MESSAGE HERE ON %d PROCESSS\n", proc_global_rank);
       if (status.MPI_TAG == TAG_DATA)
       {
         data_type = MPIU_SCALAR;
@@ -699,6 +711,8 @@ int main(int argc, char **argv)
         PetscCallMPI(MPI_Recv(buffer, count, data_type, status.MPI_SOURCE, status.MPI_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE));
         PetscCall(PetscFree(buffer));
       }
+
+
     }
   } while (message);
 
