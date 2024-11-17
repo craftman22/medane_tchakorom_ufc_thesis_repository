@@ -103,7 +103,7 @@ print:
 
 
 # List the source directories you want to compile from
-SRC_DIRS := src/asynchronous-multisplitting
+SRC_DIRS := src/asynchronous-multisplitting src/asynchronous-multisplitting-asynchronous-minimization
 
 # Define the directory where binaries will be stored
 BIN_DIR := bin
