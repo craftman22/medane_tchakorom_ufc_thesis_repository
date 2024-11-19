@@ -605,6 +605,9 @@ int main(int argc, char **argv)
         Vec approximate_residual = NULL;
         PetscCall(VecDuplicate(x_minimized, &approximate_residual));
 
+
+        Vec local_residual = NULL;
+        VecDuplicate(b_block_jacobi[rank_jacobi_block], &local_residual);
         PetscCallMPI(MPI_Barrier(comm_worker_node));
 
         do
@@ -788,8 +791,7 @@ int main(int argc, char **argv)
         PetscCall(VecScatterBegin(scatter_jacobi_vec_part_to_merged_vec[idx_non_current_block], x_block_jacobi[idx_non_current_block], x, INSERT_VALUES, SCATTER_FORWARD));
         PetscCall(VecScatterEnd(scatter_jacobi_vec_part_to_merged_vec[idx_non_current_block], x_block_jacobi[idx_non_current_block], x, INSERT_VALUES, SCATTER_FORWARD));
 
-        Vec local_residual = NULL;
-        VecDuplicate(b_block_jacobi[rank_jacobi_block], &local_residual);
+
         PetscReal local_residual_norm2;
         PetscReal global_residual_norm2;
         PetscCall(MatResidual(A_block_jacobi, b_block_jacobi[rank_jacobi_block], x, local_residual));
