@@ -535,7 +535,7 @@ int main(int argc, char **argv)
     PetscCall(VecSetType(x_minimized, VECMPI));
     PetscCall(VecSetSizes(x_minimized, PETSC_DECIDE, n_grid_points));
     PetscCall(VecSetFromOptions(x_minimized));
-    PetscCall(VecSet(x, ZERO));
+    PetscCall(VecSet(x_minimized, ZERO));
     PetscCall(VecSetUp(x_minimized));
 
     PetscCall(VecDuplicate(x_minimized, &x_minimized_prev_iteration));
