@@ -396,7 +396,8 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
-
+bin
+bin/**
 .vscode/
 .DS_Store
 synchronous-multisplitting-norm2
