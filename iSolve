@@ -174,7 +174,7 @@ if [ "$algorithm_flag" = "SM" ]; then
 fi
 
 if [ "$algorithm_flag" = "SMSM" ]; then
-    binary=${SMSM_BINARY_DIRECT_RESIDUAL}
+    binary=${SMSM_BINARY_APPROXIMATE_RESIDUAL}
     program_name=${SMSM_PROGRAM_NAME}
 fi
 
@@ -223,7 +223,7 @@ if [ -x "$(command -v $binary)" ]; then
     fi
 
     if [ "$algorithm_flag" = "SMSM" ]; then
-        command="${PETSC_MPI_EXEC} -n ${np_flag} ${binary} -m ${m_flag} -n ${n_flag} -s ${s_flag} -npb ${npb_flag} -rtol ${relative_tolerance_flag}  -${DEFAULT_INNER_KSP_PREFIX}ksp_type ${inner_ksp_flag} -${DEFAULT_INNER_KSP_PREFIX}ksp_rtol ${inner_rtol_flag} -${DEFAULT_INNER_KSP_PREFIX}ksp_max_it ${inner_max_iter_flag} -${DEFAULT_INNER_KSP_PREFIX}pc_type ${inner_pc_type_flag} -${DEFAULT_OUTER_KSP_PREFIX}ksp-type ${outer_ksp_flag} -${DEFAULT_OUTER_KSP_PREFIX}ksp_rtol ${outer_rtol_flag} -${DEFAULT_OUTER_KSP_PREFIX}ksp_max_it ${outer_max_iter_flag} -${DEFAULT_OUTER_KSP_PREFIX}pc_type ${outer_pc_type_flag} ${other_petsc_options_flag}"
+        command="${PETSC_MPI_EXEC} -n ${np_flag} ${binary} -m ${m_flag} -n ${n_flag} -s ${s_flag} -npb ${npb_flag} -rtol ${relative_tolerance_flag}  -${DEFAULT_INNER_KSP_PREFIX}ksp_type ${inner_ksp_flag} -${DEFAULT_INNER_KSP_PREFIX}ksp_rtol ${inner_rtol_flag} -${DEFAULT_INNER_KSP_PREFIX}ksp_max_it ${inner_max_iter_flag} -${DEFAULT_INNER_KSP_PREFIX}pc_type ${inner_pc_type_flag} -${DEFAULT_OUTER_KSP_PREFIX}ksp_type ${outer_ksp_flag} -${DEFAULT_OUTER_KSP_PREFIX}ksp_rtol ${outer_rtol_flag} -${DEFAULT_OUTER_KSP_PREFIX}ksp_max_it ${outer_max_iter_flag} -${DEFAULT_OUTER_KSP_PREFIX}pc_type ${outer_pc_type_flag} ${other_petsc_options_flag}"
         echo -e "RUNNING COMMAND: ${command} \n"
         eval "${command}"
     fi
@@ -237,7 +237,7 @@ if [ -x "$(command -v $binary)" ]; then
     fi
 
     if [ "$algorithm_flag" = "AMAM" ]; then
-        command="${PETSC_MPI_EXEC} -n ${np_flag} ${binary} -m ${m_flag} -n ${n_flag} -s ${s_flag} -npb ${npb_flag} -rtol ${relative_tolerance_flag}  -${DEFAULT_INNER_KSP_PREFIX}ksp_type ${inner_ksp_flag} -${DEFAULT_INNER_KSP_PREFIX}ksp_rtol ${inner_rtol_flag} -${DEFAULT_INNER_KSP_PREFIX}ksp_max_it ${inner_max_iter_flag} -${DEFAULT_INNER_KSP_PREFIX}pc_type ${inner_pc_type_flag} -${DEFAULT_OUTER_KSP_PREFIX}ksp-type ${outer_ksp_flag} -${DEFAULT_OUTER_KSP_PREFIX}ksp_rtol ${outer_rtol_flag} -${DEFAULT_OUTER_KSP_PREFIX}ksp_max_it ${outer_max_iter_flag} -${DEFAULT_OUTER_KSP_PREFIX}pc_type ${outer_pc_type_flag} ${other_petsc_options_flag}"
+        command="${PETSC_MPI_EXEC} -n ${np_flag} ${binary} -m ${m_flag} -n ${n_flag} -s ${s_flag} -npb ${npb_flag} -rtol ${relative_tolerance_flag}  -${DEFAULT_INNER_KSP_PREFIX}ksp_type ${inner_ksp_flag} -${DEFAULT_INNER_KSP_PREFIX}ksp_rtol ${inner_rtol_flag} -${DEFAULT_INNER_KSP_PREFIX}ksp_max_it ${inner_max_iter_flag} -${DEFAULT_INNER_KSP_PREFIX}pc_type ${inner_pc_type_flag} -${DEFAULT_OUTER_KSP_PREFIX}ksp_type ${outer_ksp_flag} -${DEFAULT_OUTER_KSP_PREFIX}ksp_rtol ${outer_rtol_flag} -${DEFAULT_OUTER_KSP_PREFIX}ksp_max_it ${outer_max_iter_flag} -${DEFAULT_OUTER_KSP_PREFIX}pc_type ${outer_pc_type_flag} ${other_petsc_options_flag}"
         echo -e "RUNNING COMMAND: ${command} \n"
         eval "${command}"
     fi

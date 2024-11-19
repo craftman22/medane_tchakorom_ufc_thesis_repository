@@ -2,7 +2,7 @@
 DEFAULT_FILENAME="default_run_variables"
 
 # Number of processes
-DEFAULT_NP=2
+DEFAULT_NP=3
 
 # Number of processes per block
 DEFAULT_NPB=1
@@ -15,14 +15,14 @@ DEFAULT_N=100
 DEFAULT_S=2
 
 # RELATIVE ERROR FOR OUTER ITERATIONS
-DEFAULT_RELATIVE_TOLERANCE=1e-10
+DEFAULT_RELATIVE_TOLERANCE=1e-7
 
 # ALGORITHM TO USE
 # SM --> Synchronous Multisplitting with direct residual computing (r = Ax - b)
 # AM --> Asynchronous Multisplitting with with approximate residual computing (r = Xk - Xk-1)
 # SMSM --> Synchronous Multisplitting and Synchronous Minimization with approximate residual computing (r = Xk - Xk-1)
 # AMAM --> Asynchronous Multisplitting and Asynchronous Minimization with approximate residual computing (r = Xk - Xk-1)
-DEFAULT_ALGORITHM="SM"
+DEFAULT_ALGORITHM="SMSM"
 
 # Solver to use for inner iterations (Multisplitting)
 DEFAULT_INNER_SOLVER="gmres"
