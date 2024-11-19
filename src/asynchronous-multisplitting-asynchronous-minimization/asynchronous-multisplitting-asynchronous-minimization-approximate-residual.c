@@ -690,7 +690,7 @@ int main(int argc, char **argv)
                 PetscCall(MatAssemblyBegin(S, MAT_FINAL_ASSEMBLY));
                 PetscCall(MatAssemblyEnd(S, MAT_FINAL_ASSEMBLY));
 
-                PetscCall(MatMatMult(A_block_jacobi, S, MAT_INITIAL_MATRIX, PETSC_DETERMINE, &R););
+                PetscCall(MatMatMult(A_block_jacobi, S, MAT_REUSE_MATRIX, PETSC_DETERMINE, &R););
                 PetscCall(minimizerSolver(comm_jacobi_block, x_minimized, R, S, b_block_jacobi, rank_jacobi_block, s));
 
                 PetscCall(VecWAXPY(approximate_residual, -1, x_minimized_prev_iteration, x_minimized));
