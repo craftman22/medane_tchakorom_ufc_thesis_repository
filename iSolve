@@ -174,7 +174,7 @@ if [ "$algorithm_flag" = "SM" ]; then
 fi
 
 if [ "$algorithm_flag" = "SMSM" ]; then
-    binary=${SMSM_BINARY_APPROXIMATE_RESIDUAL}
+    binary=${SMSM_BINARY_DIRECT_RESIDUAL}
     program_name=${SMSM_PROGRAM_NAME}
 fi
 
