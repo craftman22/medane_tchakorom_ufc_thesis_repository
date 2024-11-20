@@ -513,23 +513,23 @@ int main(int argc, char **argv)
         PetscCall(PCSetUp(ksp_preconditionnner));
         PetscCall(KSPSetPC(ksp, ksp_preconditionnner));
 
-        PetscReal ksp_relative_tolerance;
-        PetscInt ksp_max_iterations;
-        KSPType ksp_type;
-        PCType ksp_pc_type;
-        PetscCall(KSPGetTolerances(ksp, &ksp_relative_tolerance, NULL, NULL, &ksp_max_iterations));
-        PetscCall(KSPGetType(ksp, &ksp_type));
-        PetscCall((KSPGetPC(ksp, &ksp_preconditionnner)));
-        PetscCall(PCGetType(ksp_preconditionnner, &ksp_pc_type));
-        PetscCall(KSPGetType(ksp, &ksp_type));
+        // PetscReal ksp_relative_tolerance;
+        // PetscInt ksp_max_iterations;
+        // KSPType ksp_type;
+        // PCType ksp_pc_type;
+        // PetscCall(KSPGetTolerances(ksp, &ksp_relative_tolerance, NULL, NULL, &ksp_max_iterations));
+        // PetscCall(KSPGetType(ksp, &ksp_type));
+        // PetscCall((KSPGetPC(ksp, &ksp_preconditionnner)));
+        // PetscCall(PCGetType(ksp_preconditionnner, &ksp_pc_type));
+        // PetscCall(KSPGetType(ksp, &ksp_type));
 
-        PetscCall(PetscPrintf(MPI_COMM_WORLD, "KSP type: %s\n", ksp_type));
-        PetscCall(PetscPrintf(MPI_COMM_WORLD, "KSP preconditionner: %s \n", ksp_pc_type));
-        PetscCall(PetscPrintf(MPI_COMM_WORLD, "KSP relative tolerance: %g\n", ksp_relative_tolerance));
-        PetscCall(PetscPrintf(MPI_COMM_WORLD, "KSP max iterations: %d\n", ksp_max_iterations));
-        PetscCall(PetscPrintf(MPI_COMM_WORLD, "Initial value of approximation solution norm 2 (hardwired)  =  %g\n", approximate_residual_norm2));
-        PetscCall(PetscPrintf(MPI_COMM_WORLD, "*******************************************\n"));
-        PetscCall(PetscPrintf(MPI_COMM_WORLD, "*******************************************\n\n"));
+        // PetscCall(PetscPrintf(MPI_COMM_WORLD, "KSP type: %s\n", ksp_type));
+        // PetscCall(PetscPrintf(MPI_COMM_WORLD, "KSP preconditionner: %s \n", ksp_pc_type));
+        // PetscCall(PetscPrintf(MPI_COMM_WORLD, "KSP relative tolerance: %g\n", ksp_relative_tolerance));
+        // PetscCall(PetscPrintf(MPI_COMM_WORLD, "KSP max iterations: %d\n", ksp_max_iterations));
+        // PetscCall(PetscPrintf(MPI_COMM_WORLD, "Initial value of approximation solution norm 2 (hardwired)  =  %g\n", approximate_residual_norm2));
+        // PetscCall(PetscPrintf(MPI_COMM_WORLD, "*******************************************\n"));
+        // PetscCall(PetscPrintf(MPI_COMM_WORLD, "*******************************************\n\n"));
 
         PetscInt vec_local_size = 0;
         PetscCall(VecGetLocalSize(x_block_jacobi[rank_jacobi_block], &vec_local_size));
