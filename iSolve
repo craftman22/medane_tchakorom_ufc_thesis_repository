@@ -212,6 +212,31 @@ fi
 echo -e "\
 \t Other petsc options : ${other_petsc_options_flag} \n"
 
+
+# If asynchronous algorithm, check if number of processes is odd
+# Check also if number of process per jacobi block is equal to (number of process / 2) or ((number of process - 1) / 2) 
+if [[ "$algorithm_flag" = "AM"|| "$algorithm_flag" = "AMAM" ]]; then
+
+    if (( np_flag % 2 == 0 )); then
+        echo -e "Asynchronous algorithm: Number of process nead to be odd. Current number is [${np_flag}]"
+        echo -e "...Exit\n"
+        exit 0
+    fi
+fi
+
+
+
+result_n=$((np_flag / npb_flag))
+result_n_minus_1=$(((np_flag - 1) / npb_flag))
+if [[ $result_n -ne 2 && $result_n_minus_1 -ne 2 ]]; then
+    echo -e "Total number of processes and number of processes per block are not matching"
+    echo -e "...Exit\n"
+    exit 0
+fi
+
+
+
+
 if [ -x "$(command -v $binary)" ]; then
 
     if [ "$algorithm_flag" = "SM" ]; then
