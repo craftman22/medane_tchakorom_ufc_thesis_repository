@@ -638,7 +638,7 @@ int main(int argc, char **argv)
                     if (rcv_flag)
                     {
                         MPI_Start(&rcv_request);
-                        MPI_Wait(&rcv_request, MPI_STATUS_IGNORE);
+                        PetscCallMPI(MPI_Wait(&rcv_request, MPI_STATUS_IGNORE));
                         PetscCall(VecGetArray(x_block_jacobi[idx_non_current_block], &temp_buffer));
                         memcpy(temp_buffer, rcv_buffer, vec_local_size * sizeof(PetscReal));
                         PetscCall(VecRestoreArray(x_block_jacobi[idx_non_current_block], &temp_buffer));
@@ -661,7 +661,7 @@ int main(int argc, char **argv)
                     if (rcv_flag)
                     {
                         MPI_Start(&rcv_request);
-                        MPI_Wait(&rcv_request, MPI_STATUS_IGNORE); // todo: est ce que ce mpi_wait fonctionnerait si l'autre a déjà quitté la boucle
+                        PetscCallMPI(MPI_Wait(&rcv_request, MPI_STATUS_IGNORE) );
                         PetscCall(VecGetArray(x_block_jacobi[idx_non_current_block], &temp_buffer));
                         memcpy(temp_buffer, rcv_buffer, vec_local_size * sizeof(PetscReal));
                         PetscCall(VecRestoreArray(x_block_jacobi[idx_non_current_block], &temp_buffer));
@@ -745,7 +745,7 @@ int main(int argc, char **argv)
 
             // The maximum value of signal is choosen, NO_SIGNAL < TERMINATE SIGNAL
             reduced_signal = NO_SIGNAL;
-            MPI_Allreduce(&rcv_signal, &reduced_signal, ONE, MPIU_INT, MPI_MAX, comm_jacobi_block);
+            PetscCallMPI(MPI_Allreduce(&rcv_signal, &reduced_signal, ONE, MPIU_INT, MPI_MAX, comm_jacobi_block));
 
             number_of_iterations = number_of_iterations + 1;
 
