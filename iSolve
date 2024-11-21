@@ -10,18 +10,28 @@ source "./config/default_run_variables"
 
 # Set file path for each algorithm binary
 SM_BINARY_DIRECT_RESIDUAL="./bin/synchronous-multisplitting-direct-residual-computation"
-SM_BINARY_APPROXIMATE_RESIDUAL="./bin/synchronous-multisplitting-approximate-residual"
-SM_PROGRAM_NAME="Synchronous Multisplitting"
+SM_DIRECT_RESIDUAL_PROGRAM_NAME="Synchronous Multisplitting (Direct Residual)"
+
+
 
 SMSM_BINARY_DIRECT_RESIDUAL="./bin/synchronous-multisplitting-synchronous-minimization-direct-residual"
+SMSM_DIRECT_RESIDUAL_PROGRAM_NAME="Synchronous Multisplitting & Synchronous Minimization (Direct Residual)"
+
+
+
+SM_BINARY_APPROXIMATE_RESIDUAL="./bin/synchronous-multisplitting-approximate-residual"
+SM_DIRECT_RESIDUAL_APPROXIMATE_RESIDUAL_PROGRAM_NAME="Synchronous Multisplitting & Synchronous Minimization (Approximate Residual)"
+
+
 SMSM_BINARY_APPROXIMATE_RESIDUAL="./bin/synchronous-multisplitting-synchronous-minimization-approximate-residual"
-SMSM_PROGRAM_NAME="Synchronous Multisplitting & Synchronous Minimization"
+SMSM_APPROXIMATE_RESIDUAL_PROGRAM_NAME="Synchronous Multisplitting & Synchronous Minimization (Approximate Residual)"
+
 
 AM_BINARY_APPROXIMATE_RESIDUAL="./bin/asynchronous-multisplitting-approximate-residual"
-AM_PROGRAM_NAME="Asynchronous Multisplitting"
+AM_APPROXIMATE_RESIDUAL_PROGRAM_NAME="Asynchronous Multisplitting (Approximate Residual)"
 
 AMAM_BINARY_APPROXIMATE_RESIDUAL="./bin/asynchronous-multisplitting-asynchronous-minimization-approximate-residual"
-AMAM_PROGRAM_NAME="Aynchronous Multisplitting & Aynchronous Minimization"
+AMAM_APPROXIMATE_RESIDUAL_PROGRAM_NAME="Aynchronous Multisplitting & Aynchronous Minimization (Approximate residual)"
 
 # Set file path for petscmpiexec runner
 PETSC_MPI_EXEC="$PETSC_DIR/lib/petsc/bin/petscmpiexec"
@@ -168,24 +178,34 @@ fi
 
 program_name=
 binary=
-if [ "$algorithm_flag" = "SM" ]; then
+if [ "$algorithm_flag" = "SM_DirRes" ]; then
     binary=$SM_BINARY_DIRECT_RESIDUAL
-    program_name=${SM_PROGRAM_NAME}
+    program_name=${SM_DIRECT_RESIDUAL_PROGRAM_NAME}
 fi
 
-if [ "$algorithm_flag" = "SMSM" ]; then
+if [ "$algorithm_flag" = "SM_AppRes" ]; then
+    binary=$SM_BINARY_APPROXIMATE_RESIDUAL
+    program_name=${SM_DIRECT_RESIDUAL_APPROXIMATE_RESIDUAL_PROGRAM_NAME}
+fi
+
+if [ "$algorithm_flag" = "SMSM_DirRes" ]; then
     binary=${SMSM_BINARY_DIRECT_RESIDUAL}
-    program_name=${SMSM_PROGRAM_NAME}
+    program_name=${SM_DIRECT_RESIDUAL_APPROXIMATE_RESIDUAL_PROGRAM_NAME}
 fi
 
-if [ "$algorithm_flag" = "AM" ]; then
+if [ "$algorithm_flag" = "SMSM_AppRes" ]; then
+    binary=${SMSM_BINARY_APPROXIMATE_RESIDUAL}
+    program_name=${SMSM_APPROXIMATE_RESIDUAL_PROGRAM_NAME}
+fi
+
+if [ "$algorithm_flag" = "AM_AppRes" ]; then
     binary=$AM_BINARY_APPROXIMATE_RESIDUAL
-    program_name=${AM_PROGRAM_NAME}
+    program_name=${AM_APPROXIMATE_RESIDUAL_PROGRAM_NAME}
 fi
 
-if [ "$algorithm_flag" = "AMAM" ]; then
+if [ "$algorithm_flag" = "AMAM_AppRes" ]; then
     binary=${AMAM_BINARY_APPROXIMATE_RESIDUAL}
-    program_name=${AMAM_PROGRAM_NAME}
+    program_name=${AMAM_APPROXIMATE_RESIDUAL_PROGRAM_NAME}
 fi
 
 echo -e "Solving 2D Poisson Equation with options \n\
@@ -215,7 +235,7 @@ echo -e "\
 
 # If asynchronous algorithm, check if number of processes is odd
 # Check also if number of process per jacobi block is equal to (number of process / 2) or ((number of process - 1) / 2) 
-if [[ "$algorithm_flag" = "AM"|| "$algorithm_flag" = "AMAM" ]]; then
+if [[ "$algorithm_flag" = "AM_AppRes"|| "$algorithm_flag" = "AMAM_AppRes" ]]; then
 
     if (( np_flag % 2 == 0 )); then
         echo -e "Asynchronous algorithm: Number of process nead to be odd. Current number is [${np_flag}]"
@@ -239,7 +259,7 @@ fi
 
 if [ -x "$(command -v $binary)" ]; then
 
-    if [ "$algorithm_flag" = "SM" ]; then
+    if [ "$algorithm_flag" = "SM_DirRes" ]; then
 
         command="${PETSC_MPI_EXEC} -n ${np_flag} ${binary} -m ${m_flag} -n ${n_flag} -s ${s_flag} -npb ${npb_flag} -rtol ${relative_tolerance_flag} -${DEFAULT_INNER_KSP_PREFIX}ksp_type ${inner_ksp_flag} -${DEFAULT_INNER_KSP_PREFIX}ksp_rtol ${inner_rtol_flag} -${DEFAULT_INNER_KSP_PREFIX}ksp_max_it ${inner_max_iter_flag} -${DEFAULT_INNER_KSP_PREFIX}pc_type ${inner_pc_type_flag} ${other_petsc_options_flag}"
         echo -e "RUNNING COMMAND: ${command} \n"
@@ -247,13 +267,33 @@ if [ -x "$(command -v $binary)" ]; then
 
     fi
 
-    if [ "$algorithm_flag" = "SMSM" ]; then
+    if [ "$algorithm_flag" = "SM_AppRes" ]; then
+
+        command="${PETSC_MPI_EXEC} -n ${np_flag} ${binary} -m ${m_flag} -n ${n_flag} -s ${s_flag} -npb ${npb_flag} -rtol ${relative_tolerance_flag} -${DEFAULT_INNER_KSP_PREFIX}ksp_type ${inner_ksp_flag} -${DEFAULT_INNER_KSP_PREFIX}ksp_rtol ${inner_rtol_flag} -${DEFAULT_INNER_KSP_PREFIX}ksp_max_it ${inner_max_iter_flag} -${DEFAULT_INNER_KSP_PREFIX}pc_type ${inner_pc_type_flag} ${other_petsc_options_flag}"
+        echo -e "RUNNING COMMAND: ${command} \n"
+        eval "${command}"
+
+    fi
+
+
+
+    if [ "$algorithm_flag" = "SMSM_DirRes" ]; then
         command="${PETSC_MPI_EXEC} -n ${np_flag} ${binary} -m ${m_flag} -n ${n_flag} -s ${s_flag} -npb ${npb_flag} -rtol ${relative_tolerance_flag}  -${DEFAULT_INNER_KSP_PREFIX}ksp_type ${inner_ksp_flag} -${DEFAULT_INNER_KSP_PREFIX}ksp_rtol ${inner_rtol_flag} -${DEFAULT_INNER_KSP_PREFIX}ksp_max_it ${inner_max_iter_flag} -${DEFAULT_INNER_KSP_PREFIX}pc_type ${inner_pc_type_flag} -${DEFAULT_OUTER_KSP_PREFIX}ksp_type ${outer_ksp_flag} -${DEFAULT_OUTER_KSP_PREFIX}ksp_rtol ${outer_rtol_flag} -${DEFAULT_OUTER_KSP_PREFIX}ksp_max_it ${outer_max_iter_flag} -${DEFAULT_OUTER_KSP_PREFIX}pc_type ${outer_pc_type_flag} ${other_petsc_options_flag}"
         echo -e "RUNNING COMMAND: ${command} \n"
         eval "${command}"
     fi
 
-    if [ "$algorithm_flag" = "AM" ]; then
+
+
+    if [ "$algorithm_flag" = "SMSM_AppRes" ]; then
+        command="${PETSC_MPI_EXEC} -n ${np_flag} ${binary} -m ${m_flag} -n ${n_flag} -s ${s_flag} -npb ${npb_flag} -rtol ${relative_tolerance_flag}  -${DEFAULT_INNER_KSP_PREFIX}ksp_type ${inner_ksp_flag} -${DEFAULT_INNER_KSP_PREFIX}ksp_rtol ${inner_rtol_flag} -${DEFAULT_INNER_KSP_PREFIX}ksp_max_it ${inner_max_iter_flag} -${DEFAULT_INNER_KSP_PREFIX}pc_type ${inner_pc_type_flag} -${DEFAULT_OUTER_KSP_PREFIX}ksp_type ${outer_ksp_flag} -${DEFAULT_OUTER_KSP_PREFIX}ksp_rtol ${outer_rtol_flag} -${DEFAULT_OUTER_KSP_PREFIX}ksp_max_it ${outer_max_iter_flag} -${DEFAULT_OUTER_KSP_PREFIX}pc_type ${outer_pc_type_flag} ${other_petsc_options_flag}"
+        echo -e "RUNNING COMMAND: ${command} \n"
+        eval "${command}"
+    fi
+
+
+
+    if [ "$algorithm_flag" = "AM_AppRes" ]; then
 
         command="${PETSC_MPI_EXEC} -n ${np_flag} ${binary} -m ${m_flag} -n ${n_flag} -s ${s_flag} -npb ${npb_flag} -rtol ${relative_tolerance_flag}  -${DEFAULT_INNER_KSP_PREFIX}ksp_type ${inner_ksp_flag} -${DEFAULT_INNER_KSP_PREFIX}ksp_rtol ${inner_rtol_flag} -${DEFAULT_INNER_KSP_PREFIX}ksp_max_it ${inner_max_iter_flag} -${DEFAULT_INNER_KSP_PREFIX}pc_type ${inner_pc_type_flag} ${other_petsc_options_flag}"
         echo -e "RUNNING COMMAND: ${command} \n"
@@ -261,7 +301,7 @@ if [ -x "$(command -v $binary)" ]; then
 
     fi
 
-    if [ "$algorithm_flag" = "AMAM" ]; then
+    if [ "$algorithm_flag" = "AMAM_AppRes" ]; then
         command="${PETSC_MPI_EXEC} -n ${np_flag} ${binary} -m ${m_flag} -n ${n_flag} -s ${s_flag} -npb ${npb_flag} -rtol ${relative_tolerance_flag}  -${DEFAULT_INNER_KSP_PREFIX}ksp_type ${inner_ksp_flag} -${DEFAULT_INNER_KSP_PREFIX}ksp_rtol ${inner_rtol_flag} -${DEFAULT_INNER_KSP_PREFIX}ksp_max_it ${inner_max_iter_flag} -${DEFAULT_INNER_KSP_PREFIX}pc_type ${inner_pc_type_flag} -${DEFAULT_OUTER_KSP_PREFIX}ksp_type ${outer_ksp_flag} -${DEFAULT_OUTER_KSP_PREFIX}ksp_rtol ${outer_rtol_flag} -${DEFAULT_OUTER_KSP_PREFIX}ksp_max_it ${outer_max_iter_flag} -${DEFAULT_OUTER_KSP_PREFIX}pc_type ${outer_pc_type_flag} ${other_petsc_options_flag}"
         echo -e "RUNNING COMMAND: ${command} \n"
         eval "${command}"
