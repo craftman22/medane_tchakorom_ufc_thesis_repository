@@ -330,7 +330,7 @@ int main(int argc, char **argv)
   PetscCall(PetscOptionsGetInt(NULL, NULL, "-npb", &nprocs_per_jacobi_block, NULL));
   PetscCall(PetscOptionsGetReal(NULL, NULL, "-rtol", &relative_tolerance, NULL));
 
-  PetscPrintf(PETSC_COMM_WORLD, " =====> Total number of processes: %d \n =====>s : %d\n =====>nprocessor_per_jacobi_block : %d \n ====> Grid lines: %d \n ====> Grid columns : %d \n  ====> Relative tolerance : %f\n", nprocs, s, nprocs_per_jacobi_block, n_grid_lines, n_grid_columns, relative_tolerance);
+  // PetscPrintf(PETSC_COMM_WORLD, " =====> Total number of processes: %d \n =====>s : %d\n =====>nprocessor_per_jacobi_block : %d \n ====> Grid lines: %d \n ====> Grid columns : %d \n  ====> Relative tolerance : %f\n", nprocs, s, nprocs_per_jacobi_block, n_grid_lines, n_grid_columns, relative_tolerance);
 
   PetscInt njacobi_blocks = (PetscInt)(nprocs / nprocs_per_jacobi_block);
   PetscInt rank_jacobi_block = (PetscInt)(proc_global_rank / nprocs_per_jacobi_block);
@@ -489,23 +489,23 @@ int main(int argc, char **argv)
     PetscCall(PCSetUp(ksp_preconditionnner));
     PetscCall(KSPSetPC(ksp, ksp_preconditionnner));
 
-    PetscReal ksp_relative_tolerance;
-    PetscInt ksp_max_iterations;
-    KSPType ksp_type;
-    PCType ksp_pc_type;
-    PetscCall(KSPGetTolerances(ksp, &ksp_relative_tolerance, NULL, NULL, &ksp_max_iterations));
-    PetscCall(KSPGetType(ksp, &ksp_type));
-    PetscCall((KSPGetPC(ksp, &ksp_preconditionnner)));
-    PetscCall(PCGetType(ksp_preconditionnner, &ksp_pc_type));
-    PetscCall(KSPGetType(ksp, &ksp_type));
+    // PetscReal ksp_relative_tolerance;
+    // PetscInt ksp_max_iterations;
+    // KSPType ksp_type;
+    // PCType ksp_pc_type;
+    // PetscCall(KSPGetTolerances(ksp, &ksp_relative_tolerance, NULL, NULL, &ksp_max_iterations));
+    // PetscCall(KSPGetType(ksp, &ksp_type));
+    // PetscCall((KSPGetPC(ksp, &ksp_preconditionnner)));
+    // PetscCall(PCGetType(ksp_preconditionnner, &ksp_pc_type));
+    // PetscCall(KSPGetType(ksp, &ksp_type));
 
-    PetscCall(PetscPrintf(MPI_COMM_WORLD, "KSP type: %s\n", ksp_type));
-    PetscCall(PetscPrintf(MPI_COMM_WORLD, "KSP preconditionner: %s \n", ksp_pc_type));
-    PetscCall(PetscPrintf(MPI_COMM_WORLD, "KSP relative tolerance: %g\n", ksp_relative_tolerance));
-    PetscCall(PetscPrintf(MPI_COMM_WORLD, "KSP max iterations: %d\n", ksp_max_iterations));
-    PetscCall(PetscPrintf(MPI_COMM_WORLD, "Initial value of norm 2  =  %g\n", approximate_residual_norm2));
-    PetscCall(PetscPrintf(MPI_COMM_WORLD, "*******************************************\n"));
-    PetscCall(PetscPrintf(MPI_COMM_WORLD, "*******************************************\n\n"));
+    // PetscCall(PetscPrintf(MPI_COMM_WORLD, "KSP type: %s\n", ksp_type));
+    // PetscCall(PetscPrintf(MPI_COMM_WORLD, "KSP preconditionner: %s \n", ksp_pc_type));
+    // PetscCall(PetscPrintf(MPI_COMM_WORLD, "KSP relative tolerance: %g\n", ksp_relative_tolerance));
+    // PetscCall(PetscPrintf(MPI_COMM_WORLD, "KSP max iterations: %d\n", ksp_max_iterations));
+    // PetscCall(PetscPrintf(MPI_COMM_WORLD, "Initial value of norm 2  =  %g\n", approximate_residual_norm2));
+    // PetscCall(PetscPrintf(MPI_COMM_WORLD, "*******************************************\n"));
+    // PetscCall(PetscPrintf(MPI_COMM_WORLD, "*******************************************\n\n"));
 
     PetscInt vec_local_size = 0;
     PetscCall(VecGetLocalSize(x_block_jacobi[rank_jacobi_block], &vec_local_size));
@@ -723,8 +723,8 @@ int main(int argc, char **argv)
     PetscCallMPI(MPI_Allreduce(&local_residual_norm2, &global_residual_norm2, 1, MPIU_SCALAR, MPI_SUM, comm_worker_node));
 
     //////////////
-    if (rank_jacobi_block == BLOCK_RANK_ZERO)
-      VecView(x, PETSC_VIEWER_STDOUT_(comm_jacobi_block));
+    // if (rank_jacobi_block == BLOCK_RANK_ZERO)
+    //   VecView(x, PETSC_VIEWER_STDOUT_(comm_jacobi_block));
 
     PetscCall(PetscPrintf(MPI_COMM_WORLD, "\n Total number of iterations (s * outer iterations): %d   ====  Final Norm 2 :%g \n", s * number_of_iterations, global_residual_norm2));
 
