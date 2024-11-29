@@ -8,6 +8,7 @@ if __name__ == '__main__':
     '--with-debugging=1',
     '--with-coverage',
     '--with-tau-perfstubs=1',
+    '--with-saws=1',
     '--download-saws',
 
     '--with-macos-firewall-rules=1',
@@ -19,7 +20,7 @@ if __name__ == '__main__':
     '--with-clanguage=c',
     '--with-fc=0',   
     '--download-f2cblaslapack',
-    '--with-f2cblaslapack-float128-bindings=1',
+    #'--with-f2cblaslapack-float128-bindings=1',
     '--download-hypre',
     '--download-make=1',
     '--download-mpich',

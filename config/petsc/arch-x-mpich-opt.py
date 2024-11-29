@@ -10,14 +10,14 @@ if __name__ == '__main__':
     'CXXOPTFLAGS=-g -O',
     '--with-tau-perfstubs=0',
     
+    '--with-macos-firewall-rules=1',
+    '--with-clean=1',
     '--with-precision=double',
-    #'--with-make-np=24',
-    #'--with-make-test-np=8'
     '--with-ssl=0',
     '--with-clanguage=c',
     '--with-fc=0',
     '--download-f2cblaslapack',
-    '--with-f2cblaslapack-float128-bindings=1',
+    #'--with-f2cblaslapack-float128-bindings=1',
     '--download-hypre',
     '--download-make=1',
     '--download-mpich',
