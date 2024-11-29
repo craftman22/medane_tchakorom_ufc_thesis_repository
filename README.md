@@ -268,7 +268,7 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 For questions, feedback, or collaboration requests, please contact:
 
 * **Name:** TCHAKOROM Affo Médane
-* **Email(s):** medane.tchakorom@univ-fcomte.com  or medane.tchakorom@gmail.com
+* **Email(s):** medane.tchakorom@univ-fcomte.fr  or medane.tchakorom@gmail.com
 
 
 
