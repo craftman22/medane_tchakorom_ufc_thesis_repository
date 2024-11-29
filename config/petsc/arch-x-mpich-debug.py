@@ -1,4 +1,4 @@
-#!python3
+#!/usr/bin/env python3
 if __name__ == '__main__':
   import sys
   import os
@@ -13,8 +13,8 @@ if __name__ == '__main__':
     '--with-macos-firewall-rules=1',
     '--with-clean=1',
     '--with-precision=double',
-    '--with-make-np=24',
-    '--with-make-test-np=8'
+    #'--with-make-np=24',
+    #'--with-make-test-np=8',
     '--with-ssl=0',
     '--with-clanguage=c',
     '--with-fc=0',   
