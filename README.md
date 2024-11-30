@@ -35,8 +35,9 @@ The packages listed below are not required to be pre-installed on your local sys
 
 - Make 
 - C and C++ and Fortran compilers (e.g. GNU gcc or Apple clang)
-- MPI implementation - MPICH3
+- MPI implementation - MPICH
 - BLAS/LAPACK
+- ...more pakages listed in the config/XXX.py files
 
 
 ### Environement setup
@@ -50,7 +51,7 @@ $ git clone https://github.com/craftman22/medane_tchakorom_ufc_thesis_repository
 ```
 
 Next, you need to install PETSc and configure it.
-Although there are many example configure scripts at config/examples/XXX.py, in the PETSc installation directory (in-place installation), we provide some bootstrap scripts for configuration. You can find them enclosed in path/to/this/repository/scripts/petsc-config/XXX.py directory.
+Although there are many example configure scripts at config/examples/XXX.py, in the PETSc installation directory (in-place installation), we provide some bootstrap scripts for configuration. You can find them enclosed in path/to/this/repository/config/petsc/XXX.py directory.
 A typical workflow to download and configure PETSc should look like this example:
 
 
@@ -68,7 +69,7 @@ $ git pull
 $ git checkout v3.22.1
 
 # Configure petsc with your own options
-$ ./configure  path/to/this/repository/scripts/petsc-config/XXX.py
+$ ./configure  path/to/this/repository/config/petsc/XXX.py
 
 # Follow the remaining steps indicated upon each command termination
 ```
@@ -79,6 +80,8 @@ $ ./configure  path/to/this/repository/scripts/petsc-config/XXX.py
 ### Use docker script file
 
 If you prefer not to undertake the extensive installation and configuration process, we've got your back :). Utilizing Docker, you can effortlessly construct an image based on the Docker file included in the repository. 
+
+[Updating this part ....]
 
 
 
@@ -165,7 +168,7 @@ This implementations of numerical iteratives methods is based on PETSc (Portable
 
 PETSc provides a comprehensive set of tools for solving linear and nonlinear equations, time-dependent problems, optimization, and other tasks related to PDEs on parallel computers. It supports parallel computations using message-passing via MPI (Message Passing Interface), making it highly efficient for large-scale distributed computations.
 
-PETSc application is hosted on petsc.org website along with manual and tutorials. Find below the steps to install PETSc 3.22.0, the current version as this lines are written
+PETSc application is hosted on petsc.org website along with manual and tutorials. Find below the steps to install PETSc 3.22.1, the current version as this lines are written
 
 
 
