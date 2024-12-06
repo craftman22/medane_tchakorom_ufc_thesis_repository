@@ -142,7 +142,7 @@ For example, if you edited default_run_variables file, and then want you modify 
 ```bash
 # Here we ran the SMSM algorithm, which will clearly override the algorith name mentionned in the default_run_variables file
 
-$ ./iSolve --alg SMSM_DirRes
+$ ./iSolve --alg SMSM
 ```
 
 To override the total number of processes and number of processes per block, keeping the other default values intact, run the command below
@@ -150,7 +150,7 @@ To override the total number of processes and number of processes per block, kee
 ```bash
 # Here we ran the AMAM algorithm, which will clearly override the algorith name mentionned in the default_run_variables file
 
-$ ./iSolve --alg SMSM_DirRes --np 8 --npb 4
+$ ./iSolve --alg SMSM --np 8 --npb 4
 ```
 
 Last example consist on overriding the size of the mesh. Pretty straight forward:
@@ -158,7 +158,7 @@ Last example consist on overriding the size of the mesh. Pretty straight forward
 ```bash
 # Here we ran the AMAM algorithm, which will clearly override the algorith name mentionned in the default_run_variables file
 
-$ ./iSolve --alg SMSM_DirRes --m 200 --n 200
+$ ./iSolve --alg SMSM --m 200 --n 200
 ```
 
 

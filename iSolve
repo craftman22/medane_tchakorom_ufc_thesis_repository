@@ -9,29 +9,20 @@
 source "./config/default_run_variables"
 
 # Set file path for each algorithm binary
-SM_BINARY_DIRECT_RESIDUAL="./bin/synchronous-multisplitting-direct-residual-computation"
-SM_DIRECT_RESIDUAL_PROGRAM_NAME="Synchronous Multisplitting (Direct Residual)"
+
+SM_BINARY="./bin/synchronous-multisplitting"
+SM_PROGRAM_NAME="Synchronous Multisplitting"
 
 
-
-SMSM_BINARY_DIRECT_RESIDUAL="./bin/synchronous-multisplitting-synchronous-minimization-direct-residual"
-SMSM_DIRECT_RESIDUAL_PROGRAM_NAME="Synchronous Multisplitting & Synchronous Minimization (Direct Residual)"
-
+SMSM_BINARY="./bin/synchronous-multisplitting-synchronous-minimization"
+SMSM_PROGRAM_NAME="Synchronous Multisplitting & Synchronous Minimization"
 
 
-SM_BINARY_APPROXIMATE_RESIDUAL="./bin/synchronous-multisplitting-approximate-residual"
-SM_DIRECT_RESIDUAL_APPROXIMATE_RESIDUAL_PROGRAM_NAME="Synchronous Multisplitting & Synchronous Minimization (Approximate Residual)"
+AM_BINARY="./bin/asynchronous-multisplitting"
+AM_PROGRAM_NAME="Asynchronous Multisplitting (Approximate Residual)"
 
-
-SMSM_BINARY_APPROXIMATE_RESIDUAL="./bin/synchronous-multisplitting-synchronous-minimization-approximate-residual"
-SMSM_APPROXIMATE_RESIDUAL_PROGRAM_NAME="Synchronous Multisplitting & Synchronous Minimization (Approximate Residual)"
-
-
-AM_BINARY_APPROXIMATE_RESIDUAL="./bin/asynchronous-multisplitting-approximate-residual"
-AM_APPROXIMATE_RESIDUAL_PROGRAM_NAME="Asynchronous Multisplitting (Approximate Residual)"
-
-AMAM_BINARY_APPROXIMATE_RESIDUAL="./bin/asynchronous-multisplitting-asynchronous-minimization-approximate-residual"
-AMAM_APPROXIMATE_RESIDUAL_PROGRAM_NAME="Aynchronous Multisplitting & Aynchronous Minimization (Approximate residual)"
+AMAM_BINARY="./bin/asynchronous-multisplitting-asynchronous-minimization"
+AMAM_PROGRAM_NAME="Aynchronous Multisplitting & Aynchronous Minimization"
 
 # Set file path for petscmpiexec runner
 PETSC_MPI_EXEC="$PETSC_DIR/lib/petsc/bin/petscmpiexec"
@@ -178,34 +169,27 @@ fi
 
 program_name=
 binary=
-if [ "$algorithm_flag" = "SM_DirRes" ]; then
-    binary=$SM_BINARY_DIRECT_RESIDUAL
-    program_name=${SM_DIRECT_RESIDUAL_PROGRAM_NAME}
+
+
+if [ "$algorithm_flag" = "SM" ]; then
+    binary=$SM_BINARY
+    program_name=${SM_PROGRAM_NAME}
 fi
 
-if [ "$algorithm_flag" = "SM_AppRes" ]; then
-    binary=$SM_BINARY_APPROXIMATE_RESIDUAL
-    program_name=${SM_DIRECT_RESIDUAL_APPROXIMATE_RESIDUAL_PROGRAM_NAME}
+
+if [ "$algorithm_flag" = "SMSM" ]; then
+    binary=${SMSM_BINARY}
+    program_name=${SMSM_PROGRAM_NAME}
 fi
 
-if [ "$algorithm_flag" = "SMSM_DirRes" ]; then
-    binary=${SMSM_BINARY_DIRECT_RESIDUAL}
-    program_name=${SM_DIRECT_RESIDUAL_APPROXIMATE_RESIDUAL_PROGRAM_NAME}
+if [ "$algorithm_flag" = "AM" ]; then
+    binary=$AM_BINARY
+    program_name=${AM_PROGRAM_NAME}
 fi
 
-if [ "$algorithm_flag" = "SMSM_AppRes" ]; then
-    binary=${SMSM_BINARY_APPROXIMATE_RESIDUAL}
-    program_name=${SMSM_APPROXIMATE_RESIDUAL_PROGRAM_NAME}
-fi
-
-if [ "$algorithm_flag" = "AM_AppRes" ]; then
-    binary=$AM_BINARY_APPROXIMATE_RESIDUAL
-    program_name=${AM_APPROXIMATE_RESIDUAL_PROGRAM_NAME}
-fi
-
-if [ "$algorithm_flag" = "AMAM_AppRes" ]; then
-    binary=${AMAM_BINARY_APPROXIMATE_RESIDUAL}
-    program_name=${AMAM_APPROXIMATE_RESIDUAL_PROGRAM_NAME}
+if [ "$algorithm_flag" = "AMAM" ]; then
+    binary=${AMAM_BINARY}
+    program_name=${AMAM_PROGRAM_NAME}
 fi
 
 echo -e "Solving 2D Poisson Equation with options \n\
@@ -246,7 +230,7 @@ fi
 
 
 
-result_n=$((np_flag / npb_flag))
+result_n=$(( np_flag / npb_flag ))
 result_n_minus_1=$(((np_flag - 1) / npb_flag))
 if [[ $result_n -ne 2 && $result_n_minus_1 -ne 2 ]]; then
     echo -e "Total number of processes and number of processes per block are not matching"
@@ -259,7 +243,9 @@ fi
 
 if [ -x "$(command -v $binary)" ]; then
 
-    if [ "$algorithm_flag" = "SM_DirRes" ]; then
+
+
+    if [ "$algorithm_flag" = "SM" ]; then
 
         command="${PETSC_MPI_EXEC} -n ${np_flag} ${binary} -m ${m_flag} -n ${n_flag} -s ${s_flag} -npb ${npb_flag} -rtol ${relative_tolerance_flag} -${DEFAULT_INNER_KSP_PREFIX}ksp_type ${inner_ksp_flag} -${DEFAULT_INNER_KSP_PREFIX}ksp_rtol ${inner_rtol_flag} -${DEFAULT_INNER_KSP_PREFIX}ksp_max_it ${inner_max_iter_flag} -${DEFAULT_INNER_KSP_PREFIX}pc_type ${inner_pc_type_flag} ${other_petsc_options_flag}"
         echo -e "RUNNING COMMAND: ${command} \n"
@@ -267,17 +253,9 @@ if [ -x "$(command -v $binary)" ]; then
 
     fi
 
-    if [ "$algorithm_flag" = "SM_AppRes" ]; then
-
-        command="${PETSC_MPI_EXEC} -n ${np_flag} ${binary} -m ${m_flag} -n ${n_flag} -s ${s_flag} -npb ${npb_flag} -rtol ${relative_tolerance_flag} -${DEFAULT_INNER_KSP_PREFIX}ksp_type ${inner_ksp_flag} -${DEFAULT_INNER_KSP_PREFIX}ksp_rtol ${inner_rtol_flag} -${DEFAULT_INNER_KSP_PREFIX}ksp_max_it ${inner_max_iter_flag} -${DEFAULT_INNER_KSP_PREFIX}pc_type ${inner_pc_type_flag} ${other_petsc_options_flag}"
-        echo -e "RUNNING COMMAND: ${command} \n"
-        eval "${command}"
-
-    fi
 
 
-
-    if [ "$algorithm_flag" = "SMSM_DirRes" ]; then
+    if [ "$algorithm_flag" = "SMSM" ]; then
         command="${PETSC_MPI_EXEC} -n ${np_flag} ${binary} -m ${m_flag} -n ${n_flag} -s ${s_flag} -npb ${npb_flag} -rtol ${relative_tolerance_flag}  -${DEFAULT_INNER_KSP_PREFIX}ksp_type ${inner_ksp_flag} -${DEFAULT_INNER_KSP_PREFIX}ksp_rtol ${inner_rtol_flag} -${DEFAULT_INNER_KSP_PREFIX}ksp_max_it ${inner_max_iter_flag} -${DEFAULT_INNER_KSP_PREFIX}pc_type ${inner_pc_type_flag} -${DEFAULT_OUTER_KSP_PREFIX}ksp_type ${outer_ksp_flag} -${DEFAULT_OUTER_KSP_PREFIX}ksp_rtol ${outer_rtol_flag} -${DEFAULT_OUTER_KSP_PREFIX}ksp_max_it ${outer_max_iter_flag} -${DEFAULT_OUTER_KSP_PREFIX}pc_type ${outer_pc_type_flag} ${other_petsc_options_flag}"
         echo -e "RUNNING COMMAND: ${command} \n"
         eval "${command}"
@@ -285,15 +263,7 @@ if [ -x "$(command -v $binary)" ]; then
 
 
 
-    if [ "$algorithm_flag" = "SMSM_AppRes" ]; then
-        command="${PETSC_MPI_EXEC} -n ${np_flag} ${binary} -m ${m_flag} -n ${n_flag} -s ${s_flag} -npb ${npb_flag} -rtol ${relative_tolerance_flag}  -${DEFAULT_INNER_KSP_PREFIX}ksp_type ${inner_ksp_flag} -${DEFAULT_INNER_KSP_PREFIX}ksp_rtol ${inner_rtol_flag} -${DEFAULT_INNER_KSP_PREFIX}ksp_max_it ${inner_max_iter_flag} -${DEFAULT_INNER_KSP_PREFIX}pc_type ${inner_pc_type_flag} -${DEFAULT_OUTER_KSP_PREFIX}ksp_type ${outer_ksp_flag} -${DEFAULT_OUTER_KSP_PREFIX}ksp_rtol ${outer_rtol_flag} -${DEFAULT_OUTER_KSP_PREFIX}ksp_max_it ${outer_max_iter_flag} -${DEFAULT_OUTER_KSP_PREFIX}pc_type ${outer_pc_type_flag} ${other_petsc_options_flag}"
-        echo -e "RUNNING COMMAND: ${command} \n"
-        eval "${command}"
-    fi
-
-
-
-    if [ "$algorithm_flag" = "AM_AppRes" ]; then
+    if [ "$algorithm_flag" = "AM" ]; then
 
         command="${PETSC_MPI_EXEC} -n ${np_flag} ${binary} -m ${m_flag} -n ${n_flag} -s ${s_flag} -npb ${npb_flag} -rtol ${relative_tolerance_flag}  -${DEFAULT_INNER_KSP_PREFIX}ksp_type ${inner_ksp_flag} -${DEFAULT_INNER_KSP_PREFIX}ksp_rtol ${inner_rtol_flag} -${DEFAULT_INNER_KSP_PREFIX}ksp_max_it ${inner_max_iter_flag} -${DEFAULT_INNER_KSP_PREFIX}pc_type ${inner_pc_type_flag} ${other_petsc_options_flag}"
         echo -e "RUNNING COMMAND: ${command} \n"
@@ -301,12 +271,12 @@ if [ -x "$(command -v $binary)" ]; then
 
     fi
 
-    if [ "$algorithm_flag" = "AMAM_AppRes" ]; then
+    if [ "$algorithm_flag" = "AMAM" ]; then
         command="${PETSC_MPI_EXEC} -n ${np_flag} ${binary} -m ${m_flag} -n ${n_flag} -s ${s_flag} -npb ${npb_flag} -rtol ${relative_tolerance_flag}  -${DEFAULT_INNER_KSP_PREFIX}ksp_type ${inner_ksp_flag} -${DEFAULT_INNER_KSP_PREFIX}ksp_rtol ${inner_rtol_flag} -${DEFAULT_INNER_KSP_PREFIX}ksp_max_it ${inner_max_iter_flag} -${DEFAULT_INNER_KSP_PREFIX}pc_type ${inner_pc_type_flag} -${DEFAULT_OUTER_KSP_PREFIX}ksp_type ${outer_ksp_flag} -${DEFAULT_OUTER_KSP_PREFIX}ksp_rtol ${outer_rtol_flag} -${DEFAULT_OUTER_KSP_PREFIX}ksp_max_it ${outer_max_iter_flag} -${DEFAULT_OUTER_KSP_PREFIX}pc_type ${outer_pc_type_flag} ${other_petsc_options_flag}"
         echo -e "RUNNING COMMAND: ${command} \n"
         eval "${command}"
     fi
 
 else
-    echo "Warning: $binary not found or not executable." >&2
+    echo "Warning: $binary not found or not executable. (custom message)" >&2
 fi

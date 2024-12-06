@@ -6,12 +6,12 @@ if __name__ == '__main__':
   import configure
   configure_options = [
     '--with-debugging=1',
-    '--with-coverage',
+    #'--with-coverage',
     '--with-tau-perfstubs=1',
     '--with-saws=1',
     '--download-saws',
 
-    '--with-macos-firewall-rules=1',
+    #'--with-macos-firewall-rules=1',
     '--with-clean=1',
     '--with-precision=double',
     #'--with-make-np=24',

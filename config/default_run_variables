@@ -5,15 +5,13 @@ DEFAULT_FILENAME="default_run_variables"
 ########################################################
 
 # ALGORITHM TO USE
-# SM_DirRes --> Synchronous Multisplitting with direct residual computing (r = Ax - b)
-# SM_AppRes --> Synchronous Multisplitting with approximate residual computing (r = Xk - Xk-1)
+# SM --> Synchronous Multisplitting with approximate residual computing (r = Xk - Xk-1)
 
-# SMSM_DirRes --> Synchronous Multisplitting and Synchronous Minimization with direct residual computing (r = Ax - b)
-# SMSM_AppRes --> Synchronous Multisplitting and Synchronous Minimization with approximate residual computing (r = Xk - Xk-1)
+# SMSM --> Synchronous Multisplitting and Synchronous Minimization with approximate residual computing (r = Xk - Xk-1)
 
-# AM_AppRes --> Asynchronous Multisplitting with with approximate residual computing (r = Xk - Xk-1)
-# AMAM_AppRes --> Asynchronous Multisplitting and Asynchronous Minimization with approximate residual computing (r = Xk - Xk-1)
-DEFAULT_ALGORITHM="AMAM_AppRes"
+# AM --> Asynchronous Multisplitting with with approximate residual computing (r = Xk - Xk-1)
+# AMAM --> Asynchronous Multisplitting and Asynchronous Minimization with approximate residual computing (r = Xk - Xk-1)
+DEFAULT_ALGORITHM="AMAM"
 
 ########################################################
 ########################################################
