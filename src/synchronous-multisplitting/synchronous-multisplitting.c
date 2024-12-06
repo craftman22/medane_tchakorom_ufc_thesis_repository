@@ -334,37 +334,18 @@ int main(int argc, char **argv)
   PetscBool stop_condition = PETSC_FALSE;
   PetscInt number_of_iterations = 0;
   PetscInt idx_non_current_block = (rank_jacobi_block == ZERO) ? ONE : ZERO;
-  PetscReal approximation_residual_norm2 = PETSC_MAX_REAL;
+  PetscReal approximation_residual_infinity_norm = PETSC_MAX_REAL;
 
   KSP ksp = NULL;
   PetscCall(initialiazeKSP(comm_jacobi_block, &ksp, A_block_jacobi_subMat[rank_jacobi_block]));
 
   PC ksp_preconditionnner = NULL;
   PetscCall(PCCreate(comm_jacobi_block, &ksp_preconditionnner));
-  // PetscCall(PCSetType(ksp_preconditionnner, PCNONE));
   PetscCall(PCSetOperators(ksp_preconditionnner, A_block_jacobi_subMat[rank_jacobi_block], A_block_jacobi_subMat[rank_jacobi_block]));
   PetscCall(PCSetOptionsPrefix(ksp_preconditionnner, INNER_PC_PREFIX));
   PetscCall(PCSetFromOptions(ksp_preconditionnner));
   PetscCall(PCSetUp(ksp_preconditionnner));
   PetscCall(KSPSetPC(ksp, ksp_preconditionnner));
-
-  // PetscReal ksp_relative_tolerance;
-  // PetscInt ksp_max_iterations;
-  // KSPType ksp_type;
-  // PCType ksp_pc_type;
-  // PetscCall(KSPGetTolerances(ksp, &ksp_relative_tolerance, NULL, NULL, &ksp_max_iterations));
-  // PetscCall(KSPGetType(ksp, &ksp_type));
-  // PetscCall((KSPGetPC(ksp, &ksp_preconditionnner)));
-  // PetscCall(PCGetType(ksp_preconditionnner, &ksp_pc_type));
-  // PetscCall(KSPGetType(ksp, &ksp_type));
-
-  // PetscCall(PetscPrintf(MPI_COMM_WORLD, "KSP type: %s\n", ksp_type));
-  // PetscCall(PetscPrintf(MPI_COMM_WORLD, "KSP preconditionner: %s \n", ksp_pc_type));
-  // PetscCall(PetscPrintf(MPI_COMM_WORLD, "KSP relative tolerance: %g\n", ksp_relative_tolerance));
-  // PetscCall(PetscPrintf(MPI_COMM_WORLD, "KSP max iterations: %d\n", ksp_max_iterations));
-  // PetscCall(PetscPrintf(MPI_COMM_WORLD, "Initial value of approximation solution norm 2 (hardwired)  =  %g\n", approximation_residual_norm2));
-  // PetscCall(PetscPrintf(MPI_COMM_WORLD, "*******************************************\n"));
-  // PetscCall(PetscPrintf(MPI_COMM_WORLD, "*******************************************\n\n"));
 
   PetscScalar *send_buffer = NULL;
   PetscScalar *rcv_buffer = NULL;
@@ -408,16 +389,10 @@ int main(int argc, char **argv)
     PetscCall(VecScatterEnd(scatter_jacobi_vec_part_to_merged_vec[idx_non_current_block], x_block_jacobi[idx_non_current_block], x, INSERT_VALUES, SCATTER_FORWARD));
 
     PetscCall(VecWAXPY(approximation_residual, -1, x_previous_iteration, x));
-    PetscCall(VecNorm(approximation_residual, NORM_2, &approximation_residual_norm2));
-    PetscCall(PetscPrintf(MPI_COMM_WORLD, "Approximation residual norm 2 ==== %g \n", approximation_residual_norm2));
+    PetscCall(VecNorm(approximation_residual, NORM_INFINITY, &approximation_residual_infinity_norm));
+    PetscCall(PetscPrintf(MPI_COMM_WORLD, "Infinity norm of residual ==== %g \n", approximation_residual_infinity_norm));
 
-    // if(rank_jacobi_block == 0){
-    //   PetscCall(VecView(x, PETSC_VIEWER_STDOUT_(comm_jacobi_block)));
-    //   PetscCall(VecView(x_previous_iteration, PETSC_VIEWER_STDOUT_(comm_jacobi_block)));
-    //   PetscCall(VecView(approximation_residual, PETSC_VIEWER_STDOUT_(comm_jacobi_block)));
-    // }
-
-    if (PetscApproximateLTE(approximation_residual_norm2, relative_tolerance))
+    if (PetscApproximateLTE(approximation_residual_infinity_norm, relative_tolerance))
     {
       stop_condition = PETSC_TRUE;
     }
@@ -425,9 +400,26 @@ int main(int argc, char **argv)
 
   } while (stop_condition == PETSC_FALSE);
 
-  PetscCall(PetscPrintf(MPI_COMM_WORLD, " Total number of iterations: %d   ====  Final norm 2 %g \n", number_of_iterations, (double)approximation_residual_norm2));
-  // if (rank_jacobi_block == 1)
-  //   PetscCall(VecView(x, PETSC_VIEWER_STDOUT_(comm_jacobi_block)));
+  // compute now the direct residual and compute it's norm 2
+  Vec direct_local_residual;
+  PetscCall(VecDuplicate(b_block_jacobi[rank_jacobi_block], &direct_local_residual));
+  PetscReal direct_local_residual_norm2 = PETSC_MAX_REAL;
+  PetscCall(MatResidual(A_block_jacobi, b_block_jacobi[rank_jacobi_block], x, direct_local_residual));
+  PetscCall(VecNorm(direct_local_residual, NORM_2, &direct_local_residual_norm2));
+  direct_local_residual_norm2 = direct_local_residual_norm2 * direct_local_residual_norm2;
+  if (proc_local_rank != 0)
+  {
+    direct_local_residual_norm2 = 0.0;
+  }
+
+  {
+    PetscReal direct_global_residual_norm2 = PETSC_MAX_REAL;
+    PetscCallMPI(MPI_Allreduce(&direct_local_residual_norm2, &direct_global_residual_norm2, 1, MPIU_SCALAR, MPI_SUM, MPI_COMM_WORLD));
+    direct_global_residual_norm2 = sqrt(direct_global_residual_norm2);
+    PetscCall(PetscPrintf(MPI_COMM_WORLD, " Total number of iterations: %d   ====  Direct norm 2 ====  %e \n", number_of_iterations, direct_global_residual_norm2));
+  }
+
+  //  PetscCall(VecView(x,PETSC_VIEWER_STDOUT_(MPI_COMM_WORLD)));
 
   PetscCall(ISDestroy(&is_jacobi_vec_parts));
   for (int i = 0; i < njacobi_blocks; i++)
@@ -438,6 +430,7 @@ int main(int argc, char **argv)
     PetscCall(MatDestroy(&A_block_jacobi_subMat[i]));
     PetscCall(VecScatterDestroy(&scatter_jacobi_vec_part_to_merged_vec[i]));
   }
+  PetscCall(VecDestroy(&direct_local_residual));
   PetscCall(VecDestroy(&approximation_residual));
   PetscCall(VecDestroy(&x));
   PetscCall(VecDestroy(&b));
