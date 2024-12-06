@@ -49,7 +49,7 @@ outer_rtol_flag=${DEFAULT_OUTER_RELATIVE_TOLERANCE}
 outer_max_iter_flag=${DEFAULT_OUTER_MAX_ITERATIONS}
 outer_pc_type_flag=${DEFAULT_OUTER_PRECONDITIONNER_TYPE}
 
-other_petsc_options_flag=${DEFAULT_OTHER_MPI_OPTIONS}
+other_petsc_options_flag=${DEFAULT_OTHER_PETSC_OPTIONS}
 
 # 15 options
 
