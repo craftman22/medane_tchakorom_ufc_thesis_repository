@@ -479,6 +479,8 @@ int main(int argc, char **argv)
   }
 
   PetscCallMPI(MPI_Barrier(MPI_COMM_WORLD));
+  double start_time, end_time;
+  start_time = MPI_Wtime();
 
   do
   {
@@ -605,6 +607,8 @@ int main(int argc, char **argv)
   } while (reduced_message != TERMINATE_SIGNAL);
 
   PetscCallMPI(MPI_Barrier(MPI_COMM_WORLD));
+  end_time = MPI_Wtime();
+  PetscCall(PetscPrintf(MPI_COMM_WORLD, "Elapsed time:   %f  seconds \n", end_time - start_time));
 
   PetscCallMPI(MPI_Test(&send_signal_request, &send_signal_flag, MPI_STATUS_IGNORE));
   while (!send_signal_flag)
