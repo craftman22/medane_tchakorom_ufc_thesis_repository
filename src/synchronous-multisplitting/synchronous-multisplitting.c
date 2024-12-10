@@ -355,6 +355,8 @@ int main(int argc, char **argv)
   VecDuplicate(x, &approximation_residual);
 
   PetscCallMPI(MPI_Barrier(PETSC_COMM_WORLD));
+  double start_time, end_time;
+  start_time = MPI_Wtime();
 
   do
   {
@@ -399,6 +401,10 @@ int main(int argc, char **argv)
     number_of_iterations = number_of_iterations + 1;
 
   } while (stop_condition == PETSC_FALSE);
+
+  PetscCallMPI(MPI_Barrier(PETSC_COMM_WORLD));
+  end_time = MPI_Wtime();
+  PetscCall(PetscPrintf(MPI_COMM_WORLD, "Elapsed time:   %f  seconds \n", end_time - start_time));
 
   // compute now the direct residual and compute it's norm 2
   Vec direct_local_residual;
