@@ -17,14 +17,14 @@ DEFAULT_ALGORITHM="AMAM"
 ########################################################
 
 # Number of processes
-DEFAULT_NP=3
+DEFAULT_NP=2
 
 # Number of processes per block
 DEFAULT_NPB=1
 
 # Mesh size M x N
-DEFAULT_M=100
-DEFAULT_N=100
+DEFAULT_M=200
+DEFAULT_N=200
 
 # Number of inner iterations before minimization
 DEFAULT_S=4
