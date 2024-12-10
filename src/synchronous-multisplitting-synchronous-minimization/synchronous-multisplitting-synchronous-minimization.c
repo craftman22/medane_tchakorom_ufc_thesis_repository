@@ -502,6 +502,8 @@ int main(int argc, char **argv)
   PetscCallMPI(MPI_Recv_init(&rcv_signal, ONE, MPIU_INT, message_source, TAG_STATUS, MPI_COMM_WORLD, &rcv_signal_request));
 
   PetscCallMPI(MPI_Barrier(MPI_COMM_WORLD));
+  double start_time, end_time;
+  start_time = MPI_Wtime();
 
   do
   {
@@ -585,6 +587,8 @@ int main(int argc, char **argv)
   } while (send_signal != CONVERGENCE_SIGNAL && rcv_signal != CONVERGENCE_SIGNAL);
 
   PetscCallMPI(MPI_Barrier(MPI_COMM_WORLD));
+  end_time = MPI_Wtime();
+  PetscCall(PetscPrintf(MPI_COMM_WORLD, "Elapsed time:   %f  seconds \n", end_time - start_time));
 
   if (rank_jacobi_block == BLOCK_RANK_ZERO)
   {
@@ -672,9 +676,7 @@ int main(int argc, char **argv)
   PetscCall(PCDestroy(&ksp_preconditionnner));
   PetscCall(KSPDestroy(&ksp));
 
-
-
-  //Maybe delete the rest of this code, not necessary
+  // Maybe delete the rest of this code, not necessary
   message = ZERO;
   PetscInt count;
 
