@@ -42,7 +42,6 @@ PetscErrorCode loadMatrix(Mat *A_block_jacobi, PetscInt n_grid_lines, PetscInt n
   PetscInt i, j, J;
   PetscScalar v;
   PetscInt Ii_new;
-   
 
   for (PetscInt Ii = (rank_jacobi_block * rowBlockSize) + Idx_start; Ii < (rank_jacobi_block * rowBlockSize) + Idx_end; Ii++)
   {
@@ -577,12 +576,13 @@ int main(int argc, char **argv)
     if (PetscApproximateLTE(approximation_residual_infinity_norm, relative_tolerance))
     {
       send_signal = CONVERGENCE_SIGNAL;
-      PetscCall(MPI_Start(&send_signal_request));
-      PetscCall(MPI_Start(&rcv_signal_request));
-
-      PetscCall(MPI_Wait(&send_signal_request, MPI_STATUS_IGNORE));
-      PetscCall(MPI_Wait(&rcv_signal_request, MPI_STATUS_IGNORE));
     }
+
+    PetscCall(MPI_Start(&send_signal_request));
+    PetscCall(MPI_Start(&rcv_signal_request));
+
+    PetscCall(MPI_Wait(&send_signal_request, MPI_STATUS_IGNORE));
+    PetscCall(MPI_Wait(&rcv_signal_request, MPI_STATUS_IGNORE));
 
     number_of_iterations = number_of_iterations + 1;
 
