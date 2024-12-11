@@ -35,7 +35,7 @@ PetscErrorCode loadMatrix(Mat *A_block_jacobi, PetscInt n_grid_lines, PetscInt n
   PetscScalar v;
   PetscInt Ii_new;
 
-  for (int Ii = (rank_jacobi_block * rowBlockSize) + Idx_start; Ii < (rank_jacobi_block * rowBlockSize) + Idx_end; Ii++)
+  for (PetscInt Ii = (rank_jacobi_block * rowBlockSize) + Idx_start; Ii < (rank_jacobi_block * rowBlockSize) + Idx_end; Ii++)
   {
     v = -1.0, i = Ii / n_grid_columns, j = Ii - i * n_grid_columns;
     Ii_new = Ii - (rank_jacobi_block * rowBlockSize);
@@ -119,7 +119,7 @@ PetscErrorCode divideSubDomainIntoBlockMatrices(MPI_Comm comm_jacobi_block, Mat 
   PetscInt n_rows;
   PetscCall(MatGetSize(A_block_jacobi, &n_rows, NULL)); // return the number of rows and columns of the matrix
 
-  for (int i = 0; i < njacobi_blocks; ++i)
+  for (PetscInt i = 0; i < njacobi_blocks; ++i)
   {
     PetscInt n = n_rows / nprocs_per_jacobi_block;                                          // length of the locally owned portion of the index set
     PetscInt first = (i * n_rows) + (proc_local_rank * (n_rows / nprocs_per_jacobi_block)); // the first element of the locally owned portion of the index set
@@ -133,7 +133,7 @@ PetscErrorCode divideSubDomainIntoBlockMatrices(MPI_Comm comm_jacobi_block, Mat 
   PetscInt step = 1;                                                                           // the change to the next index
   PetscCall(ISCreateStride(comm_jacobi_block, n, first, step, &is_rows_block_jacobi));
 
-  for (int i = 0; i < njacobi_blocks; ++i)
+  for (PetscInt i = 0; i < njacobi_blocks; ++i)
   {
     // PetscCall(MatGetSubMatrix(A_block_jacobi, is_rows_block_jacobi, is_cols_block_jacobi[i], MAT_INITIAL_MATRIX, &A_block_jacobi_subMat[i]));
     PetscCall(MatCreateSubMatrix(A_block_jacobi, is_rows_block_jacobi, is_cols_block_jacobi[i], MAT_INITIAL_MATRIX, &A_block_jacobi_subMat[i]));
@@ -322,7 +322,7 @@ int main(int argc, char **argv)
   IS is_merged_vec[njacobi_blocks];
 
   PetscCall(ISCreateStride(comm_jacobi_block, jacobi_block_size, ZERO, ONE, &is_jacobi_vec_parts));
-  for (int i = 0; i < njacobi_blocks; i++)
+  for (PetscInt i = 0; i < njacobi_blocks; i++)
   {
     PetscCall(ISCreateStride(comm_jacobi_block, jacobi_block_size, (i * (jacobi_block_size)), ONE, &is_merged_vec[i]));
     PetscCall(VecScatterCreate(b_block_jacobi[i], is_jacobi_vec_parts, b, is_merged_vec[i], &scatter_jacobi_vec_part_to_merged_vec[i]));
@@ -428,7 +428,7 @@ int main(int argc, char **argv)
   //  PetscCall(VecView(x,PETSC_VIEWER_STDOUT_(MPI_COMM_WORLD)));
 
   PetscCall(ISDestroy(&is_jacobi_vec_parts));
-  for (int i = 0; i < njacobi_blocks; i++)
+  for (PetscInt i = 0; i < njacobi_blocks; i++)
   {
     PetscCall(ISDestroy(&is_cols_block_jacobi[i]));
     PetscCall(VecDestroy(&x_block_jacobi[i]));
