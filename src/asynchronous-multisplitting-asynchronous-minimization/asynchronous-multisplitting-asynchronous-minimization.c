@@ -46,7 +46,7 @@
 #define BLOCK_RANK_ZERO 0
 #define BLOCK_RANK_ONE 1
 
-#define INNER_LOOP_LIMIT 10
+// #define INNER_LOOP_LIMIT 10
 
 PetscErrorCode loadMatrix(Mat *A_block_jacobi, PetscInt n_grid_lines, PetscInt n_grid_columns, PetscInt rank_jacobi_block, PetscInt njacobi_blocks)
 {
@@ -502,8 +502,7 @@ int main(int argc, char **argv)
     // Minimization variables
     Mat R = NULL;
     Mat S = NULL;
-    PetscInt n_vectors_inserted;
-    PetscInt n_loop_iterations;
+    PetscInt n_new_vectors_inserted;
     Vec x_minimized = NULL;
     Vec x_minimized_prev_iteration = NULL;
 
@@ -550,9 +549,8 @@ int main(int argc, char **argv)
     do
     {
 
-        n_vectors_inserted = 0;
-        n_loop_iterations = 0;
-        while (n_vectors_inserted < s)
+        n_new_vectors_inserted = 0;
+        for (PetscInt vecidx = 0; vecidx < s; vecidx++)
         {
 
             PetscCall(subDomainsSolver(ksp, A_block_jacobi_subMat, x_block_jacobi, b_block_jacobi, rank_jacobi_block, &inner_solver_iterations));
@@ -569,7 +567,6 @@ int main(int argc, char **argv)
                     MPI_Start(&send_request);
                 }
 
-                // MPI_Test(&rcv_request, &rcv_flag, MPI_STATUS_IGNORE);
                 MPI_Iprobe(message_source, TAG_DATA, MPI_COMM_WORLD, &rcv_flag, MPI_STATUS_IGNORE);
                 if (rcv_flag)
                 {
@@ -592,7 +589,6 @@ int main(int argc, char **argv)
                     MPI_Start(&send_request);
                 }
 
-                // MPI_Test(&rcv_request, &rcv_flag, MPI_STATUS_IGNORE);
                 MPI_Iprobe(message_source, TAG_DATA, MPI_COMM_WORLD, &rcv_flag, MPI_STATUS_IGNORE);
                 if (rcv_flag)
                 {
@@ -604,50 +600,45 @@ int main(int argc, char **argv)
                 }
             }
 
-            if (inner_solver_iterations > 0) // todo: faire ceci condamne le programme a être un programme synchrone
+            PetscCall(VecScatterBegin(scatter_jacobi_vec_part_to_merged_vec[rank_jacobi_block], x_block_jacobi[rank_jacobi_block], x, INSERT_VALUES, SCATTER_FORWARD));
+            PetscCall(VecScatterEnd(scatter_jacobi_vec_part_to_merged_vec[rank_jacobi_block], x_block_jacobi[rank_jacobi_block], x, INSERT_VALUES, SCATTER_FORWARD));
+
+            PetscCall(VecScatterBegin(scatter_jacobi_vec_part_to_merged_vec[idx_non_current_block], x_block_jacobi[idx_non_current_block], x, INSERT_VALUES, SCATTER_FORWARD));
+            PetscCall(VecScatterEnd(scatter_jacobi_vec_part_to_merged_vec[idx_non_current_block], x_block_jacobi[idx_non_current_block], x, INSERT_VALUES, SCATTER_FORWARD));
+
+            PetscCall(VecGetValues(x, x_local_size, vec_local_idx, vector_to_insert_into_S));
+            PetscCall(MatSetValuesLocal(S, x_local_size, vec_local_idx, ONE, &vecidx, vector_to_insert_into_S, INSERT_VALUES));
+
+            if (inner_solver_iterations > 0)
             {
-                PetscCall(VecScatterBegin(scatter_jacobi_vec_part_to_merged_vec[rank_jacobi_block], x_block_jacobi[rank_jacobi_block], x, INSERT_VALUES, SCATTER_FORWARD));
-                PetscCall(VecScatterEnd(scatter_jacobi_vec_part_to_merged_vec[rank_jacobi_block], x_block_jacobi[rank_jacobi_block], x, INSERT_VALUES, SCATTER_FORWARD));
-
-                PetscCall(VecScatterBegin(scatter_jacobi_vec_part_to_merged_vec[idx_non_current_block], x_block_jacobi[idx_non_current_block], x, INSERT_VALUES, SCATTER_FORWARD));
-                PetscCall(VecScatterEnd(scatter_jacobi_vec_part_to_merged_vec[idx_non_current_block], x_block_jacobi[idx_non_current_block], x, INSERT_VALUES, SCATTER_FORWARD));
-
-                PetscCall(VecGetValues(x, x_local_size, vec_local_idx, vector_to_insert_into_S));
-                PetscCall(MatSetValuesLocal(S, x_local_size, vec_local_idx, ONE, &n_vectors_inserted, vector_to_insert_into_S, INSERT_VALUES));
-                n_vectors_inserted++;
-            }
-
-            n_loop_iterations++;
-            if (n_loop_iterations > INNER_LOOP_LIMIT && send_signal == CONVERGENCE_SIGNAL)
-            {
-                break;
+                n_new_vectors_inserted++;
             }
         }
 
-        if (n_vectors_inserted >= s)
+        PetscCall(MatAssemblyBegin(S, MAT_FINAL_ASSEMBLY));
+        PetscCall(MatAssemblyEnd(S, MAT_FINAL_ASSEMBLY));
+
+        PetscCall(MatMatMult(A_block_jacobi, S, MAT_REUSE_MATRIX, PETSC_DETERMINE, &R););
+        PetscCall(minimizerSolver(comm_jacobi_block, x_minimized, R, S, b_block_jacobi, rank_jacobi_block, s));
+
+        PetscCall(VecWAXPY(approximate_residual, -1, x_minimized_prev_iteration, x_minimized));
+
+        // PetscCall(computeResidualNorm2(A_block_jacobi, x_minimized, b_block_jacobi, &global_residual_norm2, rank_jacobi_block, proc_local_rank));
+        PetscCall(VecNorm(approximate_residual, NORM_INFINITY, &approximation_residual_infinity_norm));
+
+        PetscCall(VecScatterBegin(scatter_jacobi_vec_part_to_merged_vec[idx_non_current_block], x_minimized, x_block_jacobi[idx_non_current_block], INSERT_VALUES, SCATTER_REVERSE));
+        PetscCall(VecScatterEnd(scatter_jacobi_vec_part_to_merged_vec[idx_non_current_block], x_minimized, x_block_jacobi[idx_non_current_block], INSERT_VALUES, SCATTER_REVERSE));
+
+        PetscCall(VecScatterBegin(scatter_jacobi_vec_part_to_merged_vec[rank_jacobi_block], x_minimized, x_block_jacobi[rank_jacobi_block], INSERT_VALUES, SCATTER_REVERSE));
+        PetscCall(VecScatterEnd(scatter_jacobi_vec_part_to_merged_vec[rank_jacobi_block], x_minimized, x_block_jacobi[rank_jacobi_block], INSERT_VALUES, SCATTER_REVERSE));
+        // todo: est ce qu'il ne serait pas judicieux de mettre egalement à jour la partie [current_block]
+
+        PetscCall(VecCopy(x_minimized, x_minimized_prev_iteration)); // todo: ça sert a quoi ?
+
+        // todo: est ce qu'il ne faudrait pas envoyer la partie du block à l'autre ?
+        if (n_new_vectors_inserted >= ONE)
         {
-            PetscCall(MatAssemblyBegin(S, MAT_FINAL_ASSEMBLY));
-            PetscCall(MatAssemblyEnd(S, MAT_FINAL_ASSEMBLY));
-
-            PetscCall(MatMatMult(A_block_jacobi, S, MAT_REUSE_MATRIX, PETSC_DETERMINE, &R););
-            PetscCall(minimizerSolver(comm_jacobi_block, x_minimized, R, S, b_block_jacobi, rank_jacobi_block, s));
-
-            PetscCall(VecWAXPY(approximate_residual, -1, x_minimized_prev_iteration, x_minimized));
-
-            // PetscCall(computeResidualNorm2(A_block_jacobi, x_minimized, b_block_jacobi, &global_residual_norm2, rank_jacobi_block, proc_local_rank));
-            PetscCall(VecNorm(approximate_residual, NORM_INFINITY, &approximation_residual_infinity_norm));
             PetscCall(PetscPrintf(MPI_COMM_WORLD, "Infinity norm of residual  ==== %e \n", approximation_residual_infinity_norm));
-
-            PetscCall(VecScatterBegin(scatter_jacobi_vec_part_to_merged_vec[idx_non_current_block], x_minimized, x_block_jacobi[idx_non_current_block], INSERT_VALUES, SCATTER_REVERSE));
-            PetscCall(VecScatterEnd(scatter_jacobi_vec_part_to_merged_vec[idx_non_current_block], x_minimized, x_block_jacobi[idx_non_current_block], INSERT_VALUES, SCATTER_REVERSE));
-
-            PetscCall(VecScatterBegin(scatter_jacobi_vec_part_to_merged_vec[rank_jacobi_block], x_minimized, x_block_jacobi[rank_jacobi_block], INSERT_VALUES, SCATTER_REVERSE));
-            PetscCall(VecScatterEnd(scatter_jacobi_vec_part_to_merged_vec[rank_jacobi_block], x_minimized, x_block_jacobi[rank_jacobi_block], INSERT_VALUES, SCATTER_REVERSE));
-            // todo: est ce qu'il ne serait pas judicieux de mettre egalement à jour la partie [current_block]
-
-            PetscCall(VecCopy(x_minimized, x_minimized_prev_iteration)); // todo: ça sert a quoi ?
-
-            // todo: est ce qu'il ne faudrait pas envoyer la partie du block à l'autre ?
         }
         else
         {
