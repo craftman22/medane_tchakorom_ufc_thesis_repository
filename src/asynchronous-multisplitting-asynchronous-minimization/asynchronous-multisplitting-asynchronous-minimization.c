@@ -205,7 +205,7 @@ PetscErrorCode minimizerSolver(MPI_Comm comm_jacobi_block, Vec x_minimized, Mat 
 
     KSP ksp_minimizer = NULL;
     PetscCall(initialiazeKSPMinimizer(comm_jacobi_block, &ksp_minimizer, R_transpose_R));
-      PetscCall(KSPSetInitialGuessNonzero(ksp, PETSC_FALSE));
+    PetscCall(KSPSetInitialGuessNonzero(ksp_minimizer, PETSC_FALSE));
 
     PC ksp_minimizer_preconditionnner = NULL;
     PetscCall(PCCreate(comm_jacobi_block, &ksp_minimizer_preconditionnner));
