@@ -12,20 +12,15 @@ if __name__ == '__main__':
     '--with-fc=0',   
     '--with-hypre=1',
     '--download-hypre',
-    #'--with-metis=1',
     '--download-metis=1',
-    #'--with-parmetis=1',
     '--download-parmetis=1',
-    #'--with-superlu_dist=1',
+    ' --download-cmake=1',
     '--download-superlu_dist=1',
-    #'--with-zlib=1',
     '--download-zlib=1',
     '--download-f2cblaslapack=1',
     '--with-strict-petscerrorcode',
-    #'--with-mumps=1',
-    #'--download-mumps=1',
+    '--download-mumps=1',
     #'--download-mumps-avoid-mpi-in-place=1',
-    
     #'--with-hwloc=1',
     #'--download-hwloc=1',
     
@@ -40,6 +35,9 @@ if __name__ == '__main__':
     '--with-cc=gcc-14',
     '--with-cxx=g++-14',
     '--with-ssl=0',
+    '--with-cuda=0',
+    '--with-hip=0',
+    '--with-petsc-arch=arch-linux-mpich-g5k-opt',
     
     
     # '--download-c2html=0',
@@ -47,13 +45,11 @@ if __name__ == '__main__':
     # '--download-sowing=0',
     # '--with-64-bit-indices=0',
     # '--with-cgns=0',
-    '--with-cuda=0',
     # '--with-exodusii=0',
     # '--with-fftw=0',
     # '--with-giflib=0',
     # '--with-gmp=0',
     # '--with-hdf5=1',
-    '--with-hip=0',
     # '--with-hwloc=0',
     # '--with-kokkos-kernels=0',
     # '--with-kokkos=0',
@@ -85,7 +81,7 @@ if __name__ == '__main__':
     
     
 
-    '--with-petsc-arch=arch-linux-mpich-g5k-opt',
+
     
 
    
