@@ -14,7 +14,7 @@ if __name__ == '__main__':
     '--download-hypre',
     '--download-metis=1',
     '--download-parmetis=1',
-    ' --download-cmake=1',
+    '--download-cmake=1',
     '--download-superlu_dist=1',
     '--download-zlib=1',
     '--download-f2cblaslapack=1',
