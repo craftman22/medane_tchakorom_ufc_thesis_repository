@@ -8,8 +8,8 @@ if __name__ == '__main__':
     '--with-debugging=0',
     'COPTFLAGS=-g -O',
     'CXXOPTFLAGS=-g -O',
-    '--with-tau-perfstubs=0',
     
+    '--with-tau-perfstubs=0',
     '--with-macos-firewall-rules=1',
     '--with-clean=1',
     '--with-precision=double',
@@ -25,6 +25,8 @@ if __name__ == '__main__':
     '--download-mpich-pm=hydra',
     '--with-cc=gcc-14',
     '--with-cxx=g++-14',
+    
+    
     '--with-strict-petscerrorcode',
     '--with-petsc-arch=arch-x-mpich-opt',
   ]
