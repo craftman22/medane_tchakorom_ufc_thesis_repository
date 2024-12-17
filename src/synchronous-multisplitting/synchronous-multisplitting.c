@@ -171,7 +171,7 @@ PetscErrorCode subDomainsSolver(KSP ksp, Mat *A_block_jacobi_subMat, Vec *x_bloc
   PetscCall(MatMult(A_block_jacobi_subMat[idx], x_block_jacobi[idx], mat_mult_vec_result));
   PetscCall(VecAXPY(local_right_side_vector, -1, mat_mult_vec_result));
 
-  PetscCall(KSPSetInitialGuessNonzero(ksp, PETSC_FALSE));
+  PetscCall(KSPSetInitialGuessNonzero(ksp, PETSC_TRUE));
   PetscCall(KSPSolve(ksp, local_right_side_vector, x_block_jacobi[rank_jacobi_block]));
   PetscInt n_iterations = 0;
   PetscCall(KSPGetIterationNumber(ksp, &n_iterations));
