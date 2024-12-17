@@ -539,9 +539,6 @@ int main(int argc, char **argv)
     Vec approximate_residual = NULL;
     PetscCall(VecDuplicate(x_minimized, &approximate_residual));
 
-    Vec local_residual = NULL;
-    VecDuplicate(b_block_jacobi[rank_jacobi_block], &local_residual);
-
     PetscCallMPI(MPI_Barrier(MPI_COMM_WORLD));
     double start_time, end_time;
     start_time = MPI_Wtime();
@@ -774,21 +771,21 @@ int main(int argc, char **argv)
     PetscCall(VecScatterBegin(scatter_jacobi_vec_part_to_merged_vec[idx_non_current_block], x_block_jacobi[idx_non_current_block], x, INSERT_VALUES, SCATTER_FORWARD));
     PetscCall(VecScatterEnd(scatter_jacobi_vec_part_to_merged_vec[idx_non_current_block], x_block_jacobi[idx_non_current_block], x, INSERT_VALUES, SCATTER_FORWARD));
 
-    PetscScalar local_residual_norm2;
-    PetscScalar global_residual_norm2;
-    PetscCall(MatResidual(A_block_jacobi, b_block_jacobi[rank_jacobi_block], x, local_residual));
-    PetscCall(VecNorm(local_residual, NORM_2, &local_residual_norm2));
-    local_residual_norm2 = local_residual_norm2 * local_residual_norm2;
+    Vec direct_local_residual = NULL;
+    PetscScalar direct_local_residual_norm2;
+    VecDuplicate(b_block_jacobi[rank_jacobi_block], &direct_local_residual);
+    PetscCall(MatResidual(A_block_jacobi, b_block_jacobi[rank_jacobi_block], x, direct_local_residual));
+    PetscCall(VecNorm(direct_local_residual, NORM_2, &direct_local_residual_norm2));
+    direct_local_residual_norm2 = direct_local_residual_norm2 * direct_local_residual_norm2;
     if (proc_local_rank != 0)
-        local_residual_norm2 = 0.0;
+        direct_local_residual_norm2 = 0.0;
 
-    PetscCallMPI(MPI_Allreduce(&local_residual_norm2, &global_residual_norm2, 1, MPIU_SCALAR, MPI_SUM, MPI_COMM_WORLD));
-
-    //////////////
-
-    PetscCall(PetscPrintf(MPI_COMM_WORLD, " Total number of iterations: %d   ====  Final norm 2 %g \n", number_of_iterations, (double)global_residual_norm2));
-    // PetscPrintf(comm_jacobi_block, " Sleeping state ... block number [%d]\n", rank_jacobi_block);
-    // PetscSleep(60 * 10);
+    {
+        PetscScalar direct_global_residual_norm2 = PETSC_MAX_REAL;
+        PetscCallMPI(MPI_Allreduce(&direct_local_residual_norm2, &direct_global_residual_norm2, 1, MPIU_SCALAR, MPI_SUM, MPI_COMM_WORLD));
+        direct_global_residual_norm2 = sqrt(direct_global_residual_norm2);
+        PetscCall(PetscPrintf(MPI_COMM_WORLD, " Total number of iterations: %d   ====  Direct norm 2 ====  %e \n", number_of_iterations, direct_global_residual_norm2));
+    }
 
     PetscCallMPI(MPI_Request_free(&rcv_request));
     PetscCallMPI(MPI_Request_free(&send_request));
@@ -810,7 +807,7 @@ int main(int argc, char **argv)
         PetscCall(VecScatterDestroy(&scatter_jacobi_vec_part_to_merged_vec[i]));
     }
 
-    PetscCall(VecDestroy(&local_residual));
+    PetscCall(VecDestroy(&direct_local_residual));
     PetscCall(VecDestroy(&x_block_jacobi_previous_iteration));
     PetscCall(VecDestroy(&approximation_residual));
     PetscCall(VecDestroy(&x));
