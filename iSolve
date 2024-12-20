@@ -5,6 +5,23 @@
 # synchronous-multisplitting-synchronous-minimization-approximate-residual
 # synchronous-multisplitting-approximate-residual
 
+# Set MPI_BINDING env variable depending on the target platform
+# Detect the platform
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    # macOS
+    export MPI_BINDING="--map-by core"
+    #echo "hello"
+elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+    # Linux
+    export MPI_BINDING="--bind-to core --map-by core"
+else
+    echo "Unsupported platform: $OSTYPE"
+    exit 1
+fi
+
+# Print the value for verification
+echo "MPI_BINDING is set to $MPI_BINDING"
+
 # Get default values for all options
 source "./config/default_run_variables"
 
