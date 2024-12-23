@@ -103,7 +103,7 @@ print:
 
 # List the source directories you want to compile from
 
-SRC_DIRS := src/synchronous-multisplitting src/synchronous-multisplitting-synchronous-minimization src/asynchronous-multisplitting src/asynchronous-multisplitting-asynchronous-minimization
+SRC_DIRS :=  src/synchronous-multisplitting src/synchronous-multisplitting-synchronous-minimization src/asynchronous-multisplitting src/asynchronous-multisplitting-asynchronous-minimization
 
 
 # Define the directory where binaries will be stored
@@ -128,7 +128,7 @@ build: all
 
 # Rule to compile each binary
 $(BIN_DIR)/%: src/%.c | $(BIN_DIR)
-	@$(LINK.c) $^ $(LOADLIBES) $(LDLIBS) -o $(BIN_DIR)/$(notdir $@)
+	@$(LINK.c) src/utils/utils.c $^ $(LOADLIBES) $(LDLIBS) -I./include  -o $(BIN_DIR)/$(notdir $@)
 	
 	
 # Ensure the bin directory exists
