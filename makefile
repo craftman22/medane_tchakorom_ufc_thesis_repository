@@ -128,7 +128,7 @@ build: all
 
 # Rule to compile each binary
 $(BIN_DIR)/%: src/%.c | $(BIN_DIR)
-	@$(LINK.c) src/utils/utils.c $^ $(LOADLIBES) $(LDLIBS) -I./include  -o $(BIN_DIR)/$(notdir $@)
+	@$(LINK.c) src/utils/utils.c   $^ $(LOADLIBES) $(LDLIBS) -I./include   -o $(BIN_DIR)/$(notdir $@)
 	
 	
 # Ensure the bin directory exists
@@ -142,8 +142,9 @@ run:
 	@echo Future feature
 
 check:
-	@echo Not implemented yet...
-	@echo Future feature
+	@$(LINK.c) src/utils/utils.c  src/Unity/unity.c  ./src/tests/utils_test.c $(LOADLIBES) $(LDLIBS) -I./include -I./src/Unity  -o $(BIN_DIR)/utils_test
+	@printf "\n***************************** Running with 4 process *****************************\n"
+	@mpirun -n 4 ./bin/utils_test
 
 docs:
 	@echo Not implemented yet...

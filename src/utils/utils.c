@@ -95,7 +95,7 @@ PetscErrorCode initializeKSP(MPI_Comm comm_jacobi_block, KSP *ksp, Mat operator_
   PetscCall(KSPGetPC(*ksp, &pc));
   PetscCall(PCSetOptionsPrefix(pc, pc_prefix));
 
-  PetscCall(KSPSetInitialGuessNonzero(*ksp, !zero_initial_guess));
+  PetscCall(KSPSetInitialGuessNonzero(*ksp, !zero_initial_guess));// TODO: ici, revoir la conversion du boolean
 
   PetscCall(PCSetFromOptions(pc));
   PetscCall(KSPSetFromOptions(*ksp));
@@ -343,3 +343,4 @@ PetscErrorCode printResidualNorm(PetscScalar approximation_residual_infinity_nor
   PetscCall(PetscPrintf(MPI_COMM_WORLD, "Infinity norm of residual ==== %g \n", approximation_residual_infinity_norm));
   PetscFunctionReturn(PETSC_SUCCESS);
 }
+

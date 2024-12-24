@@ -28,6 +28,8 @@ PetscErrorCode computeDimensionRelatedVariables(PetscInt nprocs, PetscInt nprocs
 PetscErrorCode printElapsedTime(double start_time, double end_time);
 
 PetscErrorCode printResidualNorm(PetscScalar approximation_residual_infinity_norm);
+
+
    
 
 #endif // SHARED_FUNCTIONS_H
