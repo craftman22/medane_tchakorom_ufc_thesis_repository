@@ -106,6 +106,7 @@ print:
 SRC_DIRS :=  src/synchronous-multisplitting src/synchronous-multisplitting-synchronous-minimization src/asynchronous-multisplitting src/asynchronous-multisplitting-asynchronous-minimization
 
 
+
 # Define the directory where binaries will be stored
 BIN_DIR := bin
 

@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include "constants.h"
 
 #define MESH_SIZE 2
 
@@ -22,8 +23,6 @@ PetscInt rank_jacobi_block;
 PetscInt proc_local_rank;
 PetscInt n_mesh_points;
 PetscInt jacobi_block_size;
-PetscInt n_grid_lines;
-PetscInt n_grid_columns;
 PetscInt rank_jacobi_block;
 
 PetscScalar values[4]; // Values buffer
@@ -66,6 +65,7 @@ void test_computeDimensionRelatedVariables()
 void test_poisson2DMatrix(void)
 {
     // PetscInt rstart, rend;
+
     PetscInt rstart, rend;
     MatGetOwnershipRange(A_block_jacobi, &rstart, &rend);
     PetscInt row = rstart, col;
@@ -78,33 +78,34 @@ void test_poisson2DMatrix(void)
         MatGetValues(A_block_jacobi, 1, &row, 1, &col, &values[j]);
     }
 
+
     if (proc_global_rank == 0)
     {
-        TEST_ASSERT_EQUAL(values[0], 4);
-        TEST_ASSERT_EQUAL(values[1], -1);
-        TEST_ASSERT_EQUAL(values[2], -1);
-        TEST_ASSERT_EQUAL(values[3], 0);
+        TEST_ASSERT_EQUAL(4.0,values[0]);
+        TEST_ASSERT_EQUAL( -1.0 , values[1]);
+        TEST_ASSERT_EQUAL( -1.0 , values[2]);
+        TEST_ASSERT_EQUAL( 0.0 , values[3]);
     }
     if (proc_global_rank == 1)
     {
-        TEST_ASSERT_EQUAL(values[0], -1);
-        TEST_ASSERT_EQUAL(values[1], 4);
-        TEST_ASSERT_EQUAL(values[2], 0);
-        TEST_ASSERT_EQUAL(values[3], -1);
+        TEST_ASSERT_EQUAL( -1.0 , values[0]);
+        TEST_ASSERT_EQUAL( 4.0 , values[1]);
+        TEST_ASSERT_EQUAL( 0.0 , values[2]);
+        TEST_ASSERT_EQUAL( -1.0 , values[3]);
     }
-    if (proc_global_rank == 2)
+    if (proc_global_rank == 2 )
     {
-        TEST_ASSERT_EQUAL(values[0], -1);
-        TEST_ASSERT_EQUAL(values[1], 0);
-        TEST_ASSERT_EQUAL(values[2], 4);
-        TEST_ASSERT_EQUAL(values[3], -1);
+        TEST_ASSERT_EQUAL( -1.0 , values[0]);
+        TEST_ASSERT_EQUAL( 0.0 , values[1]);
+        TEST_ASSERT_EQUAL( 4.0 , values[2]);
+        TEST_ASSERT_EQUAL( -1.0 , values[3]);
     }
-    if (proc_global_rank == 3)
+    if (proc_global_rank == 3 )
     {
-        TEST_ASSERT_EQUAL(values[0], 0);
-        TEST_ASSERT_EQUAL(values[1], -1);
-        TEST_ASSERT_EQUAL(values[2], -1);
-        TEST_ASSERT_EQUAL(values[3], 4);
+        TEST_ASSERT_EQUAL( 0.0 , values[0]);
+        TEST_ASSERT_EQUAL( -1.0 , values[1]);
+        TEST_ASSERT_EQUAL( -1.0 , values[2]);
+        TEST_ASSERT_EQUAL( 4.0 , values[3]);
     }
 }
 
@@ -139,6 +140,7 @@ int main(int argc, char **argv)
     comm_jacobi_block = PetscSubcommChild(sub_comm_context);
 
     // Initialize
+
     MatCreate(comm_jacobi_block, &A_block_jacobi);
     MatSetType(A_block_jacobi, MATMPIAIJ);
     MatSetSizes(A_block_jacobi, PETSC_DECIDE, PETSC_DECIDE, n_mesh_points / njacobi_blocks, n_mesh_points);
@@ -148,19 +150,17 @@ int main(int argc, char **argv)
     dup2(stdout_fd, STDOUT_FILENO);
     close(stdout_fd);
 
-    poisson2DMatrix(&A_block_jacobi, n_grid_lines, n_grid_columns, rank_jacobi_block, njacobi_blocks);
+    poisson2DMatrix(&A_block_jacobi, n_mesh_lines, n_mesh_columns, rank_jacobi_block, njacobi_blocks);
+
     RUN_TEST(test_poisson2DMatrix);
 
-    if (rank_jacobi_block == 1)
-    {
-        MatView(A_block_jacobi, PETSC_VIEWER_STDOUT_(comm_jacobi_block));
-    }
+
 
     PetscCall(PetscFinalize());
 
     // ici pour le code qui permet de ne rien afficher
 
-    if (proc_global_rank == 0) // TODO: faire un print qui prend en compte tous les processeurs
+    if (proc_global_rank == 1) // TODO: faire un print qui prend en compte tous les processeurs
     {
 
         printf("Number of tests %ld\n", (UNITY_INT)(Unity.NumberOfTests));

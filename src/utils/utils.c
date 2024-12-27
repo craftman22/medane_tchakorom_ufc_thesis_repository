@@ -1,8 +1,86 @@
 #include "constants.h"
 #include "utils.h"
 #include <petscts.h>
+#include <petscdmda.h>
 
 PetscErrorCode poisson2DMatrix(Mat *A_block_jacobi, PetscInt n_grid_lines, PetscInt n_grid_columns, PetscInt rank_jacobi_block, PetscInt njacobi_blocks)
+{
+
+  PetscFunctionBeginUser;
+  PetscInt i, j, row, global_row;
+  PetscInt ystart = 0;
+  PetscInt yend = 0;
+  PetscScalar v[5]; // Stencil values
+  PetscInt previous_lines = 0;
+
+  if (rank_jacobi_block == BLOCK_RANK_ZERO)
+  {
+    ystart = 0;
+    yend = n_grid_columns / 2;
+    previous_lines = 0;
+  }
+
+  if (rank_jacobi_block == BLOCK_RANK_ONE)
+  {
+    ystart = n_grid_columns / 2;
+    yend = n_grid_columns;
+    previous_lines = ((n_grid_lines * n_grid_columns) / 2);
+  }
+
+  // Fill the matrix
+  for (j = ystart; j < yend; j++)
+  {
+    for (i = 0; i < n_grid_lines; i++)
+    {
+      row = (j * n_grid_lines + i);
+      PetscInt ncols = 0;
+      PetscInt cols[5];
+
+      // Center point
+      v[ncols] = 4.0;
+      cols[ncols++] = row;
+
+      // Left neighbor
+      if (i > 0)
+      {
+        v[ncols] = -1.0;
+        cols[ncols++] = row - 1;
+      }
+
+      // Right neighbor
+      if (i < n_grid_lines - 1)
+      {
+        v[ncols] = -1.0;
+        cols[ncols++] = row + 1;
+      }
+
+      // Bottom neighbor
+      if (j > 0)
+      {
+        v[ncols] = -1.0;
+        cols[ncols++] = row - n_grid_lines;
+      }
+
+      // Top neighbor
+      if (j < n_grid_columns - 1)
+      {
+        v[ncols] = -1.0;
+        cols[ncols++] = row + n_grid_lines;
+      }
+
+      global_row = (j * n_grid_lines + i) - previous_lines;
+      PetscCall(MatSetValues(*A_block_jacobi, 1, &global_row, ncols, cols, v, INSERT_VALUES));
+    }
+  }
+
+  // Assemble the matrix
+  PetscCall(MatAssemblyBegin(*A_block_jacobi, MAT_FINAL_ASSEMBLY));
+  PetscCall(MatAssemblyEnd(*A_block_jacobi, MAT_FINAL_ASSEMBLY));
+
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+PetscErrorCode poisson2DMatrix_old(Mat *A_block_jacobi, PetscInt n_grid_lines, PetscInt n_grid_columns, PetscInt rank_jacobi_block, PetscInt njacobi_blocks)
 {
   PetscFunctionBeginUser;
 
@@ -95,7 +173,7 @@ PetscErrorCode initializeKSP(MPI_Comm comm_jacobi_block, KSP *ksp, Mat operator_
   PetscCall(KSPGetPC(*ksp, &pc));
   PetscCall(PCSetOptionsPrefix(pc, pc_prefix));
 
-  PetscCall(KSPSetInitialGuessNonzero(*ksp, !zero_initial_guess));// TODO: ici, revoir la conversion du boolean
+  PetscCall(KSPSetInitialGuessNonzero(*ksp, !zero_initial_guess)); // TODO: ici, revoir la conversion du boolean
 
   PetscCall(PCSetFromOptions(pc));
   PetscCall(KSPSetFromOptions(*ksp));
@@ -343,4 +421,3 @@ PetscErrorCode printResidualNorm(PetscScalar approximation_residual_infinity_nor
   PetscCall(PetscPrintf(MPI_COMM_WORLD, "Infinity norm of residual ==== %g \n", approximation_residual_infinity_norm));
   PetscFunctionReturn(PETSC_SUCCESS);
 }
-
