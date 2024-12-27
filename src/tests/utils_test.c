@@ -78,34 +78,33 @@ void test_poisson2DMatrix(void)
         MatGetValues(A_block_jacobi, 1, &row, 1, &col, &values[j]);
     }
 
-
     if (proc_global_rank == 0)
     {
-        TEST_ASSERT_EQUAL(4.0,values[0]);
-        TEST_ASSERT_EQUAL( -1.0 , values[1]);
-        TEST_ASSERT_EQUAL( -1.0 , values[2]);
-        TEST_ASSERT_EQUAL( 0.0 , values[3]);
+        TEST_ASSERT_EQUAL(4.0, values[0]);
+        TEST_ASSERT_EQUAL(-1.0, values[1]);
+        TEST_ASSERT_EQUAL(-1.0, values[2]);
+        TEST_ASSERT_EQUAL(0.0, values[3]);
     }
     if (proc_global_rank == 1)
     {
-        TEST_ASSERT_EQUAL( -1.0 , values[0]);
-        TEST_ASSERT_EQUAL( 4.0 , values[1]);
-        TEST_ASSERT_EQUAL( 0.0 , values[2]);
-        TEST_ASSERT_EQUAL( -1.0 , values[3]);
+        TEST_ASSERT_EQUAL(-1.0, values[0]);
+        TEST_ASSERT_EQUAL(4.0, values[1]);
+        TEST_ASSERT_EQUAL(0.0, values[2]);
+        TEST_ASSERT_EQUAL(-1.0, values[3]);
     }
-    if (proc_global_rank == 2 )
+    if (proc_global_rank == 2)
     {
-        TEST_ASSERT_EQUAL( -1.0 , values[0]);
-        TEST_ASSERT_EQUAL( 0.0 , values[1]);
-        TEST_ASSERT_EQUAL( 4.0 , values[2]);
-        TEST_ASSERT_EQUAL( -1.0 , values[3]);
+        TEST_ASSERT_EQUAL(-1.0, values[0]);
+        TEST_ASSERT_EQUAL(0.0, values[1]);
+        TEST_ASSERT_EQUAL(4.0, values[2]);
+        TEST_ASSERT_EQUAL(-1.0, values[3]);
     }
-    if (proc_global_rank == 3 )
+    if (proc_global_rank == 3)
     {
-        TEST_ASSERT_EQUAL( 0.0 , values[0]);
-        TEST_ASSERT_EQUAL( -1.0 , values[1]);
-        TEST_ASSERT_EQUAL( -1.0 , values[2]);
-        TEST_ASSERT_EQUAL( 4.0 , values[3]);
+        TEST_ASSERT_EQUAL(0.0, values[0]);
+        TEST_ASSERT_EQUAL(-1.0, values[1]);
+        TEST_ASSERT_EQUAL(-1.0, values[2]);
+        TEST_ASSERT_EQUAL(4.0, values[3]);
     }
 }
 
@@ -147,25 +146,32 @@ int main(int argc, char **argv)
     MatSetFromOptions(A_block_jacobi);
     MatSetUp(A_block_jacobi);
 
-    dup2(stdout_fd, STDOUT_FILENO);
-    close(stdout_fd);
-
     poisson2DMatrix(&A_block_jacobi, n_mesh_lines, n_mesh_columns, rank_jacobi_block, njacobi_blocks);
 
     RUN_TEST(test_poisson2DMatrix);
 
 
 
+    // sum up the number of test (done, failed, ignored)
+    PetscInt n_test_done = 0;
+    PetscInt n_test_failed = 0;
+    PetscInt n_test_ignored = 0;
+    PetscCall(MPI_Allreduce(&(Unity.NumberOfTests),&n_test_done,1,MPIU_INT,MPI_SUM,MPI_COMM_WORLD));
+    PetscCall(MPI_Allreduce(&(Unity.TestFailures),&n_test_failed,1,MPIU_INT,MPI_SUM,MPI_COMM_WORLD));
+    PetscCall(MPI_Allreduce(&(Unity.TestIgnores),&n_test_ignored,1,MPIU_INT,MPI_SUM,MPI_COMM_WORLD));
+
     PetscCall(PetscFinalize());
 
     // ici pour le code qui permet de ne rien afficher
+    dup2(stdout_fd, STDOUT_FILENO);
+    close(stdout_fd);
 
     if (proc_global_rank == 1) // TODO: faire un print qui prend en compte tous les processeurs
     {
 
-        printf("Number of tests %ld\n", (UNITY_INT)(Unity.NumberOfTests));
-        printf("Number of tests failure %ld\n", (UNITY_INT)(Unity.TestFailures));
-        printf("Number of test ignore %ld\n", (UNITY_INT)(Unity.TestIgnores));
+        printf("Number of tests %d\n", n_test_done);
+        printf("Number of tests failure %d\n", n_test_failed);
+        printf("Number of test ignore %d\n", n_test_ignored);
     }
 
     return 0;
