@@ -4,6 +4,10 @@
 #include <petscts.h>
 
 
+PetscErrorCode create_matrix(MPI_Comm comm,Mat * mat, PetscInt n , PetscInt m, MatType mat_type);
+
+PetscErrorCode create_vector(MPI_Comm comm,Vec *vec, PetscInt n, VecType vec_type);
+
 PetscErrorCode poisson2DMatrix(Mat *A_block_jacobi, PetscInt n_grid_lines, PetscInt n_grid_columns, PetscInt rank_jacobi_block, PetscInt njacobi_blocks);
 
 

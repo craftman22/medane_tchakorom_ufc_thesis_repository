@@ -12,11 +12,8 @@ PetscErrorCode poisson3DMatrix(Mat *A_block_jacobi, PetscInt n_grid_lines, Petsc
   PetscInt global_row;
   PetscInt z_start = 0, z_end = 0;
 
-  
   PetscInt previous_lines = 0;
   PetscScalar v[7]; // Stencil values
-
-
 
   if (rank_jacobi_block == BLOCK_RANK_ZERO)
   {
@@ -88,7 +85,6 @@ PetscErrorCode poisson3DMatrix(Mat *A_block_jacobi, PetscInt n_grid_lines, Petsc
 
         global_row = i + (j * n_grid_lines) + (k * n_grid_lines * n_grid_columns) - previous_lines;
         PetscCall(MatSetValues(*A_block_jacobi, 1, &global_row, ncols, cols, v, INSERT_VALUES));
-  
       }
     }
   }
@@ -96,6 +92,32 @@ PetscErrorCode poisson3DMatrix(Mat *A_block_jacobi, PetscInt n_grid_lines, Petsc
   // Assemble the matrix
   PetscCall(MatAssemblyBegin(*A_block_jacobi, MAT_FINAL_ASSEMBLY));
   PetscCall(MatAssemblyEnd(*A_block_jacobi, MAT_FINAL_ASSEMBLY));
+
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+PetscErrorCode create_matrix(MPI_Comm comm, Mat *mat, PetscInt n, PetscInt m, MatType mat_type)
+{
+  PetscFunctionBeginUser;
+
+  PetscCall(MatCreate(comm, mat));
+  PetscCall(MatSetType(*mat, mat_type));
+  PetscCall(MatSetSizes(*mat, PETSC_DECIDE, PETSC_DECIDE, n, m));
+  PetscCall(MatSetFromOptions(*mat));
+  PetscCall(MatSetUp(*mat));
+
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+PetscErrorCode create_vector(MPI_Comm comm, Vec *vec, PetscInt n, VecType vec_type)
+{
+  PetscFunctionBeginUser;
+
+  PetscCall(VecCreate(comm, vec));
+  PetscCall(VecSetSizes(*vec, PETSC_DECIDE, n));
+  PetscCall(VecSetType(*vec, vec_type));
+  PetscCall(VecSetFromOptions(*vec));
+  PetscCall(VecSetUp(*vec));
 
   PetscFunctionReturn(PETSC_SUCCESS);
 }
