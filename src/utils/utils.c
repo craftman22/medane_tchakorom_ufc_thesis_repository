@@ -3,6 +3,103 @@
 #include <petscts.h>
 #include <petscdmda.h>
 
+PetscErrorCode poisson3DMatrix(Mat *A_block_jacobi, PetscInt n_grid_lines, PetscInt n_grid_columns, PetscInt n_grid_depth, PetscInt rank_jacobi_block, PetscInt njacobi_blocks)
+{
+  PetscFunctionBeginUser;
+
+  PetscInt i, j, k;
+  PetscInt row;
+  PetscInt global_row;
+  PetscInt z_start = 0, z_end = 0;
+
+  
+  PetscInt previous_lines = 0;
+  PetscScalar v[7]; // Stencil values
+
+
+
+  if (rank_jacobi_block == BLOCK_RANK_ZERO)
+  {
+    z_start = 0;
+    z_end = n_grid_columns / 2;
+    previous_lines = 0;
+  }
+
+  if (rank_jacobi_block == BLOCK_RANK_ONE)
+  {
+    z_start = n_grid_columns / 2;
+    z_end = n_grid_columns;
+    previous_lines = ((n_grid_lines * n_grid_columns * n_grid_depth) / 2);
+  }
+
+  // Fill the matrix
+  for (k = z_start; k < z_end; k++)
+  {
+    for (j = 0; j < n_grid_columns; j++)
+    {
+      for (i = 0; i < n_grid_lines; i++)
+      {
+        row = i + (j * n_grid_lines) + (k * n_grid_lines * n_grid_columns);
+        PetscInt ncols = 0;
+        PetscInt cols[7];
+
+        // Center point
+        v[ncols] = 6.0;
+        cols[ncols++] = row;
+
+        // X-direction neighbors
+        if (i > 0)
+        {
+          v[ncols] = -1.0;
+          cols[ncols++] = row - 1;
+        }
+
+        if (i < n_grid_lines - 1)
+        {
+          v[ncols] = -1.0;
+          cols[ncols++] = row + 1;
+        }
+
+        // Y-direction neighbors
+        if (j > 0)
+        {
+          v[ncols] = -1.0;
+          cols[ncols++] = row - n_grid_lines;
+        }
+
+        // Top neighbor
+        if (j < n_grid_columns - 1)
+        {
+          v[ncols] = -1.0;
+          cols[ncols++] = row + n_grid_lines;
+        }
+
+        // Z-direction neighbors
+        if (k > 0)
+        {
+          v[ncols] = -1.0;
+          cols[ncols++] = row - (n_grid_lines * n_grid_columns);
+        }
+        if (k < n_grid_depth - 1)
+        {
+          v[ncols] = -1.0;
+          cols[ncols++] = row + (n_grid_lines * n_grid_columns);
+        }
+
+        global_row = i + (j * n_grid_lines) + (k * n_grid_lines * n_grid_columns) - previous_lines;
+        PetscCall(MatSetValues(*A_block_jacobi, 1, &global_row, ncols, cols, v, INSERT_VALUES));
+  
+      }
+    }
+  }
+
+  // Assemble the matrix
+  PetscCall(MatAssemblyBegin(*A_block_jacobi, MAT_FINAL_ASSEMBLY));
+  PetscCall(MatAssemblyEnd(*A_block_jacobi, MAT_FINAL_ASSEMBLY));
+
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
+
 PetscErrorCode poisson2DMatrix(Mat *A_block_jacobi, PetscInt n_grid_lines, PetscInt n_grid_columns, PetscInt rank_jacobi_block, PetscInt njacobi_blocks)
 {
 
@@ -218,6 +315,31 @@ PetscErrorCode computeFinalResidualNorm(Mat A_block_jacobi, Vec *x, Vec *b_block
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
+PetscErrorCode computeFinalResidualNorm_new(Mat A_block_jacobi, Vec *x, Vec *b_block_jacobi, PetscInt rank_jacobi_block, PetscInt proc_local_rank, PetscScalar *direct_residual_norm)
+{
+  PetscFunctionBegin;
+  Vec direct_local_residual = NULL;
+  PetscScalar direct_local_residual_norm2 = PETSC_MAX_REAL;
+  PetscCall(VecDuplicate(*b_block_jacobi, &direct_local_residual));
+  PetscCall(MatResidual(A_block_jacobi, *b_block_jacobi, *x, direct_local_residual));
+  PetscCall(VecNorm(direct_local_residual, NORM_2, &direct_local_residual_norm2));
+  direct_local_residual_norm2 = direct_local_residual_norm2 * direct_local_residual_norm2;
+  if (proc_local_rank != 0)
+  {
+    direct_local_residual_norm2 = 0.0;
+  }
+
+  *direct_residual_norm = PETSC_MAX_REAL;
+  PetscCallMPI(MPI_Allreduce(&direct_local_residual_norm2, direct_residual_norm, 1, MPIU_SCALAR, MPI_SUM, MPI_COMM_WORLD));
+  *direct_residual_norm = sqrt(*direct_residual_norm);
+
+  PetscCall(VecDestroy(&direct_local_residual));
+
+  // PetscCall(PetscPrintf(MPI_COMM_WORLD, " Total number of iterations: %d   ====  Direct norm 2 ====  %e \n", number_of_iterations, direct_global_residual_norm2));
+
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
+
 PetscErrorCode outer_solver(MPI_Comm comm_jacobi_block, KSP *outer_ksp, Vec x_minimized, Mat R, Mat S, Vec *b_block_jacobi, PetscInt rank_jacobi_block, PetscInt s)
 {
 
@@ -356,54 +478,6 @@ PetscErrorCode inner_solver(KSP ksp, Mat *A_block_jacobi_subMat, Vec *x_block_ja
 
   PetscCall(VecDestroy(&local_right_side_vector));
   PetscCall(VecDestroy(&mat_mult_vec_result));
-
-  PetscFunctionReturn(PETSC_SUCCESS);
-}
-
-PetscErrorCode poisson3DMatrix(Mat *A_block_jacobi, PetscInt n_grid_lines, PetscInt n_grid_columns, PetscInt rank_jacobi_block, PetscInt njacobi_blocks)
-{
-  PetscFunctionBeginUser;
-
-  PetscInt Idx_start = 0, Idx_end = 0;
-  PetscCall(MatGetOwnershipRange(*A_block_jacobi, &Idx_start, &Idx_end));
-
-  PetscInt rowBlockSize = (n_grid_lines * n_grid_columns) / njacobi_blocks;
-  // PetscInt columnBlockSize = n_grid_lines * n_grid_columns;
-
-  PetscInt i, j, J;
-  PetscScalar v;
-  PetscInt Ii_new;
-
-  for (PetscInt Ii = (rank_jacobi_block * rowBlockSize) + Idx_start; Ii < (rank_jacobi_block * rowBlockSize) + Idx_end; Ii++)
-  {
-    v = -1.0, i = Ii / n_grid_columns, j = Ii - i * n_grid_columns;
-    Ii_new = Ii - (rank_jacobi_block * rowBlockSize);
-    if (i > 0)
-    {
-      J = Ii - n_grid_columns;
-      PetscCall(MatSetValue(*A_block_jacobi, Ii_new, J, v, INSERT_VALUES));
-    }
-    if (i < n_grid_lines - 1)
-    {
-      J = Ii + n_grid_columns;
-      PetscCall(MatSetValue(*A_block_jacobi, Ii_new, J, v, INSERT_VALUES));
-    }
-    if (j > 0)
-    {
-      J = Ii - 1;
-      PetscCall(MatSetValue(*A_block_jacobi, Ii_new, J, v, INSERT_VALUES));
-    }
-    if (j < n_grid_columns - 1)
-    {
-      J = Ii + 1;
-      PetscCall(MatSetValue(*A_block_jacobi, Ii_new, J, v, INSERT_VALUES));
-    }
-    v = 4.0;
-    PetscCall(MatSetValue(*A_block_jacobi, Ii_new, Ii, v, INSERT_VALUES));
-  }
-
-  PetscCall(MatAssemblyBegin(*A_block_jacobi, MAT_FINAL_ASSEMBLY));
-  PetscCall(MatAssemblyEnd(*A_block_jacobi, MAT_FINAL_ASSEMBLY));
 
   PetscFunctionReturn(PETSC_SUCCESS);
 }
