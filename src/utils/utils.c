@@ -96,17 +96,16 @@ PetscErrorCode poisson3DMatrix(Mat *A_block_jacobi, PetscInt n_grid_lines, Petsc
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode create_matrix(MPI_Comm comm, Mat *mat, PetscInt n, PetscInt m, MatType mat_type, PetscInt stencil)
+PetscErrorCode create_matrix(MPI_Comm comm, Mat *mat, PetscInt n, PetscInt m, MatType mat_type, PetscInt d_nz, PetscInt o_nz)
 {
   PetscFunctionBeginUser;
-
 
   PetscCall(MatCreate(comm, mat));
   PetscCall(MatSetType(*mat, mat_type));
   PetscCall(MatSetSizes(*mat, PETSC_DECIDE, PETSC_DECIDE, n, m));
   PetscCall(MatSetFromOptions(*mat));
-  MatSeqAIJSetPreallocation(*mat, stencil, NULL);
-  MatMPIAIJSetPreallocation(*mat, stencil, NULL, stencil, NULL);
+  PetscCall(MatSeqAIJSetPreallocation(*mat, d_nz, NULL));
+  PetscCall(MatMPIAIJSetPreallocation(*mat, d_nz, NULL, o_nz, NULL));
   PetscCall(MatSetUp(*mat));
 
   PetscFunctionReturn(PETSC_SUCCESS);

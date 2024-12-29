@@ -4,7 +4,7 @@
 #include <petscts.h>
 
 
-PetscErrorCode create_matrix(MPI_Comm comm,Mat * mat, PetscInt n , PetscInt m, MatType mat_type,PetscInt stencil);
+PetscErrorCode create_matrix(MPI_Comm comm,Mat * mat, PetscInt n , PetscInt m, MatType mat_type,PetscInt d_nz, PetscInt o_nz);
 
 PetscErrorCode create_vector(MPI_Comm comm,Vec *vec, PetscInt n, VecType vec_type);
 
