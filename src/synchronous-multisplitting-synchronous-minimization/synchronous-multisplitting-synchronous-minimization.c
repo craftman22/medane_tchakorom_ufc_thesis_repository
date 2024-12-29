@@ -97,51 +97,16 @@ int main(int argc, char **argv)
 
   for (PetscInt i = 0; i < njacobi_blocks; i++)
   {
-    PetscCall(VecCreate(comm_jacobi_block, &b_block_jacobi[i]));
-    PetscCall(VecSetType(b_block_jacobi[i], VECMPI));
-    PetscCall(VecSetSizes(b_block_jacobi[i], PETSC_DECIDE, jacobi_block_size));
-    PetscCall(VecSetFromOptions(b_block_jacobi[i]));
-    PetscCall(VecSetUp(b_block_jacobi[i]));
+    PetscCall(create_vector(comm_jacobi_block, &b_block_jacobi[i], jacobi_block_size, VECMPI));
+    PetscCall(create_vector(comm_jacobi_block, &x_block_jacobi[i], jacobi_block_size, VECMPI));
   }
 
-  for (PetscInt i = 0; i < njacobi_blocks; i++)
-  {
-    PetscCall(VecCreate(comm_jacobi_block, &x_block_jacobi[i]));
-    PetscCall(VecSetType(x_block_jacobi[i], VECMPI));
-    PetscCall(VecSetSizes(x_block_jacobi[i], PETSC_DECIDE, jacobi_block_size));
-    PetscCall(VecSetType(x_block_jacobi[i], VECMPI));
-    PetscCall(VecSetFromOptions(x_block_jacobi[i]));
-    PetscCall(VecSetUp(x_block_jacobi[i]));
-  }
-
-  PetscCall(MatCreate(comm_jacobi_block, &A_block_jacobi));
-  PetscCall(MatSetType(A_block_jacobi, MATMPIAIJ));
-  PetscCall(MatSetSizes(A_block_jacobi, PETSC_DECIDE, PETSC_DECIDE, n_mesh_points / njacobi_blocks, n_mesh_points));
-  PetscCall(MatSetFromOptions(A_block_jacobi));
-  PetscCall(MatSetUp(A_block_jacobi));
-
-  // Create matrix R
-  PetscCall(MatCreate(comm_jacobi_block, &R));
-  PetscCall(MatSetType(R, MATMPIDENSE));
-  PetscCall(MatSetSizes(R, PETSC_DECIDE, PETSC_DECIDE, jacobi_block_size, s));
-  PetscCall(MatSetFromOptions(R));
-  PetscCall(MatSetUp(R));
-
-  // Create matrix S
-  PetscCall(MatCreate(comm_jacobi_block, &S));
-  PetscCall(MatSetType(S, MATMPIDENSE));
-  PetscCall(MatSetFromOptions(S));
-  PetscCall(MatSetSizes(S, PETSC_DECIDE, PETSC_DECIDE, n_mesh_points, s));
-  PetscCall(MatSetUp(S));
-
-  PetscCall(VecCreate(comm_jacobi_block, &x));
-  PetscCall(VecSetSizes(x, PETSC_DECIDE, n_mesh_points));
-  PetscCall(VecSetType(x, VECMPI));
-  PetscCall(VecSetFromOptions(x));
-  PetscCall(VecSetUp(x));
+  PetscCall(create_matrix(comm_jacobi_block, &A_block_jacobi, n_mesh_points / njacobi_blocks, n_mesh_points, MATMPIAIJ, 5, 5));
+  PetscCall(create_matrix(comm_jacobi_block, &R, jacobi_block_size, s, MATMPIDENSE, jacobi_block_size, s));
+  PetscCall(create_matrix(comm_jacobi_block, &S, n_mesh_points, s, MATMPIDENSE, n_mesh_points, s));
+  PetscCall(create_vector(comm_jacobi_block, &x, n_mesh_points, VECMPI));
 
   PetscCall(VecDuplicate(x, &b));
-
   PetscCall(VecDuplicate(x, &x_initial_guess));
   PetscCall(VecSet(x_initial_guess, ONE));
 
@@ -172,12 +137,9 @@ int main(int argc, char **argv)
   PetscMalloc1((size_t)vec_local_size, &send_buffer);
   PetscMalloc1((size_t)vec_local_size, &rcv_buffer);
 
-  PetscCall(VecCreate(comm_jacobi_block, &x_minimized));
-  PetscCall(VecSetType(x_minimized, VECMPI));
-  PetscCall(VecSetSizes(x_minimized, PETSC_DECIDE, n_mesh_points));
-  PetscCall(VecSetFromOptions(x_minimized));
+
+  PetscCall(create_vector(comm_jacobi_block, &x_minimized, n_mesh_points, VECMPI));
   PetscCall(VecSet(x_minimized, ZERO));
-  PetscCall(VecSetUp(x_minimized));
 
   // Initialize x_minimized_prev_iteration
   PetscCall(VecDuplicate(x_minimized, &x_minimized_prev_iteration));
@@ -327,6 +289,8 @@ int main(int argc, char **argv)
 
   PetscScalar direct_residual_norm;
   PetscCall(computeFinalResidualNorm(A_block_jacobi, &x, b_block_jacobi, rank_jacobi_block, proc_global_rank, &direct_residual_norm));
+
+  PetscCall(printFinalResidualNorm(direct_residual_norm));
 
   PetscCallMPI(MPI_Request_free(&rcv_request));
   PetscCallMPI(MPI_Request_free(&send_request));
