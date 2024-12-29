@@ -106,7 +106,7 @@ PetscErrorCode create_matrix(MPI_Comm comm, Mat *mat, PetscInt n, PetscInt m, Ma
   PetscCall(MatSetFromOptions(*mat));
   PetscCall(MatSeqAIJSetPreallocation(*mat, d_nz, NULL));
   PetscCall(MatMPIAIJSetPreallocation(*mat, d_nz, NULL, o_nz, NULL));
-  PetscCall(MatSetUp(*mat));
+  //PetscCall(MatSetUp(*mat));
 
   PetscFunctionReturn(PETSC_SUCCESS);
 }
@@ -119,7 +119,7 @@ PetscErrorCode create_vector(MPI_Comm comm, Vec *vec, PetscInt n, VecType vec_ty
   PetscCall(VecSetSizes(*vec, PETSC_DECIDE, n));
   PetscCall(VecSetType(*vec, vec_type));
   PetscCall(VecSetFromOptions(*vec));
-  PetscCall(VecSetUp(*vec));
+  //PetscCall(VecSetUp(*vec));
 
   PetscFunctionReturn(PETSC_SUCCESS);
 }
@@ -294,13 +294,14 @@ PetscErrorCode initializeKSP(MPI_Comm comm_jacobi_block, KSP *ksp, Mat operator_
   PetscCall(KSPGetPC(*ksp, &pc));
   PetscCall(PCSetOptionsPrefix(pc, pc_prefix));
 
-  PetscCall(KSPSetInitialGuessNonzero(*ksp, !zero_initial_guess)); // TODO: ici, revoir la conversion du boolean
+  
+  PetscCall(KSPSetInitialGuessNonzero(*ksp, PetscNot(zero_initial_guess)));
 
   PetscCall(PCSetFromOptions(pc));
   PetscCall(KSPSetFromOptions(*ksp));
 
-  PetscCall(PCSetUp(pc));
-  PetscCall(KSPSetUp(*ksp));
+  // PetscCall(PCSetUp(pc));
+  // PetscCall(KSPSetUp(*ksp));
 
   PetscFunctionReturn(PETSC_SUCCESS);
 }
@@ -492,7 +493,7 @@ PetscErrorCode inner_solver(KSP ksp, Mat *A_block_jacobi_subMat, Vec *x_block_ja
   {
     MPI_Comm tmp;
     PetscCall(PetscObjectGetComm((PetscObject)local_right_side_vector, &tmp));
-    PetscCall(PetscPrintf(tmp, "NUMBER OF ITERATIONS : %d  ====== ", n_iterations));
+    PetscCall(PetscPrintf(tmp, "NUMBER OF INNER ITERATIONS = %d  \n", n_iterations));
   }
 
   if (inner_solver_iterations != NULL)
