@@ -365,49 +365,34 @@ PetscErrorCode computeFinalResidualNorm_new(Mat A_block_jacobi, Vec *x, Vec *b_b
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode outer_solver(MPI_Comm comm_jacobi_block, KSP *outer_ksp, Vec x_minimized, Mat R, Mat S, Vec *b_block_jacobi, PetscInt rank_jacobi_block, PetscInt s)
+PetscErrorCode outer_solver(MPI_Comm comm_jacobi_block, KSP *outer_ksp, Vec x_minimized, Mat R, Mat S, Mat R_transpose_R,Vec vec_R_transpose_b_block_jacobi, Vec alpha, Vec *b_block_jacobi, PetscInt rank_jacobi_block, PetscInt s)
 {
 
   PetscFunctionBegin;
 
-  Mat R_transpose_R = NULL;
-  Vec vec_R_transpose_b_block_jacobi = NULL;
 
-  PetscCall(MatTransposeMatMult(R, R, MAT_INITIAL_MATRIX, PETSC_DEFAULT, &R_transpose_R));
-  PetscCall(VecCreate(comm_jacobi_block, &vec_R_transpose_b_block_jacobi));
-  PetscCall(VecSetType(vec_R_transpose_b_block_jacobi, VECMPI));
-  PetscCall(VecSetSizes(vec_R_transpose_b_block_jacobi, PETSC_DECIDE, s));
-  PetscCall(VecSetFromOptions(vec_R_transpose_b_block_jacobi));
-  PetscCall(VecSetUp(vec_R_transpose_b_block_jacobi));
+  PetscCall(MatTransposeMatMult(R, R, MAT_REUSE_MATRIX, PETSC_DETERMINE, &R_transpose_R));
+
   PetscCall(MatMultTranspose(R, b_block_jacobi[rank_jacobi_block], vec_R_transpose_b_block_jacobi));
 
   PetscCall(updateKSPoperators(outer_ksp, R_transpose_R));
 
-  PetscScalar ksp_rtol;
-  PetscInt kps_max_iters;
-  KSPType ksp_type;
-  PCType pc_type;
-  PC pc;
+  // PetscScalar ksp_rtol;
+  // PetscInt kps_max_iters;
+  // KSPType ksp_type;
+  // PCType pc_type;
+  // PC pc;
 
-  PetscCall(KSPGetTolerances(*outer_ksp, &ksp_rtol, NULL, NULL, &kps_max_iters));
-  PetscCall(KSPGetType(*outer_ksp, &ksp_type));
-  PetscCall((KSPGetPC(*outer_ksp, &pc)));
-  PetscCall(PCGetType(pc, &pc_type));
-  PetscCall(KSPGetType(*outer_ksp, &ksp_type));
+  // PetscCall(KSPGetTolerances(*outer_ksp, &ksp_rtol, NULL, NULL, &kps_max_iters));
+  // PetscCall(KSPGetType(*outer_ksp, &ksp_type));
+  // PetscCall((KSPGetPC(*outer_ksp, &pc)));
+  // PetscCall(PCGetType(pc, &pc_type));
+  // PetscCall(KSPGetType(*outer_ksp, &ksp_type));
 
-  Vec alpha = NULL;
-  PetscCall(VecCreate(comm_jacobi_block, &alpha));
-  PetscCall(VecSetType(alpha, VECMPI));
-  PetscCall(VecSetSizes(alpha, PETSC_DECIDE, s));
-  PetscCall(VecSetFromOptions(alpha));
-  PetscCall(VecSetUp(alpha));
+
   PetscCall(KSPSolve(*outer_ksp, vec_R_transpose_b_block_jacobi, alpha));
 
   PetscCall(MatMult(S, alpha, x_minimized));
-
-  PetscCall(MatDestroy(&R_transpose_R));
-  PetscCall(VecDestroy(&vec_R_transpose_b_block_jacobi));
-  PetscCall(VecDestroy(&alpha));
 
   PetscFunctionReturn(PETSC_SUCCESS);
 }
