@@ -509,13 +509,27 @@ PetscErrorCode inner_solver(KSP ksp, Mat *A_block_jacobi_subMat, Vec *x_block_ja
 PetscErrorCode printElapsedTime(double start_time, double end_time)
 {
   PetscFunctionBegin;
-  PetscCall(PetscPrintf(MPI_COMM_WORLD, "Elapsed time:   %f  seconds \n", end_time - start_time));
+  PetscCall(PetscPrintf(MPI_COMM_WORLD, "Elapsed time (iterations):   %f  seconds \n", end_time - start_time));
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode printResidualNorm(PetscScalar approximation_residual_infinity_norm)
 {
   PetscFunctionBegin;
-  PetscCall(PetscPrintf(MPI_COMM_WORLD, "Infinity norm of residual ==== %g \n", approximation_residual_infinity_norm));
+  PetscCall(PetscPrintf(MPI_COMM_WORLD, "Infinity norm of residual (Xk - Xk-1) = %e \n", approximation_residual_infinity_norm));
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+PetscErrorCode printFinalResidualNorm(PetscScalar global_residual_norm)
+{
+  PetscFunctionBegin;
+  PetscCall(PetscPrintf(MPI_COMM_WORLD, "Final residual norm 2 = %e \n", global_residual_norm));
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+PetscErrorCode printTotalNumberOfIterations(PetscInt iterations)
+{
+  PetscFunctionBegin;
+  PetscCall(PetscPrintf(MPI_COMM_WORLD, "Total number of iterations (inner * outer) = %d \n", iterations));
   PetscFunctionReturn(PETSC_SUCCESS);
 }

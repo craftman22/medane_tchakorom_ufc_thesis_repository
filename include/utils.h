@@ -41,6 +41,10 @@ PetscErrorCode printElapsedTime(double start_time, double end_time);
 
 PetscErrorCode printResidualNorm(PetscScalar approximation_residual_infinity_norm);
 
+PetscErrorCode printFinalResidualNorm(PetscScalar global_residual_norm);
+
+PetscErrorCode printTotalNumberOfIterations(PetscInt iterations);
+
 
    
 
