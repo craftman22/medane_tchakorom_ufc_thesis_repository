@@ -121,6 +121,8 @@ int main(int argc, char **argv)
   // Insert non-zeros entries into the operator matrix
   PetscCall(poisson2DMatrix(&A_block_jacobi, n_mesh_lines, n_mesh_columns, rank_jacobi_block, njacobi_blocks));
 
+
+
   PetscCall(divideSubDomainIntoBlockMatrices(comm_jacobi_block, A_block_jacobi, A_block_jacobi_subMat, is_cols_block_jacobi, rank_jacobi_block, njacobi_blocks, proc_local_rank, nprocs_per_jacobi_block));
 
   // creation of a scatter context to manage data transfert between complete b or x , and their part x_block_jacobi[..] and b_block_jacobi[...]
@@ -228,18 +230,19 @@ int main(int argc, char **argv)
     PetscCall(MatAssemblyEnd(S, MAT_FINAL_ASSEMBLY));
 
     PetscCall(MatMatMult(A_block_jacobi, S, MAT_REUSE_MATRIX, PETSC_DETERMINE, &R));
-    // PetscCall(outer_solver(comm_jacobi_block, &outer_ksp, x_minimized, R, S, b_block_jacobi, rank_jacobi_block, s));
     PetscCall(outer_solver(comm_jacobi_block, &outer_ksp, x_minimized, R, S, R_transpose_R, vec_R_transpose_b_block_jacobi, alpha, b_block_jacobi, rank_jacobi_block, s));
 
-    PetscCall(VecWAXPY(approximate_residual, -1, x_minimized_prev_iteration, x_minimized));
+    PetscCall(VecWAXPY(approximate_residual, -1.0, x_minimized_prev_iteration, x_minimized));
 
-    PetscCall(VecNorm(approximate_residual, NORM_INFINITY, &approximation_residual_infinity_norm));
-    PetscCall(printResidualNorm(approximation_residual_infinity_norm));
-
+    PetscCall(VecNormBegin(approximate_residual, NORM_INFINITY, &approximation_residual_infinity_norm));
     PetscCall(VecScatterBegin(scatter_jacobi_vec_part_to_merged_vec[idx_non_current_block], x_minimized, x_block_jacobi[idx_non_current_block], INSERT_VALUES, SCATTER_REVERSE));
     PetscCall(VecScatterEnd(scatter_jacobi_vec_part_to_merged_vec[idx_non_current_block], x_minimized, x_block_jacobi[idx_non_current_block], INSERT_VALUES, SCATTER_REVERSE));
+    PetscCall(VecNormEnd(approximate_residual, NORM_INFINITY, &approximation_residual_infinity_norm));
+
     PetscCall(VecScatterBegin(scatter_jacobi_vec_part_to_merged_vec[rank_jacobi_block], x_minimized, x_block_jacobi[rank_jacobi_block], INSERT_VALUES, SCATTER_REVERSE));
     PetscCall(VecScatterEnd(scatter_jacobi_vec_part_to_merged_vec[rank_jacobi_block], x_minimized, x_block_jacobi[rank_jacobi_block], INSERT_VALUES, SCATTER_REVERSE));
+
+    PetscCall(printResidualNorm(approximation_residual_infinity_norm));
 
     if (PetscApproximateLTE(approximation_residual_infinity_norm, relative_tolerance))
     {
