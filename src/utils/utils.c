@@ -106,7 +106,11 @@ PetscErrorCode create_matrix(MPI_Comm comm, Mat *mat, PetscInt n, PetscInt m, Ma
   PetscCall(MatSetFromOptions(*mat));
   PetscCall(MatSeqAIJSetPreallocation(*mat, d_nz, NULL));
   PetscCall(MatMPIAIJSetPreallocation(*mat, d_nz, NULL, o_nz, NULL));
-  //PetscCall(MatSetUp(*mat));
+  // PetscCall(MatSetOption(*mat, MAT_NEW_NONZERO_LOCATION_ERR, PETSC_TRUE));
+   //PetscCall(MatSetOption(*mat, MAT_NO_OFF_PROC_ENTRIES, PETSC_TRUE));
+
+   
+  //  PetscCall(MatSetUp(*mat));
 
   PetscFunctionReturn(PETSC_SUCCESS);
 }
@@ -119,12 +123,12 @@ PetscErrorCode create_vector(MPI_Comm comm, Vec *vec, PetscInt n, VecType vec_ty
   PetscCall(VecSetSizes(*vec, PETSC_DECIDE, n));
   PetscCall(VecSetType(*vec, vec_type));
   PetscCall(VecSetFromOptions(*vec));
-  //PetscCall(VecSetUp(*vec));
+  // PetscCall(VecSetUp(*vec));
 
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode poisson2DMatrix(Mat *A_block_jacobi, PetscInt n_grid_lines, PetscInt n_grid_columns, PetscInt rank_jacobi_block, PetscInt njacobi_blocks)
+PetscErrorCode poisson2DMatrix_old(Mat *A_block_jacobi, PetscInt n_grid_lines, PetscInt n_grid_columns, PetscInt rank_jacobi_block, PetscInt njacobi_blocks)
 {
 
   PetscFunctionBeginUser;
@@ -201,7 +205,7 @@ PetscErrorCode poisson2DMatrix(Mat *A_block_jacobi, PetscInt n_grid_lines, Petsc
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode poisson2DMatrix_old(Mat *A_block_jacobi, PetscInt n_grid_lines, PetscInt n_grid_columns, PetscInt rank_jacobi_block, PetscInt njacobi_blocks)
+PetscErrorCode poisson2DMatrix(Mat *A_block_jacobi, PetscInt n_grid_lines, PetscInt n_grid_columns, PetscInt rank_jacobi_block, PetscInt njacobi_blocks)
 {
   PetscFunctionBeginUser;
 
@@ -294,7 +298,6 @@ PetscErrorCode initializeKSP(MPI_Comm comm_jacobi_block, KSP *ksp, Mat operator_
   PetscCall(KSPGetPC(*ksp, &pc));
   PetscCall(PCSetOptionsPrefix(pc, pc_prefix));
 
-  
   PetscCall(KSPSetInitialGuessNonzero(*ksp, PetscNot(zero_initial_guess)));
 
   PetscCall(PCSetFromOptions(pc));
@@ -365,11 +368,10 @@ PetscErrorCode computeFinalResidualNorm_new(Mat A_block_jacobi, Vec *x, Vec *b_b
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode outer_solver(MPI_Comm comm_jacobi_block, KSP *outer_ksp, Vec x_minimized, Mat R, Mat S, Mat R_transpose_R,Vec vec_R_transpose_b_block_jacobi, Vec alpha, Vec *b_block_jacobi, PetscInt rank_jacobi_block, PetscInt s)
+PetscErrorCode outer_solver(MPI_Comm comm_jacobi_block, KSP *outer_ksp, Vec x_minimized, Mat R, Mat S, Mat R_transpose_R, Vec vec_R_transpose_b_block_jacobi, Vec alpha, Vec *b_block_jacobi, PetscInt rank_jacobi_block, PetscInt s)
 {
 
   PetscFunctionBegin;
-
 
   PetscCall(MatTransposeMatMult(R, R, MAT_REUSE_MATRIX, PETSC_DETERMINE, &R_transpose_R));
 
@@ -388,7 +390,6 @@ PetscErrorCode outer_solver(MPI_Comm comm_jacobi_block, KSP *outer_ksp, Vec x_mi
   // PetscCall((KSPGetPC(*outer_ksp, &pc)));
   // PetscCall(PCGetType(pc, &pc_type));
   // PetscCall(KSPGetType(*outer_ksp, &ksp_type));
-
 
   PetscCall(KSPSolve(*outer_ksp, vec_R_transpose_b_block_jacobi, alpha));
 
@@ -468,7 +469,8 @@ PetscErrorCode inner_solver(KSP ksp, Mat *A_block_jacobi_subMat, Vec *x_block_ja
 
   PetscInt idx = (rank_jacobi_block == ZERO ? ONE : ZERO);
   PetscCall(MatMult(A_block_jacobi_subMat[idx], x_block_jacobi[idx], mat_mult_vec_result));
-  PetscCall(VecAXPY(local_right_side_vector, -1, mat_mult_vec_result));
+   PetscCall(VecAXPY(local_right_side_vector, -1.0, mat_mult_vec_result));
+  //PetscCall(VecWAXPY(local_right_side_vector, -1.0, mat_mult_vec_result, local_right_side_vector));
 
   PetscCall(KSPSetInitialGuessNonzero(ksp, PETSC_TRUE));
   PetscCall(KSPSolve(ksp, local_right_side_vector, x_block_jacobi[rank_jacobi_block]));
