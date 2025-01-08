@@ -510,6 +510,13 @@ PetscErrorCode printResidualNorm(PetscScalar approximation_residual_infinity_nor
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
+PetscErrorCode printResidualNorm_no_data(PetscScalar approximation_residual_infinity_norm)
+{
+  PetscFunctionBegin;
+  PetscCall(PetscPrintf(MPI_COMM_WORLD, "Infinity norm of residual (Xk - Xk-1) [no new data]= %e \n", approximation_residual_infinity_norm));
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
+
 PetscErrorCode printFinalResidualNorm(PetscScalar global_residual_norm)
 {
   PetscFunctionBegin;
