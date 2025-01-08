@@ -107,9 +107,8 @@ PetscErrorCode create_matrix(MPI_Comm comm, Mat *mat, PetscInt n, PetscInt m, Ma
   PetscCall(MatSeqAIJSetPreallocation(*mat, d_nz, NULL));
   PetscCall(MatMPIAIJSetPreallocation(*mat, d_nz, NULL, o_nz, NULL));
   // PetscCall(MatSetOption(*mat, MAT_NEW_NONZERO_LOCATION_ERR, PETSC_TRUE));
-   //PetscCall(MatSetOption(*mat, MAT_NO_OFF_PROC_ENTRIES, PETSC_TRUE));
+  // PetscCall(MatSetOption(*mat, MAT_NO_OFF_PROC_ENTRIES, PETSC_TRUE));
 
-   
   //  PetscCall(MatSetUp(*mat));
 
   PetscFunctionReturn(PETSC_SUCCESS);
@@ -298,6 +297,9 @@ PetscErrorCode initializeKSP(MPI_Comm comm_jacobi_block, KSP *ksp, Mat operator_
   PetscCall(KSPGetPC(*ksp, &pc));
   PetscCall(PCSetOptionsPrefix(pc, pc_prefix));
 
+  //PetscCall(KSPSetNormType(*ksp,KSP_NORM_UNPRECONDITIONED));
+  //PetscCall(KSPSetPCSide(*ksp, PC_RIGHT));
+
   PetscCall(KSPSetInitialGuessNonzero(*ksp, PetscNot(zero_initial_guess)));
 
   PetscCall(PCSetFromOptions(pc));
@@ -469,8 +471,8 @@ PetscErrorCode inner_solver(KSP ksp, Mat *A_block_jacobi_subMat, Vec *x_block_ja
 
   PetscInt idx = (rank_jacobi_block == ZERO ? ONE : ZERO);
   PetscCall(MatMult(A_block_jacobi_subMat[idx], x_block_jacobi[idx], mat_mult_vec_result));
-   PetscCall(VecAXPY(local_right_side_vector, -1.0, mat_mult_vec_result));
-  //PetscCall(VecWAXPY(local_right_side_vector, -1.0, mat_mult_vec_result, local_right_side_vector));
+  PetscCall(VecAXPY(local_right_side_vector, -1.0, mat_mult_vec_result));
+  // PetscCall(VecWAXPY(local_right_side_vector, -1.0, mat_mult_vec_result, local_right_side_vector));
 
   PetscCall(KSPSetInitialGuessNonzero(ksp, PETSC_TRUE));
   PetscCall(KSPSolve(ksp, local_right_side_vector, x_block_jacobi[rank_jacobi_block]));
@@ -518,6 +520,13 @@ PetscErrorCode printFinalResidualNorm(PetscScalar global_residual_norm)
 PetscErrorCode printTotalNumberOfIterations(PetscInt iterations)
 {
   PetscFunctionBegin;
-  PetscCall(PetscPrintf(MPI_COMM_WORLD, "Total number of iterations (inner * outer) = %d \n", iterations));
+  PetscCall(PetscPrintf(MPI_COMM_WORLD, "Total number of iterations (outer_iterations) = %d \n", iterations));
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+PetscErrorCode printTotalNumberOfIterations_2(PetscInt iterations, PetscInt s)
+{
+  PetscFunctionBegin;
+  PetscCall(PetscPrintf(MPI_COMM_WORLD, "Total number of iterations (outer_iterations * s) = %d * %d = %d \n", iterations, s, s * iterations));
   PetscFunctionReturn(PETSC_SUCCESS);
 }

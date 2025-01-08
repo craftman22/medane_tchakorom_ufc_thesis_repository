@@ -45,6 +45,8 @@ PetscErrorCode printFinalResidualNorm(PetscScalar global_residual_norm);
 
 PetscErrorCode printTotalNumberOfIterations(PetscInt iterations);
 
+PetscErrorCode printTotalNumberOfIterations_2(PetscInt iterations, PetscInt s);
+
 
    
 
