@@ -75,11 +75,7 @@ int main(int argc, char **argv)
   PetscCall(VecSet(x_initial_guess, initial_scalar_value));
 
   // Operator matrix
-  PetscCall(MatCreate(comm_jacobi_block, &A_block_jacobi));
-  PetscCall(MatSetType(A_block_jacobi, MATMPIAIJ));
-  PetscCall(MatSetSizes(A_block_jacobi, PETSC_DECIDE, PETSC_DECIDE, n_mesh_points / njacobi_blocks, n_mesh_points));
-  PetscCall(MatSetFromOptions(A_block_jacobi));
-  PetscCall(MatSetUp(A_block_jacobi));
+  PetscCall(create_matrix(comm_jacobi_block, &A_block_jacobi, n_mesh_points / njacobi_blocks, n_mesh_points, MATMPIAIJ, 5, 5));
 
   // Insert non-zeros values into the sparse operator matrix
   PetscCall(poisson2DMatrix(&A_block_jacobi, n_mesh_lines, n_mesh_columns, rank_jacobi_block, njacobi_blocks));
@@ -94,20 +90,8 @@ int main(int argc, char **argv)
 
   for (PetscInt i = 0; i < njacobi_blocks; i++)
   {
-    PetscCall(VecCreate(comm_jacobi_block, &x_block_jacobi[i]));
-    PetscCall(VecSetSizes(x_block_jacobi[i], PETSC_DECIDE, jacobi_block_size));
-    PetscCall(VecSetType(x_block_jacobi[i], VECMPI));
-    PetscCall(VecSetFromOptions(x_block_jacobi[i]));
-    PetscCall(VecSetUp(x_block_jacobi[i]));
-  }
-
-  for (PetscInt i = 0; i < njacobi_blocks; i++)
-  {
-    PetscCall(VecCreate(comm_jacobi_block, &b_block_jacobi[i]));
-    PetscCall(VecSetSizes(b_block_jacobi[i], PETSC_DECIDE, jacobi_block_size));
-    PetscCall(VecSetType(b_block_jacobi[i], VECMPI));
-    PetscCall(VecSetFromOptions(b_block_jacobi[i]));
-    PetscCall(VecSetUp(b_block_jacobi[i]));
+    PetscCall(create_vector(comm_jacobi_block, &b_block_jacobi[i], jacobi_block_size, VECMPI));
+    PetscCall(create_vector(comm_jacobi_block, &x_block_jacobi[i], jacobi_block_size, VECMPI));
   }
 
   // creation of a scatter context to manage data transfert between complete b or x , and their part x_block_jacobi[..] and b_block_jacobi[...]
@@ -242,11 +226,11 @@ int main(int argc, char **argv)
       PetscCall(VecWAXPY(approximation_residual, -1, x_block_jacobi_previous_iteration, x_block_jacobi[rank_jacobi_block]));
       PetscCall(VecNorm(approximation_residual, NORM_INFINITY, &approximation_residual_infinity_norm));
       PetscCall(VecCopy(x_block_jacobi[rank_jacobi_block], x_block_jacobi_previous_iteration));
-      PetscCall(printResidualNorm(approximation_residual_infinity_norm));
+      PetscCall(printResidualNorm_no_data(approximation_residual_infinity_norm));
     }
     else
     {
-      PetscCall(PetscPrintf(MPI_COMM_WORLD, "Infinity norm of residual  (no new data) ==== %e \n", approximation_residual_infinity_norm));
+       PetscCall(printResidualNorm_no_data(approximation_residual_infinity_norm));
     }
 
     // Setting convergence criteria to true, and then sending convergence signal to process rank 0 on mpi_comm_world
@@ -312,6 +296,7 @@ int main(int argc, char **argv)
   PetscCallMPI(MPI_Barrier(MPI_COMM_WORLD));
   end_time = MPI_Wtime();
   PetscCall(printElapsedTime(start_time, end_time));
+  PetscCall(printTotalNumberOfIterations(number_of_iterations));
 
   PetscCallMPI(MPI_Test(&send_signal_request, &send_signal_flag, MPI_STATUS_IGNORE));
   while (!send_signal_flag)
@@ -379,6 +364,7 @@ int main(int argc, char **argv)
 
   PetscScalar direct_residual_norm;
   PetscCall(computeFinalResidualNorm(A_block_jacobi, &x, b_block_jacobi, rank_jacobi_block, proc_global_rank, &direct_residual_norm));
+  PetscCall(printFinalResidualNorm(direct_residual_norm));
 
   PetscCallMPI(MPI_Request_free(&rcv_request));
   PetscCallMPI(MPI_Request_free(&send_request));
