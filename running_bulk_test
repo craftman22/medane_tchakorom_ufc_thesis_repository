@@ -1,0 +1,3 @@
+#!/bin/bash
+
+timeout -k 5s 180s  bash ./iSolve
