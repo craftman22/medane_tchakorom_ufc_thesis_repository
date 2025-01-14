@@ -262,6 +262,7 @@ int main(int argc, char **argv)
   PetscCallMPI(MPI_Barrier(MPI_COMM_WORLD));
   end_time = MPI_Wtime();
   PetscCall(printElapsedTime(start_time, end_time));
+  PetscCall(printTotalNumberOfIterations_2(number_of_iterations,s));
 
   if (rank_jacobi_block == BLOCK_RANK_ZERO)
   {
