@@ -18,14 +18,14 @@ DEFAULT_ALGORITHM="SM"
 ########################################################
 
 # Number of processes
-DEFAULT_NP=2
+DEFAULT_NP=8
 
 # Number of processes per block
-DEFAULT_NPB=1
+DEFAULT_NPB=4
 
 # Mesh size M x N
-DEFAULT_M=4
-DEFAULT_N=4
+DEFAULT_M=4096
+DEFAULT_N=4096
 
 # Number of inner iterations before minimization
 DEFAULT_S=2
@@ -39,7 +39,7 @@ DEFAULT_RELATIVE_TOLERANCE=1e-3
 # Solver to use for inner iterations (Multisplitting)
 DEFAULT_INNER_SOLVER="gmres"
 # Maximum iterations for inner iterations
-DEFAULT_INNER_MAX_ITERATIONS=1000
+DEFAULT_INNER_MAX_ITERATIONS=100000
 # Relative tolerance used in default determination of convergence
 DEFAULT_INNER_RELATIVE_TOLERANCE=1e-3
 # Preconditionner type for inner ksp
@@ -53,11 +53,11 @@ DEFAULT_INNER_KSP_PREFIX="inner_"
 # Solver to use for outer iterations (Multisplitting)
 DEFAULT_OUTER_SOLVER="cg"
 # Maximum iterations for outer iterations
-DEFAULT_OUTER_MAX_ITERATIONS=1000
+DEFAULT_OUTER_MAX_ITERATIONS=100000
 # Relative tolerance used in default determination of convergence
-DEFAULT_OUTER_RELATIVE_TOLERANCE=1e-3
+DEFAULT_OUTER_RELATIVE_TOLERANCE=1e-20
 # Preconditionner type for outer ksp
-DEFAULT_OUTER_PRECONDITIONNER_TYPE="hypre"
+DEFAULT_OUTER_PRECONDITIONNER_TYPE="none"
 # Inner iterations KSP prefix (DO NOT MODIFY THIS OPTION UNLESS YOU KNOW WHAT YOU ARE DOING)
 DEFAULT_OUTER_KSP_PREFIX="outer_"
 
@@ -67,7 +67,8 @@ DEFAULT_OUTER_KSP_PREFIX="outer_"
 
 #OTHER PETSC RUNTIME OPTIONS
 #DEFAULT_OTHER_PETSC_OPTIONS="-log_view ::ascii_xml"
-DEFAULT_OTHER_PETSC_OPTIONS="-log_view ::ascii_flamegraph"
+#DEFAULT_OTHER_PETSC_OPTIONS="-log_view ::ascii_flamegraph"
+DEFAULT_OTHER_PETSC_OPTIONS="-log_view"
 
 
 
