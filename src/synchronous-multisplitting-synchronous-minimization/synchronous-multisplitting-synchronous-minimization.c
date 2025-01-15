@@ -121,8 +121,6 @@ int main(int argc, char **argv)
   // Insert non-zeros entries into the operator matrix
   PetscCall(poisson2DMatrix(&A_block_jacobi, n_mesh_lines, n_mesh_columns, rank_jacobi_block, njacobi_blocks));
 
-
-
   PetscCall(divideSubDomainIntoBlockMatrices(comm_jacobi_block, A_block_jacobi, A_block_jacobi_subMat, is_cols_block_jacobi, rank_jacobi_block, njacobi_blocks, proc_local_rank, nprocs_per_jacobi_block));
 
   // creation of a scatter context to manage data transfert between complete b or x , and their part x_block_jacobi[..] and b_block_jacobi[...]
@@ -244,6 +242,10 @@ int main(int argc, char **argv)
 
     PetscCall(printResidualNorm(approximation_residual_infinity_norm));
 
+    printf(" processor %d =========== RESIDUAL NORM AT THE END:  %e \n", proc_global_rank, approximation_residual_infinity_norm);
+
+    send_signal = NO_SIGNAL;
+    rcv_signal = NO_SIGNAL;
     if (PetscApproximateLTE(approximation_residual_infinity_norm, relative_tolerance))
     {
       send_signal = CONVERGENCE_SIGNAL;
@@ -257,12 +259,14 @@ int main(int argc, char **argv)
 
     number_of_iterations = number_of_iterations + 1;
 
-  } while (send_signal != CONVERGENCE_SIGNAL && rcv_signal != CONVERGENCE_SIGNAL);
+    printf(" processor %d =========== SEND SIGNAL %d RECEIVED SIGNAL  %d  \n", proc_global_rank, send_signal,rcv_signal);
+
+  } while (send_signal != CONVERGENCE_SIGNAL || rcv_signal != CONVERGENCE_SIGNAL);
 
   PetscCallMPI(MPI_Barrier(MPI_COMM_WORLD));
   end_time = MPI_Wtime();
   PetscCall(printElapsedTime(start_time, end_time));
-  PetscCall(printTotalNumberOfIterations_2(number_of_iterations,s));
+  PetscCall(printTotalNumberOfIterations_2(number_of_iterations, s));
 
   if (rank_jacobi_block == BLOCK_RANK_ZERO)
   {
@@ -298,6 +302,11 @@ int main(int argc, char **argv)
   PetscCall(VecScatterEnd(scatter_jacobi_vec_part_to_merged_vec[rank_jacobi_block], x_block_jacobi[rank_jacobi_block], x, INSERT_VALUES, SCATTER_FORWARD));
   PetscCall(VecScatterBegin(scatter_jacobi_vec_part_to_merged_vec[idx_non_current_block], x_block_jacobi[idx_non_current_block], x, INSERT_VALUES, SCATTER_FORWARD));
   PetscCall(VecScatterEnd(scatter_jacobi_vec_part_to_merged_vec[idx_non_current_block], x_block_jacobi[idx_non_current_block], x, INSERT_VALUES, SCATTER_FORWARD));
+
+  // if (rank_jacobi_block == 1)
+  //   PetscSleep(4);
+
+  //PetscCall(VecView(x, PETSC_VIEWER_STDOUT_(comm_jacobi_block)));
 
   PetscScalar direct_residual_norm;
   PetscCall(computeFinalResidualNorm(A_block_jacobi, &x, b_block_jacobi, rank_jacobi_block, proc_global_rank, &direct_residual_norm));
