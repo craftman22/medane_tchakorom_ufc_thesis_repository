@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Set the duration for the timeout
-TIMEOUT_DURATION="300s"
+TIMEOUT_DURATION="100s"
 
 # Additionnal grace period
 ADDITIONAL_GRACE_PERIOD="5s"
@@ -15,22 +15,22 @@ rm -drf ./tmp/logs/*
 
 
 timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --inner-ksp gmres --inner-pc-type none > ./tmp/logs/SM_log_1.log 2>&1   
-timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --inner-ksp gmres --inner-pc-type hypre > ./tmp/logs/SM_log_2.log 2>&1   
-timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --inner-ksp cg --inner-pc-type none > ./tmp/logs/SM_log_3.log 2>&1   
-timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --inner-ksp cg --inner-pc-type hypre > ./tmp/logs/SM_log_4.log 2>&1   
+# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --inner-ksp gmres --inner-pc-type hypre > ./tmp/logs/SM_log_2.log 2>&1   
+# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --inner-ksp cg --inner-pc-type none > ./tmp/logs/SM_log_3.log 2>&1   
+# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --inner-ksp cg --inner-pc-type hypre > ./tmp/logs/SM_log_4.log 2>&1   
 
 
 
 
 
-timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --alg SMSM --inner-ksp gmres --inner-pc-type none --outer-ksp gmres --outer-pc-type none > ./tmp/logs/SMSM_log_1.log 2>&1   
-timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --alg SMSM --inner-ksp gmres --inner-pc-type hypre --outer-ksp gmres --outer-pc-type none > ./tmp/logs/SMSM_log_2.log 2>&1   
-timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --alg SMSM --inner-ksp gmres --inner-pc-type hypre --outer-ksp gmres --outer-pc-type hypre > ./tmp/logs/SMSM_log_3.log 2>&1   
-timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --alg SMSM --inner-ksp gmres --inner-pc-type none --outer-ksp gmres --outer-pc-type hypre > ./tmp/logs/SMSM_log_4.log 2>&1   
+#timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --alg SMSM --inner-ksp gmres --inner-pc-type none --outer-ksp gmres --outer-pc-type none > ./tmp/logs/SMSM_log_1.log 2>&1   
+# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --alg SMSM --inner-ksp gmres --inner-pc-type hypre --outer-ksp gmres --outer-pc-type none > ./tmp/logs/SMSM_log_2.log 2>&1   
+# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --alg SMSM --inner-ksp gmres --inner-pc-type hypre --outer-ksp gmres --outer-pc-type hypre > ./tmp/logs/SMSM_log_3.log 2>&1   
+# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --alg SMSM --inner-ksp gmres --inner-pc-type none --outer-ksp gmres --outer-pc-type hypre > ./tmp/logs/SMSM_log_4.log 2>&1   
 
-timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --alg SMSM --inner-ksp gmres --inner-pc-type none --outer-ksp cg --outer-pc-type none > ./tmp/logs/SMSM_log_5.log 2>&1   
-timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --alg SMSM --inner-ksp gmres --inner-pc-type hypre --outer-ksp cg --outer-pc-type none > ./tmp/logs/SMSM_log_6.log 2>&1   
-timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --alg SMSM --inner-ksp cg --inner-pc-type hypre --outer-ksp cg --outer-pc-type none > ./tmp/logs/SMSM_log_7.log 2>&1   
-timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --alg SMSM --inner-ksp cg --inner-pc-type none --outer-ksp cg --outer-pc-type none > ./tmp/logs/SMSM_log_8.log 2>&1   
-timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --alg SMSM --inner-ksp cg --inner-pc-type none --outer-ksp cg --outer-pc-type hypre > ./tmp/logs/SMSM_log_9.log 2>&1   
+# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --alg SMSM --inner-ksp gmres --inner-pc-type none --outer-ksp cg --outer-pc-type none > ./tmp/logs/SMSM_log_5.log 2>&1   
+# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --alg SMSM --inner-ksp gmres --inner-pc-type hypre --outer-ksp cg --outer-pc-type none > ./tmp/logs/SMSM_log_6.log 2>&1   
+# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --alg SMSM --inner-ksp cg --inner-pc-type hypre --outer-ksp cg --outer-pc-type none > ./tmp/logs/SMSM_log_7.log 2>&1   
+# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --alg SMSM --inner-ksp cg --inner-pc-type none --outer-ksp cg --outer-pc-type none > ./tmp/logs/SMSM_log_8.log 2>&1   
+# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --alg SMSM --inner-ksp cg --inner-pc-type none --outer-ksp cg --outer-pc-type hypre > ./tmp/logs/SMSM_log_9.log 2>&1   
 
