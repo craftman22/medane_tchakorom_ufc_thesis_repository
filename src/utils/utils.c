@@ -254,6 +254,8 @@ PetscErrorCode poisson2DMatrix(Mat *A_block_jacobi, PetscInt n_grid_lines, Petsc
 
 // Divide the A_block_jacobi matrix into number_of_blocks matrices in the y direction. Resulting matrix has the possesses the same distribution
 // on the processor on the x axis, but different distribution on y-axis
+// TODO: revoir ce code juste pour verifier la decoupe correspond a la logique mathematique
+
 PetscErrorCode divideSubDomainIntoBlockMatrices(MPI_Comm comm_jacobi_block, Mat A_block_jacobi, Mat *A_block_jacobi_subMat, IS *is_cols_block_jacobi, PetscInt rank_jacobi_block, PetscInt njacobi_blocks, PetscInt proc_local_rank, PetscInt nprocs_per_jacobi_block)
 {
   PetscFunctionBeginUser;
@@ -297,8 +299,8 @@ PetscErrorCode initializeKSP(MPI_Comm comm_jacobi_block, KSP *ksp, Mat operator_
   PetscCall(KSPGetPC(*ksp, &pc));
   PetscCall(PCSetOptionsPrefix(pc, pc_prefix));
 
-  //PetscCall(KSPSetNormType(*ksp,KSP_NORM_UNPRECONDITIONED));
-  //PetscCall(KSPSetPCSide(*ksp, PC_RIGHT));
+  // PetscCall(KSPSetNormType(*ksp,KSP_NORM_UNPRECONDITIONED));
+  // PetscCall(KSPSetPCSide(*ksp, PC_RIGHT));
 
   PetscCall(KSPSetInitialGuessNonzero(*ksp, PetscNot(zero_initial_guess)));
 
@@ -535,5 +537,119 @@ PetscErrorCode printTotalNumberOfIterations_2(PetscInt iterations, PetscInt s)
 {
   PetscFunctionBegin;
   PetscCall(PetscPrintf(MPI_COMM_WORLD, "Total number of iterations (outer_iterations * s) = %d * %d = %d \n", iterations, s, s * iterations));
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+PetscErrorCode exchange_R_block_jacobi(Mat R, Mat *R_block_jacobi, PetscInt s, PetscInt n_grid_lines, PetscInt n_grid_columns, PetscInt rank_jacobi_block, PetscInt njacobi_blocks, PetscInt proc_local_rank, PetscInt idx_non_current_block, PetscInt nprocs_per_jacobi_block)
+{
+  PetscFunctionBegin;
+
+  PetscInt rstart, rend, nrows;
+  PetscCall(MatGetOwnershipRange(R_block_jacobi[rank_jacobi_block], &rstart, &rend));
+  PetscCall(MatGetSize(R_block_jacobi[rank_jacobi_block], &nrows, NULL));
+
+  PetscInt nvalues = s * (rend - rstart);
+  PetscInt rows[(rend - rstart)];
+  PetscInt cols[s];
+  PetscScalar values[nvalues];
+  PetscScalar remote_values[nvalues];
+  PetscCall(fillArrayWithIncrement(rows, (rend - rstart), rstart, 1));
+  PetscCall(fillArrayWithIncrement(cols, s, 0, 1));
+  PetscCall(MatGetValues(R_block_jacobi[rank_jacobi_block], (rend - rstart), rows, s, cols, values));
+
+  PetscCall(fillArrayWithIncrement(rows, (rend - rstart), rstart + (rank_jacobi_block * nrows), 1));
+  PetscCall(MatSetValues(R, (rend - rstart), rows, s, cols, values, INSERT_VALUES));
+
+  if (rank_jacobi_block == BLOCK_RANK_ZERO)
+  {
+    PetscCallMPI(MPI_Send(values, nvalues, MPIU_SCALAR, (idx_non_current_block * nprocs_per_jacobi_block) + proc_local_rank, 0, MPI_COMM_WORLD));
+    PetscCallMPI(MPI_Recv(remote_values, nvalues, MPIU_SCALAR, (idx_non_current_block * nprocs_per_jacobi_block) + proc_local_rank, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE));
+  }
+  else if (rank_jacobi_block == BLOCK_RANK_ONE)
+  {
+    PetscCallMPI(MPI_Recv(remote_values, nvalues, MPIU_SCALAR, (idx_non_current_block * nprocs_per_jacobi_block) + proc_local_rank, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE));
+    PetscCallMPI(MPI_Send(values, nvalues, MPIU_SCALAR, (idx_non_current_block * nprocs_per_jacobi_block) + proc_local_rank, 1, MPI_COMM_WORLD));
+  }
+
+  PetscCall(fillArrayWithIncrement(rows, (rend - rstart), rstart + (idx_non_current_block * nrows), 1));
+  PetscCall(MatSetValues(R, (rend - rstart), rows, s, cols, remote_values, INSERT_VALUES));
+
+  PetscCall(MatAssemblyBegin(R, MAT_FINAL_ASSEMBLY));
+  PetscCall(MatAssemblyEnd(R, MAT_FINAL_ASSEMBLY));
+
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+PetscErrorCode fillArrayWithIncrement(int *array, int size, int start, int increment)
+{
+  PetscFunctionBegin;
+  for (int i = 0; i < size; i++)
+  {
+    array[i] = start + i * increment;
+  }
+
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+PetscErrorCode divideRintoSubMatrices(MPI_Comm comm_jacobi_block, Mat R, Mat *R_block_jacobi, PetscInt rank_jacobi_block, PetscInt njacobi_blocks, PetscInt nprocs_per_jacobi_block, PetscInt proc_local_rank)
+{
+
+  PetscFunctionBegin;
+  IS is_rows[njacobi_blocks];
+  PetscInt nrows;
+  PetscCall(MatGetSize(R, &nrows, NULL));
+  PetscInt nrows_half = nrows / 2;
+
+  PetscInt n = nrows_half / nprocs_per_jacobi_block;
+  PetscInt first = proc_local_rank * (nrows_half / nprocs_per_jacobi_block);
+  PetscInt step = 1;
+
+  for (PetscInt i = 0; i < njacobi_blocks; i++)
+  {
+    PetscCall(ISCreateStride(comm_jacobi_block, n, first, step, &is_rows[i])); // TODO: correct this
+  }
+
+  // Extract submatrices
+  for (PetscInt i = 0; i < njacobi_blocks; i++)
+  {
+    PetscCall(MatCreateSubMatrix(R, is_rows[i], NULL, MAT_INITIAL_MATRIX, &R_block_jacobi[i]));
+  }
+
+  // Clean up
+  for (PetscInt i = 0; i < njacobi_blocks; i++)
+  {
+    PetscCall(ISDestroy(&is_rows[i]));
+  }
+
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+PetscErrorCode outer_solver_global_R(MPI_Comm comm_jacobi_block, KSP *outer_ksp, Vec x_minimized, Mat R, Mat S, Mat R_transpose_R, Vec vec_R_transpose_b_block_jacobi, Vec alpha, Vec b, PetscInt rank_jacobi_block, PetscInt s)
+{
+
+  PetscFunctionBegin;
+
+  PetscCall(MatTransposeMatMult(R, R, MAT_REUSE_MATRIX, PETSC_DETERMINE, &R_transpose_R));
+
+  PetscCall(MatMultTranspose(R, b, vec_R_transpose_b_block_jacobi));
+
+  PetscCall(updateKSPoperators(outer_ksp, R_transpose_R));
+
+  // PetscScalar ksp_rtol;
+  // PetscInt kps_max_iters;
+  // KSPType ksp_type;
+  // PCType pc_type;
+  // PC pc;
+
+  // PetscCall(KSPGetTolerances(*outer_ksp, &ksp_rtol, NULL, NULL, &kps_max_iters));
+  // PetscCall(KSPGetType(*outer_ksp, &ksp_type));
+  // PetscCall((KSPGetPC(*outer_ksp, &pc)));
+  // PetscCall(PCGetType(pc, &pc_type));
+  // PetscCall(KSPGetType(*outer_ksp, &ksp_type));
+
+  PetscCall(KSPSolve(*outer_ksp, vec_R_transpose_b_block_jacobi, alpha));
+
+  PetscCall(MatMult(S, alpha, x_minimized));
+
   PetscFunctionReturn(PETSC_SUCCESS);
 }
