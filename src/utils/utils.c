@@ -546,46 +546,58 @@ PetscErrorCode exchange_R_block_jacobi(Mat R, Mat *R_block_jacobi, PetscInt s, P
 
   PetscInt rstart, rend, nrows;
   PetscCall(MatGetOwnershipRange(R_block_jacobi[rank_jacobi_block], &rstart, &rend));
+  // PetscCall(PetscPrintf(MPI_COMM_WORLD, " rstart %d  rend %d\n", rstart, rend));
   PetscCall(MatGetSize(R_block_jacobi[rank_jacobi_block], &nrows, NULL));
 
   PetscInt nvalues = s * (rend - rstart);
-  PetscInt rows[(rend - rstart)];
-  PetscInt cols[s];
-  PetscScalar values[nvalues];
-  PetscScalar remote_values[nvalues];
+  // PetscInt rows[(rend - rstart)];
+  // PetscInt cols[s];
+
+  PetscInt *rows;
+  PetscInt *cols;
+  PetscCall(PetscMalloc1((rend - rstart), &rows));
+  PetscCall(PetscMalloc1(s, &cols));
+
+  PetscScalar * values;
+  PetscScalar * remote_values;
+
+  PetscCall(PetscMalloc1(nvalues, &values));
+  PetscCall(PetscMalloc1(nvalues, &remote_values));
+
   PetscCall(fillArrayWithIncrement(rows, (rend - rstart), rstart, 1));
   PetscCall(fillArrayWithIncrement(cols, s, 0, 1));
-  PetscCall(MatGetValues(R_block_jacobi[rank_jacobi_block], (rend - rstart), rows, s, cols, values));
+    PetscCall(MatGetValues(R_block_jacobi[rank_jacobi_block], (rend - rstart), rows, s, cols, values));
 
-  PetscCall(fillArrayWithIncrement(rows, (rend - rstart), rstart + (rank_jacobi_block * nrows), 1));
-  PetscCall(MatSetValues(R, (rend - rstart), rows, s, cols, values, INSERT_VALUES));
+    PetscCall(fillArrayWithIncrement(rows, (rend - rstart), rstart + (rank_jacobi_block * nrows), 1));
+    PetscCall(MatSetValues(R, (rend - rstart), rows, s, cols, values, INSERT_VALUES));
 
-  if (rank_jacobi_block == BLOCK_RANK_ZERO)
-  {
-    PetscCallMPI(MPI_Send(values, nvalues, MPIU_SCALAR, (idx_non_current_block * nprocs_per_jacobi_block) + proc_local_rank, 0, MPI_COMM_WORLD));
-    PetscCallMPI(MPI_Recv(remote_values, nvalues, MPIU_SCALAR, (idx_non_current_block * nprocs_per_jacobi_block) + proc_local_rank, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE));
-  }
-  else if (rank_jacobi_block == BLOCK_RANK_ONE)
-  {
-    PetscCallMPI(MPI_Recv(remote_values, nvalues, MPIU_SCALAR, (idx_non_current_block * nprocs_per_jacobi_block) + proc_local_rank, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE));
-    PetscCallMPI(MPI_Send(values, nvalues, MPIU_SCALAR, (idx_non_current_block * nprocs_per_jacobi_block) + proc_local_rank, 1, MPI_COMM_WORLD));
-  }
+    if (rank_jacobi_block == BLOCK_RANK_ZERO)
+    {
+      PetscCallMPI(MPI_Send(values, nvalues, MPIU_SCALAR, (idx_non_current_block * nprocs_per_jacobi_block) + proc_local_rank, 0, MPI_COMM_WORLD));
+      PetscCallMPI(MPI_Recv(remote_values, nvalues, MPIU_SCALAR, (idx_non_current_block * nprocs_per_jacobi_block) + proc_local_rank, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE));
+    }
+    else if (rank_jacobi_block == BLOCK_RANK_ONE)
+    {
+      PetscCallMPI(MPI_Recv(remote_values, nvalues, MPIU_SCALAR, (idx_non_current_block * nprocs_per_jacobi_block) + proc_local_rank, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE));
+      PetscCallMPI(MPI_Send(values, nvalues, MPIU_SCALAR, (idx_non_current_block * nprocs_per_jacobi_block) + proc_local_rank, 1, MPI_COMM_WORLD));
+    }
 
-  PetscCall(fillArrayWithIncrement(rows, (rend - rstart), rstart + (idx_non_current_block * nrows), 1));
-  PetscCall(MatSetValues(R, (rend - rstart), rows, s, cols, remote_values, INSERT_VALUES));
+    PetscCall(fillArrayWithIncrement(rows, (rend - rstart), rstart + (idx_non_current_block * nrows), 1));
+   PetscCall(MatSetValues(R, (rend - rstart), rows, s, cols, remote_values, INSERT_VALUES));
 
-  PetscCall(MatAssemblyBegin(R, MAT_FINAL_ASSEMBLY));
-  PetscCall(MatAssemblyEnd(R, MAT_FINAL_ASSEMBLY));
+    PetscCall(MatAssemblyBegin(R, MAT_FINAL_ASSEMBLY));
+    PetscCall(MatAssemblyEnd(R, MAT_FINAL_ASSEMBLY));
 
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode fillArrayWithIncrement(int *array, int size, int start, int increment)
+PetscErrorCode fillArrayWithIncrement(PetscInt *array, PetscInt size, PetscInt start, PetscInt increment)
 {
   PetscFunctionBegin;
-  for (int i = 0; i < size; i++)
+
+  for (PetscInt i = 0; i < size; i++)
   {
-    array[i] = start + i * increment;
+    array[i] = start + (i * increment);
   }
 
   PetscFunctionReturn(PETSC_SUCCESS);
