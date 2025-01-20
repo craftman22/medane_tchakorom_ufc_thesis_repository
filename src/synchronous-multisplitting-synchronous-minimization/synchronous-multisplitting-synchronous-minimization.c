@@ -55,6 +55,7 @@ int main(int argc, char **argv)
   MPI_Request send_request;
 
   // Minimization variables
+
   Mat R = NULL;
   Mat S = NULL;
   PetscInt n_vectors_inserted;
@@ -88,6 +89,7 @@ int main(int argc, char **argv)
 
   IS is_cols_block_jacobi[njacobi_blocks];
   Mat A_block_jacobi_subMat[njacobi_blocks];
+  Mat R_block_jacobi[njacobi_blocks];
   Vec b_block_jacobi[njacobi_blocks];
   Vec x_block_jacobi[njacobi_blocks];
   VecScatter scatter_jacobi_vec_part_to_merged_vec[njacobi_blocks];
@@ -105,7 +107,9 @@ int main(int argc, char **argv)
   }
 
   PetscCall(create_matrix(comm_jacobi_block, &A_block_jacobi, n_mesh_points / njacobi_blocks, n_mesh_points, MATMPIAIJ, 5, 5));
-  PetscCall(create_matrix(comm_jacobi_block, &R, jacobi_block_size, s, MATMPIDENSE, jacobi_block_size, s));
+  // PetscCall(create_matrix(comm_jacobi_block, &R_jacobi_block, jacobi_block_size, s, MATMPIDENSE, jacobi_block_size, s));
+  PetscCall(create_matrix(comm_jacobi_block, &R, n_mesh_points, s, MATMPIDENSE, jacobi_block_size, s));
+  PetscCall(divideRintoSubMatrices(comm_jacobi_block, R, R_block_jacobi, rank_jacobi_block, njacobi_blocks, nprocs_per_jacobi_block, proc_local_rank));
   PetscCall(create_matrix(comm_jacobi_block, &S, n_mesh_points, s, MATMPIDENSE, n_mesh_points, s));
 
   PetscCall(create_matrix(comm_jacobi_block, &R_transpose_R, s, s, MATMPIDENSE, s, s));
@@ -227,8 +231,18 @@ int main(int argc, char **argv)
     PetscCall(MatAssemblyBegin(S, MAT_FINAL_ASSEMBLY));
     PetscCall(MatAssemblyEnd(S, MAT_FINAL_ASSEMBLY));
 
-    PetscCall(MatMatMult(A_block_jacobi, S, MAT_REUSE_MATRIX, PETSC_DETERMINE, &R));
-    PetscCall(outer_solver(comm_jacobi_block, &outer_ksp, x_minimized, R, S, R_transpose_R, vec_R_transpose_b_block_jacobi, alpha, b_block_jacobi, rank_jacobi_block, s));
+    // PetscInt nrows, ncols;
+    // MatGetSize(R_block_jacobi[rank_jacobi_block], &nrows, &ncols);
+    // PetscCall(PetscPrintf(MPI_COMM_WORLD," rows %d cols %d \n", nrows,ncols));
+
+    PetscCall(MatMatMult(A_block_jacobi, S, MAT_REUSE_MATRIX, PETSC_DETERMINE, &R_block_jacobi[rank_jacobi_block]));
+
+    // PetscCall(PetscFinalize());
+    // return 0;
+
+    PetscCall(exchange_R_block_jacobi(R, R_block_jacobi, s, n_mesh_lines, n_mesh_columns, rank_jacobi_block, njacobi_blocks, proc_local_rank, idx_non_current_block, nprocs_per_jacobi_block));
+
+    PetscCall(outer_solver_global_R(comm_jacobi_block, &outer_ksp, x_minimized, R, S, R_transpose_R, vec_R_transpose_b_block_jacobi, alpha, b, rank_jacobi_block, s));
 
     PetscCall(VecWAXPY(approximate_residual, -1.0, x_minimized_prev_iteration, x_minimized));
 
@@ -242,7 +256,7 @@ int main(int argc, char **argv)
 
     PetscCall(printResidualNorm(approximation_residual_infinity_norm));
 
-    printf(" processor %d =========== RESIDUAL NORM AT THE END:  %e \n", proc_global_rank, approximation_residual_infinity_norm);
+    // printf(" processor %d =========== RESIDUAL NORM AT THE END:  %e \n", proc_global_rank, approximation_residual_infinity_norm);
 
     send_signal = NO_SIGNAL;
     rcv_signal = NO_SIGNAL;
@@ -259,7 +273,7 @@ int main(int argc, char **argv)
 
     number_of_iterations = number_of_iterations + 1;
 
-    printf(" processor %d =========== SEND SIGNAL %d RECEIVED SIGNAL  %d  \n", proc_global_rank, send_signal,rcv_signal);
+    // printf(" processor %d =========== SEND SIGNAL %d RECEIVED SIGNAL  %d  \n", proc_global_rank, send_signal, rcv_signal);
 
   } while (send_signal != CONVERGENCE_SIGNAL || rcv_signal != CONVERGENCE_SIGNAL);
 
@@ -306,7 +320,7 @@ int main(int argc, char **argv)
   // if (rank_jacobi_block == 1)
   //   PetscSleep(4);
 
-  //PetscCall(VecView(x, PETSC_VIEWER_STDOUT_(comm_jacobi_block)));
+  // PetscCall(VecView(x, PETSC_VIEWER_STDOUT_(comm_jacobi_block)));
 
   PetscScalar direct_residual_norm;
   PetscCall(computeFinalResidualNorm(A_block_jacobi, &x, b_block_jacobi, rank_jacobi_block, proc_global_rank, &direct_residual_norm));
@@ -324,6 +338,7 @@ int main(int argc, char **argv)
     PetscCall(VecDestroy(&x_block_jacobi[i]));
     PetscCall(VecDestroy(&b_block_jacobi[i]));
     PetscCall(MatDestroy(&A_block_jacobi_subMat[i]));
+    PetscCall(MatDestroy(&R_block_jacobi[i]));
     PetscCall(VecScatterDestroy(&scatter_jacobi_vec_part_to_merged_vec[i]));
     PetscCall(ISDestroy(&is_merged_vec[i]));
   }
@@ -337,7 +352,7 @@ int main(int argc, char **argv)
   PetscCall(VecDestroy(&x_initial_guess));
   PetscCall(MatDestroy(&A_block_jacobi));
   PetscCall(MatDestroy(&S));
-  PetscCall(MatDestroy(&R));
+
   PetscCall(PetscFree(send_buffer));
   PetscCall(PetscFree(rcv_buffer));
   PetscCall(KSPDestroy(&inner_ksp));
