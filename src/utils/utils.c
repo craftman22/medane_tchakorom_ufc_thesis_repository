@@ -20,10 +20,13 @@ PetscLogEvent USER_EVENT1;
 PetscClassId classid1;
 PetscLogDouble user_event_flops1 = 0;
 
-PetscErrorCode foo(Mat *R_block_jacobi, PetscInt rank_jacobi_block, PetscInt idx_non_current_block, PetscInt s)
+PetscErrorCode foo(Mat *R_block_jacobi, PetscInt rank_jacobi_block, PetscInt idx_non_current_block, PetscInt s, PetscInt proc_local_rank)
 {
 
   PetscCall(MatGetOwnershipRange(R_block_jacobi[rank_jacobi_block], &GLOBAL_rstart, &GLOBAL_rend));
+
+  printf(" Rank block %d process %d rstart %d rend %d \n", rank_jacobi_block, proc_local_rank, GLOBAL_rstart, GLOBAL_rend);
+
   PetscCall(MatGetSize(R_block_jacobi[rank_jacobi_block], &GLOBAL_nrows, NULL));
 
   GLOBAL_nvalues = s * (GLOBAL_rend - GLOBAL_rstart);
@@ -137,7 +140,23 @@ PetscErrorCode poisson3DMatrix(Mat *A_block_jacobi, PetscInt n_grid_lines, Petsc
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode create_matrix(MPI_Comm comm, Mat *mat, PetscInt n, PetscInt m, MatType mat_type, PetscInt d_nz, PetscInt o_nz)
+PetscErrorCode create_matrix_dense(MPI_Comm comm, Mat *mat, PetscInt n, PetscInt m, MatType mat_type)
+{
+  PetscFunctionBeginUser;
+
+  PetscCall(MatCreate(comm, mat));
+  PetscCall(MatSetType(*mat, mat_type));
+  PetscCall(MatSetSizes(*mat, PETSC_DECIDE, PETSC_DECIDE, n, m));
+  PetscCall(MatSetFromOptions(*mat));
+  // PetscCall(MatSetOption(*mat, MAT_NEW_NONZERO_LOCATION_ERR, PETSC_TRUE));
+  // PetscCall(MatSetOption(*mat, MAT_NO_OFF_PROC_ENTRIES, PETSC_TRUE));
+
+  //  PetscCall(MatSetUp(*mat));
+
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+PetscErrorCode create_matrix_sparse(MPI_Comm comm, Mat *mat, PetscInt n, PetscInt m, MatType mat_type, PetscInt d_nz, PetscInt o_nz)
 {
   PetscFunctionBeginUser;
 
@@ -638,32 +657,45 @@ PetscErrorCode divideRintoSubMatrices(MPI_Comm comm_jacobi_block, Mat R, Mat *R_
 {
 
   PetscFunctionBegin;
-  IS is_rows[njacobi_blocks];
-  PetscInt nrows;
-  PetscCall(MatGetSize(R, &nrows, NULL));
-  PetscInt nrows_half = nrows / 2;
 
-  PetscInt n = nrows_half / nprocs_per_jacobi_block;
-  PetscInt first = proc_local_rank * (nrows_half / nprocs_per_jacobi_block);
-  PetscInt step = 1;
+  
+    IS is_rows[njacobi_blocks];
+    IS is_cols;
 
-  for (PetscInt i = 0; i < njacobi_blocks; i++)
-  {
-    PetscCall(ISCreateStride(comm_jacobi_block, n, first, step, &is_rows[i])); // TODO: correct this
-  }
+    PetscInt nrows;
+    PetscInt ncols;
+    PetscCall(MatGetSize(R, &nrows, &ncols));
 
-  // Extract submatrices
-  for (PetscInt i = 0; i < njacobi_blocks; i++)
-  {
-    PetscCall(MatCreateSubMatrix(R, is_rows[i], NULL, MAT_INITIAL_MATRIX, &R_block_jacobi[i]));
-  }
+    PetscInt nrows_half = nrows / 2;
 
-  // Clean up
-  for (PetscInt i = 0; i < njacobi_blocks; i++)
-  {
-    PetscCall(ISDestroy(&is_rows[i]));
-  }
+    PetscInt n = (nrows_half / nprocs_per_jacobi_block);
+    PetscInt first = proc_local_rank * (nrows_half / nprocs_per_jacobi_block);
+    PetscInt step = 1;
 
+    for (PetscInt i = 0; i < njacobi_blocks; i++)
+    {
+       //printf("rank jacobi block %d nrows %d ncols %d  first %d step %d\n", rank_jacobi_block, nrows, ncols, (i * nrows_half) + first, step);
+      PetscCall(ISCreateStride(comm_jacobi_block, n, (i * nrows_half) + first, step, &is_rows[i]));
+    }
+    PetscFunctionReturn(PETSC_SUCCESS);
+
+    PetscCall(ISCreateStride(comm_jacobi_block, ncols, 0, step, &is_cols));
+
+    // Extract submatrices
+
+    for (PetscInt i = 0; i < njacobi_blocks; i++)
+    {
+      PetscCall(MatCreateSubMatrix(R, is_rows[i], is_cols, MAT_INITIAL_MATRIX, &R_block_jacobi[i]));
+    }
+
+    // Clean up
+    for (PetscInt i = 0; i < njacobi_blocks; i++)
+    {
+      PetscCall(ISDestroy(&is_rows[i]));
+    }
+
+    PetscCall(ISDestroy(&is_cols));
+  
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
