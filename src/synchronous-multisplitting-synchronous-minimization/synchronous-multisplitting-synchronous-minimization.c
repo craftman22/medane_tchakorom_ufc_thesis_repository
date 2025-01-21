@@ -173,6 +173,12 @@ int main(int argc, char **argv)
   PetscCallMPI(MPI_Send_init(&send_signal, ONE, MPIU_INT, message_dest, TAG_STATUS, MPI_COMM_WORLD, &send_signal_request));
   PetscCallMPI(MPI_Recv_init(&rcv_signal, ONE, MPIU_INT, message_source, TAG_STATUS, MPI_COMM_WORLD, &rcv_signal_request));
 
+  PetscCall(PetscPrintf(comm_jacobi_block, "hello world from block %d\n", rank_jacobi_block));
+
+  PetscCall(foo(R_block_jacobi, rank_jacobi_block, idx_non_current_block, s));
+
+
+
   PetscCallMPI(MPI_Barrier(MPI_COMM_WORLD));
   double start_time, end_time;
   start_time = MPI_Wtime();
@@ -240,8 +246,13 @@ int main(int argc, char **argv)
     // PetscCall(PetscFinalize());
     // return 0;
 
+
+
+
     PetscCall(exchange_R_block_jacobi(R, R_block_jacobi, s, n_mesh_lines, n_mesh_columns, rank_jacobi_block, njacobi_blocks, proc_local_rank, idx_non_current_block, nprocs_per_jacobi_block));
 
+
+    
     PetscCall(outer_solver_global_R(comm_jacobi_block, &outer_ksp, x_minimized, R, S, R_transpose_R, vec_R_transpose_b_block_jacobi, alpha, b, rank_jacobi_block, s));
 
     PetscCall(VecWAXPY(approximate_residual, -1.0, x_minimized_prev_iteration, x_minimized));
@@ -258,24 +269,25 @@ int main(int argc, char **argv)
 
     // printf(" processor %d =========== RESIDUAL NORM AT THE END:  %e \n", proc_global_rank, approximation_residual_infinity_norm);
 
-    send_signal = NO_SIGNAL;
-    rcv_signal = NO_SIGNAL;
+    // send_signal = NO_SIGNAL;
+    // rcv_signal = NO_SIGNAL;
     if (PetscApproximateLTE(approximation_residual_infinity_norm, relative_tolerance))
     {
       send_signal = CONVERGENCE_SIGNAL;
     }
 
-    PetscCall(MPI_Start(&send_signal_request));
-    PetscCall(MPI_Start(&rcv_signal_request));
+    // PetscCall(MPI_Start(&send_signal_request));
+    // PetscCall(MPI_Start(&rcv_signal_request));
 
-    PetscCall(MPI_Wait(&send_signal_request, MPI_STATUS_IGNORE));
-    PetscCall(MPI_Wait(&rcv_signal_request, MPI_STATUS_IGNORE));
+    // PetscCall(MPI_Wait(&send_signal_request, MPI_STATUS_IGNORE));
+    // PetscCall(MPI_Wait(&rcv_signal_request, MPI_STATUS_IGNORE));
 
     number_of_iterations = number_of_iterations + 1;
 
     // printf(" processor %d =========== SEND SIGNAL %d RECEIVED SIGNAL  %d  \n", proc_global_rank, send_signal, rcv_signal);
 
-  } while (send_signal != CONVERGENCE_SIGNAL || rcv_signal != CONVERGENCE_SIGNAL);
+  } while (send_signal != CONVERGENCE_SIGNAL);
+  // } while (send_signal != CONVERGENCE_SIGNAL || rcv_signal != CONVERGENCE_SIGNAL);
 
   PetscCallMPI(MPI_Barrier(MPI_COMM_WORLD));
   end_time = MPI_Wtime();
