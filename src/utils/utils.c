@@ -677,7 +677,7 @@ PetscErrorCode divideRintoSubMatrices(MPI_Comm comm_jacobi_block, Mat R, Mat *R_
        //printf("rank jacobi block %d nrows %d ncols %d  first %d step %d\n", rank_jacobi_block, nrows, ncols, (i * nrows_half) + first, step);
       PetscCall(ISCreateStride(comm_jacobi_block, n, (i * nrows_half) + first, step, &is_rows[i]));
     }
-    PetscFunctionReturn(PETSC_SUCCESS);
+   
 
     PetscCall(ISCreateStride(comm_jacobi_block, ncols, 0, step, &is_cols));
 
