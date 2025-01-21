@@ -71,7 +71,7 @@ int main(int argc, char **argv)
   PetscCall(VecSet(x_initial_guess, initial_scalar_value));
 
   // Operator matrix
-  PetscCall(create_matrix(comm_jacobi_block, &A_block_jacobi, n_mesh_points / njacobi_blocks, n_mesh_points, MATMPIAIJ, 5, 5));
+  PetscCall(create_matrix_sparse(comm_jacobi_block, &A_block_jacobi, n_mesh_points / njacobi_blocks, n_mesh_points, MATMPIAIJ, 5, 5));
 
 
   // Insert non-zeros values into the sparse operator matrix

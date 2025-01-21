@@ -83,7 +83,7 @@ int main(int argc, char **argv)
     PetscCall(VecSet(x_initial_guess, initial_scalar_value));
 
     // Operator matrix
-    PetscCall(create_matrix(comm_jacobi_block, &A_block_jacobi, n_mesh_points / njacobi_blocks, n_mesh_points, MATMPIAIJ, 5, 5));
+    PetscCall(create_matrix_sparse(comm_jacobi_block, &A_block_jacobi, n_mesh_points / njacobi_blocks, n_mesh_points, MATMPIAIJ, 5, 5));
 
     // Insert non-zeros values into the sparse operator matrix
     PetscCall(poisson2DMatrix(&A_block_jacobi, n_mesh_lines, n_mesh_columns, rank_jacobi_block, njacobi_blocks));
@@ -188,9 +188,9 @@ int main(int argc, char **argv)
 
     PetscCall(VecDuplicate(x_minimized, &x_minimized_prev_iteration));
 
-    PetscCall(create_matrix(comm_jacobi_block, &R, jacobi_block_size, s, MATMPIDENSE, jacobi_block_size, s));
-    PetscCall(create_matrix(comm_jacobi_block, &S, n_mesh_points, s, MATMPIDENSE, n_mesh_points, s));
-    PetscCall(create_matrix(comm_jacobi_block, &R_transpose_R, s, s, MATMPIDENSE, s, s));
+    PetscCall(create_matrix_dense(comm_jacobi_block, &R, jacobi_block_size, s, MATMPIDENSE));
+    PetscCall(create_matrix_dense(comm_jacobi_block, &S, n_mesh_points, s, MATMPIDENSE));
+    PetscCall(create_matrix_dense(comm_jacobi_block, &R_transpose_R, s, s, MATMPIDENSE));
 
     PetscCall(create_vector(comm_jacobi_block, &vec_R_transpose_b_block_jacobi, s, VECMPI));
     PetscCall(create_vector(comm_jacobi_block, &alpha, s, VECMPI));

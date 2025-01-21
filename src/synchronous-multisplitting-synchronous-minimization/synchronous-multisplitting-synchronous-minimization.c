@@ -106,13 +106,33 @@ int main(int argc, char **argv)
     PetscCall(create_vector(comm_jacobi_block, &x_block_jacobi[i], jacobi_block_size, VECMPI));
   }
 
-  PetscCall(create_matrix(comm_jacobi_block, &A_block_jacobi, n_mesh_points / njacobi_blocks, n_mesh_points, MATMPIAIJ, 5, 5));
+  PetscCall(create_matrix_sparse(comm_jacobi_block, &A_block_jacobi, n_mesh_points / njacobi_blocks, n_mesh_points, MATMPIAIJ, 5, 5));
   // PetscCall(create_matrix(comm_jacobi_block, &R_jacobi_block, jacobi_block_size, s, MATMPIDENSE, jacobi_block_size, s));
-  PetscCall(create_matrix(comm_jacobi_block, &R, n_mesh_points, s, MATMPIDENSE, jacobi_block_size, s));
-  PetscCall(divideRintoSubMatrices(comm_jacobi_block, R, R_block_jacobi, rank_jacobi_block, njacobi_blocks, nprocs_per_jacobi_block, proc_local_rank));
-  PetscCall(create_matrix(comm_jacobi_block, &S, n_mesh_points, s, MATMPIDENSE, n_mesh_points, s));
+  PetscCall(create_matrix_dense(comm_jacobi_block, &R, n_mesh_points, s, MATMPIDENSE));
+  MatZeroEntries(R);
+  MatAssemblyBegin(R,MAT_FINAL_ASSEMBLY);
+  MatAssemblyEnd(R,MAT_FINAL_ASSEMBLY);
 
-  PetscCall(create_matrix(comm_jacobi_block, &R_transpose_R, s, s, MATMPIDENSE, s, s));
+  PetscCall(divideRintoSubMatrices(comm_jacobi_block, R, R_block_jacobi, rank_jacobi_block, njacobi_blocks, nprocs_per_jacobi_block, proc_local_rank));
+
+
+  // PetscCall(PetscFinalize());
+  // return 0;
+
+
+
+
+
+
+
+
+
+
+
+
+  PetscCall(create_matrix_dense(comm_jacobi_block, &S, n_mesh_points, s, MATMPIDENSE));
+
+  PetscCall(create_matrix_dense(comm_jacobi_block, &R_transpose_R, s, s, MATMPIDENSE));
 
   PetscCall(create_vector(comm_jacobi_block, &vec_R_transpose_b_block_jacobi, s, VECMPI));
   PetscCall(create_vector(comm_jacobi_block, &alpha, s, VECMPI));
@@ -124,6 +144,9 @@ int main(int argc, char **argv)
 
   // Insert non-zeros entries into the operator matrix
   PetscCall(poisson2DMatrix(&A_block_jacobi, n_mesh_lines, n_mesh_columns, rank_jacobi_block, njacobi_blocks));
+
+
+
 
   PetscCall(divideSubDomainIntoBlockMatrices(comm_jacobi_block, A_block_jacobi, A_block_jacobi_subMat, is_cols_block_jacobi, rank_jacobi_block, njacobi_blocks, proc_local_rank, nprocs_per_jacobi_block));
 
@@ -173,15 +196,14 @@ int main(int argc, char **argv)
   PetscCallMPI(MPI_Send_init(&send_signal, ONE, MPIU_INT, message_dest, TAG_STATUS, MPI_COMM_WORLD, &send_signal_request));
   PetscCallMPI(MPI_Recv_init(&rcv_signal, ONE, MPIU_INT, message_source, TAG_STATUS, MPI_COMM_WORLD, &rcv_signal_request));
 
-  PetscCall(PetscPrintf(comm_jacobi_block, "hello world from block %d\n", rank_jacobi_block));
-
-  PetscCall(foo(R_block_jacobi, rank_jacobi_block, idx_non_current_block, s));
-
-
+  PetscCall(foo(R_block_jacobi, rank_jacobi_block, idx_non_current_block, s, proc_local_rank));
 
   PetscCallMPI(MPI_Barrier(MPI_COMM_WORLD));
   double start_time, end_time;
   start_time = MPI_Wtime();
+
+
+
 
   do
   {
@@ -246,13 +268,8 @@ int main(int argc, char **argv)
     // PetscCall(PetscFinalize());
     // return 0;
 
-
-
-
     PetscCall(exchange_R_block_jacobi(R, R_block_jacobi, s, n_mesh_lines, n_mesh_columns, rank_jacobi_block, njacobi_blocks, proc_local_rank, idx_non_current_block, nprocs_per_jacobi_block));
 
-
-    
     PetscCall(outer_solver_global_R(comm_jacobi_block, &outer_ksp, x_minimized, R, S, R_transpose_R, vec_R_transpose_b_block_jacobi, alpha, b, rank_jacobi_block, s));
 
     PetscCall(VecWAXPY(approximate_residual, -1.0, x_minimized_prev_iteration, x_minimized));
