@@ -3,6 +3,10 @@
 #define SHARED_FUNCTIONS_H
 #include <petscts.h>
 
+
+PetscErrorCode foo(Mat *R_block_jacobi, PetscInt rank_jacobi_block, PetscInt idx_non_current_block, PetscInt s);
+
+
 PetscErrorCode create_matrix(MPI_Comm comm, Mat *mat, PetscInt n, PetscInt m, MatType mat_type, PetscInt d_nz, PetscInt o_nz);
 
 PetscErrorCode create_vector(MPI_Comm comm, Vec *vec, PetscInt n, VecType vec_type);

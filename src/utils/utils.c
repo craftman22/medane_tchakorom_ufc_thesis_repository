@@ -3,6 +3,47 @@
 #include <petscts.h>
 #include <petscdmda.h>
 
+PetscInt GLOBAL_rstart, GLOBAL_rend, GLOBAL_nrows;
+PetscInt GLOBAL_nvalues;
+PetscInt *GLOBAL_rows;
+PetscInt *GLOBAL_rows1;
+PetscInt *GLOBAL_rows2;
+PetscInt *GLOBAL_cols;
+PetscScalar *GLOBAL_values;
+PetscScalar *GLOBAL_remote_values;
+
+PetscLogEvent USER_EVENT;
+PetscClassId classid;
+PetscLogDouble user_event_flops = 0;
+
+PetscLogEvent USER_EVENT1;
+PetscClassId classid1;
+PetscLogDouble user_event_flops1 = 0;
+
+PetscErrorCode foo(Mat *R_block_jacobi, PetscInt rank_jacobi_block, PetscInt idx_non_current_block, PetscInt s)
+{
+
+  PetscCall(MatGetOwnershipRange(R_block_jacobi[rank_jacobi_block], &GLOBAL_rstart, &GLOBAL_rend));
+  PetscCall(MatGetSize(R_block_jacobi[rank_jacobi_block], &GLOBAL_nrows, NULL));
+
+  GLOBAL_nvalues = s * (GLOBAL_rend - GLOBAL_rstart);
+
+  PetscCall(PetscMalloc1((GLOBAL_rend - GLOBAL_rstart), &GLOBAL_rows));
+  PetscCall(PetscMalloc1((GLOBAL_rend - GLOBAL_rstart), &GLOBAL_rows1));
+  PetscCall(PetscMalloc1((GLOBAL_rend - GLOBAL_rstart), &GLOBAL_rows2));
+  PetscCall(PetscMalloc1(s, &GLOBAL_cols));
+
+  PetscCall(PetscMalloc1(GLOBAL_nvalues, &GLOBAL_values));
+  PetscCall(PetscMalloc1(GLOBAL_nvalues, &GLOBAL_remote_values));
+
+  PetscCall(fillArrayWithIncrement(GLOBAL_rows, (GLOBAL_rend - GLOBAL_rstart), GLOBAL_rstart, 1));
+  PetscCall(fillArrayWithIncrement(GLOBAL_cols, s, 0, 1));
+  PetscCall(fillArrayWithIncrement(GLOBAL_rows1, (GLOBAL_rend - GLOBAL_rstart), GLOBAL_rstart + (rank_jacobi_block * GLOBAL_nrows), 1));
+  PetscCall(fillArrayWithIncrement(GLOBAL_rows2, (GLOBAL_rend - GLOBAL_rstart), GLOBAL_rstart + (idx_non_current_block * GLOBAL_nrows), 1));
+
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
+
 PetscErrorCode poisson3DMatrix(Mat *A_block_jacobi, PetscInt n_grid_lines, PetscInt n_grid_columns, PetscInt n_grid_depth, PetscInt rank_jacobi_block, PetscInt njacobi_blocks)
 {
   PetscFunctionBeginUser;
@@ -544,49 +585,39 @@ PetscErrorCode exchange_R_block_jacobi(Mat R, Mat *R_block_jacobi, PetscInt s, P
 {
   PetscFunctionBegin;
 
-  PetscInt rstart, rend, nrows;
-  PetscCall(MatGetOwnershipRange(R_block_jacobi[rank_jacobi_block], &rstart, &rend));
-  // PetscCall(PetscPrintf(MPI_COMM_WORLD, " rstart %d  rend %d\n", rstart, rend));
-  PetscCall(MatGetSize(R_block_jacobi[rank_jacobi_block], &nrows, NULL));
+  PetscCall(MatGetValues(R_block_jacobi[rank_jacobi_block], (GLOBAL_rend - GLOBAL_rstart), GLOBAL_rows, s, GLOBAL_cols, GLOBAL_values));
 
-  PetscInt nvalues = s * (rend - rstart);
-  // PetscInt rows[(rend - rstart)];
-  // PetscInt cols[s];
+  PetscClassIdRegister("class name", &classid);
+  PetscLogEventRegister("exc_R", classid, &USER_EVENT);
+  PetscLogEventBegin(USER_EVENT, 0, 0, 0, 0);
 
-  PetscInt *rows;
-  PetscInt *cols;
-  PetscCall(PetscMalloc1((rend - rstart), &rows));
-  PetscCall(PetscMalloc1(s, &cols));
+  PetscCall(MatSetValues(R, (GLOBAL_rend - GLOBAL_rstart), GLOBAL_rows1, s, GLOBAL_cols, GLOBAL_values, INSERT_VALUES));
 
-  PetscScalar * values;
-  PetscScalar * remote_values;
+  if (rank_jacobi_block == BLOCK_RANK_ZERO)
+  {
+    PetscCallMPI(MPI_Send(GLOBAL_values, GLOBAL_nvalues, MPIU_SCALAR, (idx_non_current_block * nprocs_per_jacobi_block) + proc_local_rank, 0, MPI_COMM_WORLD));
+    PetscCallMPI(MPI_Recv(GLOBAL_remote_values, GLOBAL_nvalues, MPIU_SCALAR, (idx_non_current_block * nprocs_per_jacobi_block) + proc_local_rank, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE));
+  }
+  else if (rank_jacobi_block == BLOCK_RANK_ONE)
+  {
+    PetscCallMPI(MPI_Recv(GLOBAL_remote_values, GLOBAL_nvalues, MPIU_SCALAR, (idx_non_current_block * nprocs_per_jacobi_block) + proc_local_rank, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE));
+    PetscCallMPI(MPI_Send(GLOBAL_values, GLOBAL_nvalues, MPIU_SCALAR, (idx_non_current_block * nprocs_per_jacobi_block) + proc_local_rank, 1, MPI_COMM_WORLD));
+  }
 
-  PetscCall(PetscMalloc1(nvalues, &values));
-  PetscCall(PetscMalloc1(nvalues, &remote_values));
+  PetscCall(MatSetValues(R, (GLOBAL_rend - GLOBAL_rstart), GLOBAL_rows2, s, GLOBAL_cols, GLOBAL_remote_values, INSERT_VALUES));
 
-  PetscCall(fillArrayWithIncrement(rows, (rend - rstart), rstart, 1));
-  PetscCall(fillArrayWithIncrement(cols, s, 0, 1));
-    PetscCall(MatGetValues(R_block_jacobi[rank_jacobi_block], (rend - rstart), rows, s, cols, values));
+  PetscLogFlops(user_event_flops);
+  PetscLogEventEnd(USER_EVENT, 0, 0, 0, 0);
 
-    PetscCall(fillArrayWithIncrement(rows, (rend - rstart), rstart + (rank_jacobi_block * nrows), 1));
-    PetscCall(MatSetValues(R, (rend - rstart), rows, s, cols, values, INSERT_VALUES));
+  PetscClassIdRegister("class name1", &classid1);
+  PetscLogEventRegister("ass_R", classid1, &USER_EVENT1);
+  PetscLogEventBegin(USER_EVENT1, 0, 0, 0, 0);
 
-    if (rank_jacobi_block == BLOCK_RANK_ZERO)
-    {
-      PetscCallMPI(MPI_Send(values, nvalues, MPIU_SCALAR, (idx_non_current_block * nprocs_per_jacobi_block) + proc_local_rank, 0, MPI_COMM_WORLD));
-      PetscCallMPI(MPI_Recv(remote_values, nvalues, MPIU_SCALAR, (idx_non_current_block * nprocs_per_jacobi_block) + proc_local_rank, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE));
-    }
-    else if (rank_jacobi_block == BLOCK_RANK_ONE)
-    {
-      PetscCallMPI(MPI_Recv(remote_values, nvalues, MPIU_SCALAR, (idx_non_current_block * nprocs_per_jacobi_block) + proc_local_rank, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE));
-      PetscCallMPI(MPI_Send(values, nvalues, MPIU_SCALAR, (idx_non_current_block * nprocs_per_jacobi_block) + proc_local_rank, 1, MPI_COMM_WORLD));
-    }
+  PetscCall(MatAssemblyBegin(R, MAT_FINAL_ASSEMBLY));
+  PetscCall(MatAssemblyEnd(R, MAT_FINAL_ASSEMBLY));
 
-    PetscCall(fillArrayWithIncrement(rows, (rend - rstart), rstart + (idx_non_current_block * nrows), 1));
-   PetscCall(MatSetValues(R, (rend - rstart), rows, s, cols, remote_values, INSERT_VALUES));
-
-    PetscCall(MatAssemblyBegin(R, MAT_FINAL_ASSEMBLY));
-    PetscCall(MatAssemblyEnd(R, MAT_FINAL_ASSEMBLY));
+  PetscLogFlops(user_event_flops1);
+  PetscLogEventEnd(USER_EVENT1, 0, 0, 0, 0);
 
   PetscFunctionReturn(PETSC_SUCCESS);
 }
