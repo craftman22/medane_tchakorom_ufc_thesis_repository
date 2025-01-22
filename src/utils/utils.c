@@ -25,7 +25,7 @@ PetscErrorCode foo(Mat *R_block_jacobi, PetscInt rank_jacobi_block, PetscInt idx
 
   PetscCall(MatGetOwnershipRange(R_block_jacobi[rank_jacobi_block], &GLOBAL_rstart, &GLOBAL_rend));
 
-  printf(" Rank block %d process %d rstart %d rend %d \n", rank_jacobi_block, proc_local_rank, GLOBAL_rstart, GLOBAL_rend);
+  // printf(" Rank block %d process %d rstart %d rend %d \n", rank_jacobi_block, proc_local_rank, GLOBAL_rstart, GLOBAL_rend);
 
   PetscCall(MatGetSize(R_block_jacobi[rank_jacobi_block], &GLOBAL_nrows, NULL));
 
@@ -658,44 +658,44 @@ PetscErrorCode divideRintoSubMatrices(MPI_Comm comm_jacobi_block, Mat R, Mat *R_
 
   PetscFunctionBegin;
 
-  
-    IS is_rows[njacobi_blocks];
-    IS is_cols;
+  IS is_rows[njacobi_blocks];
 
-    PetscInt nrows;
-    PetscInt ncols;
-    PetscCall(MatGetSize(R, &nrows, &ncols));
+  PetscInt nrows;
+  PetscInt ncols;
+  PetscCall(MatGetSize(R, &nrows, &ncols));
 
-    PetscInt nrows_half = nrows / 2;
+  PetscInt nrows_half = nrows / 2;
 
-    PetscInt n = (nrows_half / nprocs_per_jacobi_block);
-    PetscInt first = proc_local_rank * (nrows_half / nprocs_per_jacobi_block);
-    PetscInt step = 1;
+  PetscInt n = (nrows_half / nprocs_per_jacobi_block);
+  PetscInt first = proc_local_rank * (nrows_half / nprocs_per_jacobi_block);
+  PetscInt step = 1;
 
-    for (PetscInt i = 0; i < njacobi_blocks; i++)
-    {
-       //printf("rank jacobi block %d nrows %d ncols %d  first %d step %d\n", rank_jacobi_block, nrows, ncols, (i * nrows_half) + first, step);
-      PetscCall(ISCreateStride(comm_jacobi_block, n, (i * nrows_half) + first, step, &is_rows[i]));
-    }
-   
+  for (PetscInt i = 0; i < njacobi_blocks; i++)
+  {
+    PetscCall(ISCreateStride(comm_jacobi_block, n, (i * nrows_half) + first, step, &is_rows[i]));
+    // PetscCall(ISCreateStride(comm_jacobi_block, nrows/nprocs_per_jacobi_block, proc_local_rank * (nrows / nprocs_per_jacobi_block), step, &is_rows[i]));
+  }
 
-    PetscCall(ISCreateStride(comm_jacobi_block, ncols, 0, step, &is_cols));
+  // Extract submatrices
 
-    // Extract submatrices
+  for (PetscInt i = 0; i < njacobi_blocks; i++)
+  {
+    PetscCall(MatCreateSubMatrix(R, is_rows[i], NULL, MAT_INITIAL_MATRIX, &R_block_jacobi[i]));
+    PetscCall(MatZeroEntries(R_block_jacobi[i]));
+  }
 
-    for (PetscInt i = 0; i < njacobi_blocks; i++)
-    {
-      PetscCall(MatCreateSubMatrix(R, is_rows[i], is_cols, MAT_INITIAL_MATRIX, &R_block_jacobi[i]));
-    }
+  PetscCall(MatGetSize(R_block_jacobi[0], &nrows, &ncols));
+  printf("rank jacobi block %d nrows %d ncols %d \n", rank_jacobi_block, nrows, ncols);
 
-    // Clean up
-    for (PetscInt i = 0; i < njacobi_blocks; i++)
-    {
-      PetscCall(ISDestroy(&is_rows[i]));
-    }
+  // Clean up
+  for (PetscInt i = 0; i < njacobi_blocks; i++)
+  {
+    PetscCall(ISDestroy(&is_rows[i]));
+  }
 
-    PetscCall(ISDestroy(&is_cols));
-  
+  MatDestroy(&R_block_jacobi[0]);
+  MatDestroy(&R_block_jacobi[1]);
+
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 

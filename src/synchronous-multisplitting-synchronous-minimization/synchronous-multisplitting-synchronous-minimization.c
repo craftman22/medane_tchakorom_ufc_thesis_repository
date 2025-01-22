@@ -116,13 +116,6 @@ int main(int argc, char **argv)
   PetscCall(divideRintoSubMatrices(comm_jacobi_block, R, R_block_jacobi, rank_jacobi_block, njacobi_blocks, nprocs_per_jacobi_block, proc_local_rank));
 
 
-  // PetscCall(PetscFinalize());
-  // return 0;
-
-
-
-
-
 
 
 
@@ -196,7 +189,15 @@ int main(int argc, char **argv)
   PetscCallMPI(MPI_Send_init(&send_signal, ONE, MPIU_INT, message_dest, TAG_STATUS, MPI_COMM_WORLD, &send_signal_request));
   PetscCallMPI(MPI_Recv_init(&rcv_signal, ONE, MPIU_INT, message_source, TAG_STATUS, MPI_COMM_WORLD, &rcv_signal_request));
 
-  PetscCall(foo(R_block_jacobi, rank_jacobi_block, idx_non_current_block, s, proc_local_rank));
+  //PetscCall(foo( R_block_jacobi, rank_jacobi_block, idx_non_current_block, s, proc_local_rank));
+
+  // if(rank_jacobi_block == 0){
+  //   PetscCall(MatView(R_block_jacobi[rank_jacobi_block],PETSC_VIEWER_STDOUT_(comm_jacobi_block)));
+  //   PetscCall(MatView(R,PETSC_VIEWER_STDOUT_(comm_jacobi_block)));
+  // }
+  PetscCall(PetscFinalize());
+  return 0;
+
 
   PetscCallMPI(MPI_Barrier(MPI_COMM_WORLD));
   double start_time, end_time;
