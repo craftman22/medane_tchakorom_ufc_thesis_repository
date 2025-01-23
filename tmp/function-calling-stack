@@ -1,61 +1,83 @@
-Main Stage 1276799
-Main Stage;KSPSolve 13807
-Main Stage;KSPSolve;KSPGMRESOrthog 1051
-Main Stage;KSPSolve;KSPGMRESOrthog;VecMDot 1470921
-Main Stage;KSPSolve;KSPGMRESOrthog;VecMAXPY 968612
-Main Stage;KSPSolve;MatMult 717467
-Main Stage;KSPSolve;MatMult;VecScatterEnd 10292
-Main Stage;KSPSolve;MatMult;VecScatterBegin 3009
-Main Stage;KSPSolve;VecNormalize 499
-Main Stage;KSPSolve;VecNormalize;VecNorm 168735
-Main Stage;KSPSolve;VecNormalize;VecScale 49920
-Main Stage;KSPSolve;PCApply 256
-Main Stage;KSPSolve;PCApply;VecCopy 94148
-Main Stage;KSPSolve;VecMAXPY 80289
-Main Stage;KSPSolve;VecAXPY 18624
-Main Stage;KSPSolve;VecNorm 11125
-Main Stage;KSPSolve;VecCopy 7211
-Main Stage;KSPSolve;VecSet 2405
-Main Stage;ass_R 47
-Main Stage;ass_R;MatAssemblyEnd 465456
-Main Stage;ass_R;MatAssemblyBegin 215818
-Main Stage;ass_R;MatAssemblyBegin;BuildTwoSidedF 101
-Main Stage;ass_R;MatAssemblyBegin;BuildTwoSidedF;BuildTwoSided 168136
-Main Stage;exc_R 369638
-Main Stage;MatMatMultNum 143548
-Main Stage;MatMatMultNum;MatMatMultNum 21287
-Main Stage;VecScatterEnd 87422
-Main Stage;VecScatterEnd;SFUnpack 26581
-Main Stage;MatCreateSubMat 76007
-Main Stage;MatCreateSubMat;MatAssemblyEnd 8323
-Main Stage;MatCreateSubMat;MatAssemblyBegin 26
-Main Stage;MatCreateSubMat;MatAssemblyBegin;BuildTwoSidedF 3
-Main Stage;MatCreateSubMat;MatAssemblyBegin;BuildTwoSidedF;BuildTwoSided 1442
-Main Stage;SFSetUp 13471
-Main Stage;SFSetUp;BuildTwoSided 54675
-Main Stage;VecScatterBegin 29694
-Main Stage;VecScatterBegin;SFPack 18524
-Main Stage;MatAssemblyEnd 37998
-Main Stage;MatAssemblyEnd;SFSetUp 1689
-Main Stage;MatAssemblyEnd;SFSetUp;BuildTwoSided 4360
-Main Stage;MatAssemblyEnd;SFSetGraph 2036
-Main Stage;MatTrnMatMultNum 3931
-Main Stage;MatTrnMatMultNum;MatTrnMatMultNum 36756
-Main Stage;SFSetGraph 39507
-Main Stage;MatMult 24725
-Main Stage;MatMult;VecScatterEnd 8233
-Main Stage;MatMatMultSym 29370
-Main Stage;MatMultTranspose 19740
-Main Stage;MatMultTranspose;SFReduceBegin 2266
-Main Stage;MatAssemblyBegin 199
-Main Stage;MatAssemblyBegin;BuildTwoSidedF 41
-Main Stage;MatAssemblyBegin;BuildTwoSidedF;BuildTwoSided 13529
-Main Stage;VecCopy 10935
-Main Stage;VecWAXPY 10355
-Main Stage;VecReduceComm 7898
-Main Stage;VecAXPY 7597
-Main Stage;VecReduceArith 5278
-Main Stage;MatResidual 230
-Main Stage;MatResidual;MatMult 1593
-Main Stage;VecNorm 1252
-Main Stage;KSPSetUp 845
+Main Stage 376778
+Main Stage;total solving 2817828
+Main Stage;total solving;inner_solver 51565
+Main Stage;total solving;inner_solver;KSPSolve 46948
+Main Stage;total solving;inner_solver;KSPSolve;KSPGMRESOrthog 3146
+Main Stage;total solving;inner_solver;KSPSolve;KSPGMRESOrthog;VecMDot 5375988
+Main Stage;total solving;inner_solver;KSPSolve;KSPGMRESOrthog;VecMAXPY 3099243
+Main Stage;total solving;inner_solver;KSPSolve;MatMult 1989225
+Main Stage;total solving;inner_solver;KSPSolve;MatMult;VecScatterEnd 983397
+Main Stage;total solving;inner_solver;KSPSolve;MatMult;VecScatterBegin 10167
+Main Stage;total solving;inner_solver;KSPSolve;MatMult;VecScatterBegin;SFPack 3183
+Main Stage;total solving;inner_solver;KSPSolve;VecNormalize 2263
+Main Stage;total solving;inner_solver;KSPSolve;VecNormalize;VecNorm 1342218
+Main Stage;total solving;inner_solver;KSPSolve;VecNormalize;VecScale 277330
+Main Stage;total solving;inner_solver;KSPSolve;PCApply 695
+Main Stage;total solving;inner_solver;KSPSolve;PCApply;VecCopy 300815
+Main Stage;total solving;inner_solver;KSPSolve;VecMAXPY 240306
+Main Stage;total solving;inner_solver;KSPSolve;VecAXPY 43258
+Main Stage;total solving;inner_solver;KSPSolve;VecNorm 41585
+Main Stage;total solving;inner_solver;KSPSolve;VecCopy 21021
+Main Stage;total solving;inner_solver;KSPSolve;VecSet 5815
+Main Stage;total solving;inner_solver;MatMult 2086
+Main Stage;total solving;inner_solver;MatMult;VecScatterEnd 96209
+Main Stage;total solving;inner_solver;VecAXPY 17139
+Main Stage;total solving;inner_solver;VecCopy 13910
+Main Stage;total solving;inner_solver;KSPSetUp 3545
+Main Stage;total solving;ass_R 65
+Main Stage;total solving;ass_R;MatAssemblyEnd 2816055
+Main Stage;total solving;ass_R;MatAssemblyBegin 1333792
+Main Stage;total solving;ass_R;MatAssemblyBegin;BuildTwoSidedF 198
+Main Stage;total solving;ass_R;MatAssemblyBegin;BuildTwoSidedF;BuildTwoSided 824144
+Main Stage;total solving;outer_solver 229
+Main Stage;total solving;outer_solver;MatTrnMatMultNum 1480975
+Main Stage;total solving;outer_solver;MatTrnMatMultNum;MatTrnMatMultNum 205955
+Main Stage;total solving;outer_solver;MatTrnMatMultSym 172265
+Main Stage;total solving;outer_solver;MatMultTranspose 51178
+Main Stage;total solving;outer_solver;MatMultTranspose;SFReduceBegin 10563
+Main Stage;total solving;outer_solver;MatMultTranspose;SFSetUp 9174
+Main Stage;total solving;outer_solver;MatMultTranspose;SFReduceEnd 5026
+Main Stage;total solving;outer_solver;MatMult 59420
+Main Stage;total solving;outer_solver;KSPSolve 2470
+Main Stage;total solving;MatMatMultNum 571658
+Main Stage;total solving;MatMatMultNum;MatMatMultNum 88690
+Main Stage;total solving;VecScatterEnd 502588
+Main Stage;total solving;VecScatterEnd;SFUnpack 127133
+Main Stage;total solving;exc_R 458008
+Main Stage;total solving;VecScatterBegin 91848
+Main Stage;total solving;VecScatterBegin;SFPack 141542
+Main Stage;total solving;MatMatMultSym 64521
+Main Stage;total solving;MatAssemblyBegin 94
+Main Stage;total solving;MatAssemblyBegin;BuildTwoSidedF 15
+Main Stage;total solving;MatAssemblyBegin;BuildTwoSidedF;BuildTwoSided 51383
+Main Stage;total solving;VecWAXPY 23851
+Main Stage;total solving;VecReduceComm 23114
+Main Stage;total solving;VecCopy 8521
+Main Stage;total solving;VecReduceArith 3025
+Main Stage;SFSetUp 49641
+Main Stage;SFSetUp;BuildTwoSided 418691
+Main Stage;MatCreateSubMat 361509
+Main Stage;MatCreateSubMat;MatAssemblyEnd 44832
+Main Stage;MatCreateSubMat;MatAssemblyBegin 49
+Main Stage;MatCreateSubMat;MatAssemblyBegin;BuildTwoSidedF 6
+Main Stage;MatCreateSubMat;MatAssemblyBegin;BuildTwoSidedF;BuildTwoSided 21176
+Main Stage;SFSetGraph 323042
+Main Stage;MatAssemblyEnd 159501
+Main Stage;MatAssemblyEnd;SFSetUp 8194
+Main Stage;MatAssemblyEnd;SFSetUp;BuildTwoSided 20463
+Main Stage;MatAssemblyEnd;SFSetGraph 7417
+Main Stage;VecScatterEnd 32319
+Main Stage;VecScatterEnd;SFUnpack 6995
+Main Stage;MatAssemblyBegin 48
+Main Stage;MatAssemblyBegin;BuildTwoSidedF 8
+Main Stage;MatAssemblyBegin;BuildTwoSidedF;BuildTwoSided 30335
+Main Stage;MatResidual 1445
+Main Stage;MatResidual;MatMult 4617
+Main Stage;MatResidual;MatMult;VecScatterEnd 7571
+Main Stage;MatResidual;MatMult;VecScatterBegin 27
+Main Stage;MatResidual;MatMult;VecScatterBegin;SFPack 2831
+Main Stage;VecScatterBegin 5073
+Main Stage;VecScatterBegin;SFPack 10739
+Main Stage;MatMult 3856
+Main Stage;MatMult;VecScatterEnd 4424
+Main Stage;VecNorm 4085
