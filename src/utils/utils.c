@@ -3,50 +3,6 @@
 #include <petscts.h>
 #include <petscdmda.h>
 
-PetscInt GLOBAL_rstart, GLOBAL_rend, GLOBAL_nrows;
-PetscInt GLOBAL_nvalues;
-PetscInt *GLOBAL_rows;
-PetscInt *GLOBAL_rows1;
-PetscInt *GLOBAL_rows2;
-PetscInt *GLOBAL_cols;
-PetscScalar *GLOBAL_values;
-PetscScalar *GLOBAL_remote_values;
-
-PetscLogEvent USER_EVENT;
-PetscClassId classid;
-PetscLogDouble user_event_flops = 0;
-
-PetscLogEvent USER_EVENT1;
-PetscClassId classid1;
-PetscLogDouble user_event_flops1 = 0;
-
-PetscErrorCode foo(Mat *R_block_jacobi, PetscInt rank_jacobi_block, PetscInt idx_non_current_block, PetscInt s, PetscInt proc_local_rank)
-{
-
-  PetscCall(MatGetOwnershipRange(R_block_jacobi[rank_jacobi_block], &GLOBAL_rstart, &GLOBAL_rend));
-
-  // printf(" Rank block %d process %d rstart %d rend %d \n", rank_jacobi_block, proc_local_rank, GLOBAL_rstart, GLOBAL_rend);
-
-  PetscCall(MatGetSize(R_block_jacobi[rank_jacobi_block], &GLOBAL_nrows, NULL));
-
-  GLOBAL_nvalues = s * (GLOBAL_rend - GLOBAL_rstart);
-
-  PetscCall(PetscMalloc1((GLOBAL_rend - GLOBAL_rstart), &GLOBAL_rows));
-  PetscCall(PetscMalloc1((GLOBAL_rend - GLOBAL_rstart), &GLOBAL_rows1));
-  PetscCall(PetscMalloc1((GLOBAL_rend - GLOBAL_rstart), &GLOBAL_rows2));
-  PetscCall(PetscMalloc1(s, &GLOBAL_cols));
-
-  PetscCall(PetscMalloc1(GLOBAL_nvalues, &GLOBAL_values));
-  PetscCall(PetscMalloc1(GLOBAL_nvalues, &GLOBAL_remote_values));
-
-  PetscCall(fillArrayWithIncrement(GLOBAL_rows, (GLOBAL_rend - GLOBAL_rstart), GLOBAL_rstart, 1));
-  PetscCall(fillArrayWithIncrement(GLOBAL_cols, s, 0, 1));
-  PetscCall(fillArrayWithIncrement(GLOBAL_rows1, (GLOBAL_rend - GLOBAL_rstart), GLOBAL_rstart + (rank_jacobi_block * GLOBAL_nrows), 1));
-  PetscCall(fillArrayWithIncrement(GLOBAL_rows2, (GLOBAL_rend - GLOBAL_rstart), GLOBAL_rstart + (idx_non_current_block * GLOBAL_nrows), 1));
-
-  PetscFunctionReturn(PETSC_SUCCESS);
-}
-
 PetscErrorCode poisson3DMatrix(Mat *A_block_jacobi, PetscInt n_grid_lines, PetscInt n_grid_columns, PetscInt n_grid_depth, PetscInt rank_jacobi_block, PetscInt njacobi_blocks)
 {
   PetscFunctionBeginUser;
@@ -600,43 +556,51 @@ PetscErrorCode printTotalNumberOfIterations_2(PetscInt iterations, PetscInt s)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode exchange_R_block_jacobi(Mat R, Mat *R_block_jacobi, PetscInt s, PetscInt n_grid_lines, PetscInt n_grid_columns, PetscInt rank_jacobi_block, PetscInt njacobi_blocks, PetscInt proc_local_rank, PetscInt idx_non_current_block, PetscInt nprocs_per_jacobi_block)
+PetscErrorCode exchange_R_block_jacobi(Mat R, Mat *R_block_jacobi_subMat, PetscInt s, PetscInt n_grid_lines, PetscInt n_grid_columns, PetscInt rank_jacobi_block, PetscInt njacobi_blocks, PetscInt proc_local_rank, PetscInt idx_non_current_block, PetscInt nprocs_per_jacobi_block)
 {
   PetscFunctionBegin;
 
-  PetscCall(MatGetValues(R_block_jacobi[rank_jacobi_block], (GLOBAL_rend - GLOBAL_rstart), GLOBAL_rows, s, GLOBAL_cols, GLOBAL_values));
+  PetscScalar *local_values = NULL;
+  PetscScalar *remote_values = NULL;
+  PetscScalar *local_values_buffer = NULL;
+  PetscScalar *remote_values_buffer = NULL;
+  PetscInt local_size;
+  PetscCall(MatGetLocalSize(R_block_jacobi_subMat[rank_jacobi_block], &local_size, NULL));
+  PetscInt nvalues = s * local_size;
 
-  PetscClassIdRegister("class name", &classid);
-  PetscLogEventRegister("exc_R", classid, &USER_EVENT);
-  PetscLogEventBegin(USER_EVENT, 0, 0, 0, 0);
+  PetscCall(PetscMalloc1(nvalues, &local_values_buffer));
+  PetscCall(PetscMalloc1(nvalues, &remote_values_buffer));
 
-  PetscCall(MatSetValues(R, (GLOBAL_rend - GLOBAL_rstart), GLOBAL_rows1, s, GLOBAL_cols, GLOBAL_values, INSERT_VALUES));
+  // Get submat
+  PetscCall(getHalfSubMatrixFromR(R, R_block_jacobi_subMat, n_grid_lines, n_grid_columns, rank_jacobi_block));
+  PetscCall(MatDenseGetArrayWrite(R_block_jacobi_subMat[rank_jacobi_block], &local_values));
+  PetscCall(PetscArraycpy(local_values_buffer, local_values, nvalues));
+  PetscCall(MatDenseRestoreArrayWrite(R_block_jacobi_subMat[rank_jacobi_block], &local_values));
+  PetscCall(restoreHalfSubMatrixToR(R, R_block_jacobi_subMat, rank_jacobi_block));
+  // restore submat
 
-  if (rank_jacobi_block == BLOCK_RANK_ZERO)
+  if (nvalues > ZERO)
   {
-    PetscCallMPI(MPI_Send(GLOBAL_values, GLOBAL_nvalues, MPIU_SCALAR, (idx_non_current_block * nprocs_per_jacobi_block) + proc_local_rank, 0, MPI_COMM_WORLD));
-    PetscCallMPI(MPI_Recv(GLOBAL_remote_values, GLOBAL_nvalues, MPIU_SCALAR, (idx_non_current_block * nprocs_per_jacobi_block) + proc_local_rank, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE));
+    if (rank_jacobi_block == BLOCK_RANK_ZERO)
+    {
+      PetscCallMPI(MPI_Send(local_values_buffer, nvalues, MPIU_SCALAR, (idx_non_current_block * nprocs_per_jacobi_block) + proc_local_rank, 0, MPI_COMM_WORLD));
+      PetscCallMPI(MPI_Recv(remote_values_buffer, nvalues, MPIU_SCALAR, (idx_non_current_block * nprocs_per_jacobi_block) + proc_local_rank, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE));
+    }
+    else if (rank_jacobi_block == BLOCK_RANK_ONE)
+    {
+      PetscCallMPI(MPI_Recv(remote_values_buffer, nvalues, MPIU_SCALAR, (idx_non_current_block * nprocs_per_jacobi_block) + proc_local_rank, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE));
+      PetscCallMPI(MPI_Send(local_values_buffer, nvalues, MPIU_SCALAR, (idx_non_current_block * nprocs_per_jacobi_block) + proc_local_rank, 1, MPI_COMM_WORLD));
+    }
   }
-  else if (rank_jacobi_block == BLOCK_RANK_ONE)
-  {
-    PetscCallMPI(MPI_Recv(GLOBAL_remote_values, GLOBAL_nvalues, MPIU_SCALAR, (idx_non_current_block * nprocs_per_jacobi_block) + proc_local_rank, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE));
-    PetscCallMPI(MPI_Send(GLOBAL_values, GLOBAL_nvalues, MPIU_SCALAR, (idx_non_current_block * nprocs_per_jacobi_block) + proc_local_rank, 1, MPI_COMM_WORLD));
-  }
 
-  PetscCall(MatSetValues(R, (GLOBAL_rend - GLOBAL_rstart), GLOBAL_rows2, s, GLOBAL_cols, GLOBAL_remote_values, INSERT_VALUES));
+  // Get submat
+  PetscCall(getHalfSubMatrixFromR(R, R_block_jacobi_subMat, n_grid_lines, n_grid_columns, idx_non_current_block));
+  PetscCall(MatDenseGetArrayWrite(R_block_jacobi_subMat[idx_non_current_block], &remote_values));
+  PetscCall(PetscArraycpy(remote_values, remote_values_buffer, nvalues));
+  PetscCall(MatDenseRestoreArrayWrite(R_block_jacobi_subMat[idx_non_current_block], &remote_values));
+  PetscCall(restoreHalfSubMatrixToR(R, R_block_jacobi_subMat, idx_non_current_block));
 
-  PetscLogFlops(user_event_flops);
-  PetscLogEventEnd(USER_EVENT, 0, 0, 0, 0);
-
-  PetscClassIdRegister("class name1", &classid1);
-  PetscLogEventRegister("ass_R", classid1, &USER_EVENT1);
-  PetscLogEventBegin(USER_EVENT1, 0, 0, 0, 0);
-
-  PetscCall(MatAssemblyBegin(R, MAT_FINAL_ASSEMBLY));
-  PetscCall(MatAssemblyEnd(R, MAT_FINAL_ASSEMBLY));
-
-  PetscLogFlops(user_event_flops1);
-  PetscLogEventEnd(USER_EVENT1, 0, 0, 0, 0);
+  // restore submat
 
   PetscFunctionReturn(PETSC_SUCCESS);
 }
@@ -726,5 +690,54 @@ PetscErrorCode outer_solver_global_R(MPI_Comm comm_jacobi_block, KSP *outer_ksp,
 
   PetscCall(MatMult(S, alpha, x_minimized));
 
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+PetscErrorCode create_redistributed_A_block_jacobi(MPI_Comm comm_jacobi_block, Mat A_block_jacobi, Mat *A_block_jacobi_redist, PetscInt nprocs_per_jacobi_block, PetscInt proc_local_rank, PetscInt proc_local_size, PetscInt first_row_owned)
+{
+
+  PetscFunctionBegin;
+
+  IS isrows;
+  PetscInt length_local_own_portion = ZERO;
+  PetscInt first = ZERO;
+  PetscInt step = ZERO;
+
+  if (proc_local_size > ZERO)
+  {
+    length_local_own_portion = proc_local_size;
+    // first = (proc_local_size * proc_local_rank);
+    first = first_row_owned;
+    step = ONE;
+  }
+
+  // printf("rank %d length_local_own_portion %d first %d step %d\n", proc_local_rank, length_local_own_portion, first, step);
+
+  
+  PetscCall(ISCreateStride(comm_jacobi_block, length_local_own_portion, first, step, &isrows));
+
+  ISView(isrows, PETSC_VIEWER_STDOUT_(comm_jacobi_block));
+
+
+  PetscCall(MatCreateSubMatrix(A_block_jacobi, isrows, NULL, MAT_INITIAL_MATRIX, A_block_jacobi_redist));
+
+
+   MatView(*A_block_jacobi_redist, PETSC_VIEWER_STDOUT_(comm_jacobi_block));
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+PetscErrorCode getHalfSubMatrixFromR(Mat R, Mat *R_block_jacobi_subMat, PetscInt n_grid_lines, PetscInt n_grid_columns, PetscInt rank_jacobi_block)
+{
+  PetscFunctionBegin;
+  PetscInt idx_first_row = rank_jacobi_block * ((n_grid_lines * n_grid_columns) / 2);
+  PetscInt idx_one_plus_last_row = (rank_jacobi_block + 1) * ((n_grid_lines * n_grid_columns) / 2);
+  PetscCall(MatDenseGetSubMatrix(R, idx_first_row, idx_one_plus_last_row, PETSC_DECIDE, PETSC_DECIDE, &R_block_jacobi_subMat[rank_jacobi_block]));
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+PetscErrorCode restoreHalfSubMatrixToR(Mat R, Mat *R_block_jacobi_subMat, PetscInt rank_jacobi_block)
+{
+  PetscFunctionBegin;
+  PetscCall(MatDenseRestoreSubMatrix(R, &R_block_jacobi_subMat[rank_jacobi_block]));
   PetscFunctionReturn(PETSC_SUCCESS);
 }

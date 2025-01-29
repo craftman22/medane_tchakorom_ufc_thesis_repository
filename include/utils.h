@@ -51,10 +51,18 @@ PetscErrorCode printTotalNumberOfIterations(PetscInt iterations);
 
 PetscErrorCode printTotalNumberOfIterations_2(PetscInt iterations, PetscInt s);
 
-PetscErrorCode exchange_R_block_jacobi(Mat R, Mat *R_block_jacobi, PetscInt s, PetscInt n_grid_lines, PetscInt n_grid_columns, PetscInt rank_jacobi_block, PetscInt njacobi_blocks, PetscInt proc_local_rank,PetscInt idx_non_current_block ,PetscInt nprocs_per_jacobi_block);
+PetscErrorCode exchange_R_block_jacobi(Mat R, Mat *R_block_jacobi_subMat, PetscInt s, PetscInt n_grid_lines, PetscInt n_grid_columns, PetscInt rank_jacobi_block, PetscInt njacobi_blocks, PetscInt proc_local_rank,PetscInt idx_non_current_block ,PetscInt nprocs_per_jacobi_block);
 
 PetscErrorCode divideRintoSubMatrices(MPI_Comm comm_jacobi_block, Mat R, Mat *R_block_jacobi, PetscInt rank_jacobi_block, PetscInt njacobi_blocks, PetscInt nprocs_per_jacobi_block, PetscInt proc_local_rank);
 
-PetscErrorCode fillArrayWithIncrement(int *array, int size, int start, int increment);
+// PetscErrorCode fillArrayWithIncrement(int *array, int size, int start, int increment);
+
+PetscErrorCode create_redistributed_A_block_jacobi(MPI_Comm comm_jacobi_block, Mat A_block_jacobi, Mat *A_block_jacobi_redist, PetscInt nprocs_per_jacobi_block, PetscInt proc_local_rank, PetscInt proc_local_size, PetscInt idx_first_row_owned);
+
+
+PetscErrorCode getHalfSubMatrixFromR(Mat R, Mat *R_block_jacobi_subMat, PetscInt n_grid_lines, PetscInt n_grid_columns, PetscInt rank_jacobi_block);
+
+PetscErrorCode restoreHalfSubMatrixToR(Mat R, Mat *R_block_jacobi_subMat, PetscInt rank_jacobi_block);
+
 
 #endif // SHARED_FUNCTIONS_H
