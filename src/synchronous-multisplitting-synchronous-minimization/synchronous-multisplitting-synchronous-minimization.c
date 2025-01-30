@@ -5,6 +5,8 @@
 #include "petscdmda.h"
 #include "constants.h"
 #include "utils.h"
+#include "petscdraw.h"
+#include "petscviewer.h"
 
 int main(int argc, char **argv)
 {
@@ -116,21 +118,12 @@ int main(int argc, char **argv)
 
   PetscCall(getHalfSubMatrixFromR(R, R_block_jacobi_subMat, n_mesh_lines, n_mesh_columns, rank_jacobi_block));
 
-  if (rank_jacobi_block == 0)
-  {
-    PetscViewerPushFormat(PETSC_VIEWER_STDOUT_(comm_jacobi_block), PETSC_VIEWER_ASCII_INFO_DETAIL);
-    MatView(A_block_jacobi, PETSC_VIEWER_STDOUT_(comm_jacobi_block));
 
-    // MatView(R_block_jacobi_subMat[rank_jacobi_block], PETSC_VIEWER_STDOUT_(comm_jacobi_block));
-
-    PetscInt redistributed_local_size;
-    PetscInt first_row_owned;
-    PetscCall(MatGetLocalSize(R_block_jacobi_subMat[rank_jacobi_block], &redistributed_local_size, NULL));
-    PetscCall(MatGetOwnershipRange(R_block_jacobi_subMat[rank_jacobi_block], &first_row_owned, NULL));
-    PetscCall(create_redistributed_A_block_jacobi(comm_jacobi_block, A_block_jacobi, &A_block_jacobi_resdistributed, nprocs_per_jacobi_block, proc_local_rank, redistributed_local_size, first_row_owned));
-  }
-  PetscCall(PetscFinalize());
-  return 0;
+  PetscInt redistributed_local_size;
+  PetscInt first_row_owned;
+  PetscCall(MatGetLocalSize(R_block_jacobi_subMat[rank_jacobi_block], &redistributed_local_size, NULL));
+  PetscCall(MatGetOwnershipRange(R_block_jacobi_subMat[rank_jacobi_block], &first_row_owned, NULL));
+  PetscCall(create_redistributed_A_block_jacobi(comm_jacobi_block, A_block_jacobi, &A_block_jacobi_resdistributed, nprocs_per_jacobi_block, proc_local_rank, redistributed_local_size, first_row_owned));
 
   PetscCall(restoreHalfSubMatrixToR(R, R_block_jacobi_subMat, rank_jacobi_block));
 
@@ -343,7 +336,7 @@ int main(int argc, char **argv)
     PetscCall(VecDestroy(&x_block_jacobi[i]));
     PetscCall(VecDestroy(&b_block_jacobi[i]));
     PetscCall(MatDestroy(&A_block_jacobi_subMat[i]));
-    PetscCall(MatDestroy(&R_block_jacobi_subMat[i]));
+    // PetscCall(MatDestroy(&R_block_jacobi_subMat[i]));
     PetscCall(VecScatterDestroy(&scatter_jacobi_vec_part_to_merged_vec[i]));
     PetscCall(ISDestroy(&is_merged_vec[i]));
   }

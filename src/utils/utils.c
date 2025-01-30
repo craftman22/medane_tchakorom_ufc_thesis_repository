@@ -556,7 +556,7 @@ PetscErrorCode printTotalNumberOfIterations_2(PetscInt iterations, PetscInt s)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode exchange_R_block_jacobi(Mat R, Mat *R_block_jacobi_subMat, PetscInt s, PetscInt n_grid_lines, PetscInt n_grid_columns, PetscInt rank_jacobi_block, PetscInt njacobi_blocks, PetscInt proc_local_rank, PetscInt idx_non_current_block, PetscInt nprocs_per_jacobi_block)
+PetscErrorCode exchange_R_block_jacobi_old(Mat R, Mat *R_block_jacobi_subMat, PetscInt s, PetscInt n_grid_lines, PetscInt n_grid_columns, PetscInt rank_jacobi_block, PetscInt njacobi_blocks, PetscInt proc_local_rank, PetscInt idx_non_current_block, PetscInt nprocs_per_jacobi_block)
 {
   PetscFunctionBegin;
 
@@ -601,6 +601,59 @@ PetscErrorCode exchange_R_block_jacobi(Mat R, Mat *R_block_jacobi_subMat, PetscI
   PetscCall(restoreHalfSubMatrixToR(R, R_block_jacobi_subMat, idx_non_current_block));
 
   // restore submat
+
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+PetscErrorCode exchange_R_block_jacobi(Mat R, Mat *R_block_jacobi_subMat, PetscInt s, PetscInt n_grid_lines, PetscInt n_grid_columns, PetscInt rank_jacobi_block, PetscInt njacobi_blocks, PetscInt proc_local_rank, PetscInt idx_non_current_block, PetscInt nprocs_per_jacobi_block)
+{
+  PetscFunctionBegin;
+
+  PetscScalar *local_values = NULL;
+  PetscScalar *remote_values = NULL;
+  PetscScalar *local_values_buffer = NULL;
+  PetscScalar *remote_values_buffer = NULL;
+  PetscInt local_size;
+  PetscCall(MatGetLocalSize(R, &local_size, NULL));
+  PetscInt nvalues = s * local_size;
+
+  PetscCall(PetscMalloc1(nvalues, &local_values_buffer));
+  PetscCall(PetscMalloc1(nvalues, &remote_values_buffer));
+
+  if (rank_jacobi_block == BLOCK_RANK_ZERO)
+  {
+    if (proc_local_rank < (nprocs_per_jacobi_block / 2))
+    {
+      PetscCall(MatDenseGetArrayWrite(R, &local_values));
+      PetscCall(PetscArraycpy(local_values_buffer, local_values, nvalues));
+      PetscCall(MatDenseRestoreArrayWrite(R, &local_values));
+      PetscCallMPI(MPI_Send(local_values_buffer, nvalues, MPIU_SCALAR, (idx_non_current_block * nprocs_per_jacobi_block) + proc_local_rank, 0, MPI_COMM_WORLD));
+    }
+    else
+    {
+      PetscCallMPI(MPI_Recv(remote_values_buffer, nvalues, MPIU_SCALAR, (idx_non_current_block * nprocs_per_jacobi_block) + proc_local_rank, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE));
+      PetscCall(MatDenseGetArrayWrite(R, &remote_values));
+      PetscCall(PetscArraycpy(remote_values, remote_values_buffer, nvalues));
+      PetscCall(MatDenseRestoreArrayWrite(R, &remote_values));
+    }
+  }
+  else if (rank_jacobi_block == BLOCK_RANK_ONE)
+  {
+    if (proc_local_rank < (nprocs_per_jacobi_block / 2))
+    {
+      PetscCallMPI(MPI_Recv(remote_values_buffer, nvalues, MPIU_SCALAR, (idx_non_current_block * nprocs_per_jacobi_block) + proc_local_rank, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE));
+      PetscCall(MatDenseGetArrayWrite(R, &remote_values));
+      PetscCall(PetscArraycpy(remote_values, remote_values_buffer, nvalues));
+      PetscCall(MatDenseRestoreArrayWrite(R, &remote_values));
+    }
+    else
+    {
+      PetscCall(MatDenseGetArrayWrite(R, &local_values));
+      PetscCall(PetscArraycpy(local_values_buffer, local_values, nvalues));
+      PetscCall(MatDenseRestoreArrayWrite(R, &local_values));
+      PetscCallMPI(MPI_Send(local_values_buffer, nvalues, MPIU_SCALAR, (idx_non_current_block * nprocs_per_jacobi_block) + proc_local_rank, 1, MPI_COMM_WORLD));
+    }
+  }
 
   PetscFunctionReturn(PETSC_SUCCESS);
 }
@@ -713,16 +766,13 @@ PetscErrorCode create_redistributed_A_block_jacobi(MPI_Comm comm_jacobi_block, M
 
   // printf("rank %d length_local_own_portion %d first %d step %d\n", proc_local_rank, length_local_own_portion, first, step);
 
-  
   PetscCall(ISCreateStride(comm_jacobi_block, length_local_own_portion, first, step, &isrows));
 
-  ISView(isrows, PETSC_VIEWER_STDOUT_(comm_jacobi_block));
-
+  // ISView(isrows, PETSC_VIEWER_STDOUT_(comm_jacobi_block));
 
   PetscCall(MatCreateSubMatrix(A_block_jacobi, isrows, NULL, MAT_INITIAL_MATRIX, A_block_jacobi_redist));
 
-
-   MatView(*A_block_jacobi_redist, PETSC_VIEWER_STDOUT_(comm_jacobi_block));
+  // MatView(*A_block_jacobi_redist, PETSC_VIEWER_STDOUT_(comm_jacobi_block));
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
