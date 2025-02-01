@@ -25,9 +25,13 @@
 #define TAG_CONTROL 2   // Control or command messages
 #define TAG_TERMINATE 3 // Termination signal
 #define TAG_STATUS 4    // Status or heartbeat messages
+#define TAG_DATA_MINIMIZATION 5
+#define TAG_DATA_OUT_LOOP 6
 
 #define BLOCK_RANK_ZERO 0
 #define BLOCK_RANK_ONE 1
+
+#define CONVERGENCE_COUNT_MIN 5
 
 
 #endif // CONSTANTS_H
