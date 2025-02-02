@@ -221,19 +221,12 @@ int main(int argc, char **argv)
       }
     }
 
-    if (inner_solver_iterations > 0)
-    {
-      PetscCall(VecWAXPY(approximation_residual, -1, x_block_jacobi_previous_iteration, x_block_jacobi[rank_jacobi_block]));
-      PetscCall(VecNorm(approximation_residual, NORM_INFINITY, &approximation_residual_infinity_norm));
-      PetscCall(VecCopy(x_block_jacobi[rank_jacobi_block], x_block_jacobi_previous_iteration));
-      PetscCall(printResidualNorm(approximation_residual_infinity_norm));
-    }
-    else
-    {
-      PetscCall(printResidualNorm_no_data(approximation_residual_infinity_norm));
-    }
+    PetscCall(VecWAXPY(approximation_residual, -1, x_block_jacobi_previous_iteration, x_block_jacobi[rank_jacobi_block]));
+    PetscCall(VecNorm(approximation_residual, NORM_INFINITY, &approximation_residual_infinity_norm));
+    PetscCall(VecCopy(x_block_jacobi[rank_jacobi_block], x_block_jacobi_previous_iteration));
+    PetscCall(printResidualNorm(approximation_residual_infinity_norm));
 
-    if (PetscApproximateLTE(approximation_residual_infinity_norm, relative_tolerance)) // TODO: increase convergence count only on receiving data
+    if (PetscApproximateLTE(approximation_residual_infinity_norm, relative_tolerance)) 
     {
       convergence_count++;
     }
@@ -242,19 +235,21 @@ int main(int argc, char **argv)
       convergence_count = ZERO;
     }
 
-    if (convergence_count >= CONVERGENCE_COUNT_MIN)
+    // if (convergence_count >= CONVERGENCE_COUNT_MIN)
+    // {
+    if (proc_local_rank == ZERO)
     {
-      if (proc_local_rank == ZERO)
-      {
-        // printf("sending ... rank block %d\n", rank_jacobi_block);
+      if (convergence_count >= CONVERGENCE_COUNT_MIN)
         send_signal = CONVERGENCE_SIGNAL;
-        PetscCallMPI(MPI_Test(&send_signal_request, &send_signal_flag, MPI_STATUS_IGNORE));
-        if (send_signal_flag)
-        {
-          PetscCallMPI(MPI_Isend(&send_signal, ONE, MPIU_INT, message_dest, TAG_STATUS, MPI_COMM_WORLD, &send_signal_request));
-        }
+      else
+        send_signal = NO_SIGNAL;
+      PetscCallMPI(MPI_Test(&send_signal_request, &send_signal_flag, MPI_STATUS_IGNORE));
+      if (send_signal_flag)
+      {
+        PetscCallMPI(MPI_Isend(&send_signal, ONE, MPIU_INT, message_dest, TAG_STATUS, MPI_COMM_WORLD, &send_signal_request));
       }
     }
+    // }
 
     if (proc_local_rank == ZERO)
     {
@@ -262,7 +257,6 @@ int main(int argc, char **argv)
       PetscCallMPI(MPI_Iprobe(message_source, TAG_STATUS, MPI_COMM_WORLD, &rcv_signal_flag, &status));
       if (rcv_signal_flag)
       {
-        // printf("receiving ... rank block %d\n", rank_jacobi_block);
         PetscCallMPI(MPI_Irecv(&rcv_signal, ONE, MPIU_INT, message_source, TAG_STATUS, MPI_COMM_WORLD, &rcv_signal_request));
         PetscCallMPI(MPI_Wait(&rcv_signal_request, MPI_STATUS_IGNORE));
       }
@@ -287,14 +281,7 @@ int main(int argc, char **argv)
   PetscCall(printElapsedTime(start_time, end_time));
   PetscCall(printTotalNumberOfIterations(number_of_iterations));
 
-  if (rcv_data_request != MPI_REQUEST_NULL)
-    PetscCallMPI(MPI_Request_free(&rcv_data_request));
-  if (send_data_request != MPI_REQUEST_NULL)
-    PetscCallMPI(MPI_Request_free(&send_data_request));
-  if (send_signal_request != MPI_REQUEST_NULL)
-    PetscCallMPI(MPI_Request_free(&send_signal_request));
-  if (rcv_signal_request != MPI_REQUEST_NULL)
-    PetscCallMPI(MPI_Request_free(&rcv_signal_request));
+
 
   PetscScalar *send_buffer_bis = NULL;
   PetscScalar *rcv_buffer_bis = NULL;
