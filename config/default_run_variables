@@ -12,7 +12,7 @@ DEFAULT_FILENAME="default_run_variables"
 # AM --> Asynchronous Multisplitting with with approximate residual computing (r = Xk - Xk-1)
 # AMAM --> Asynchronous Multisplitting and Asynchronous Minimization with approximate residual computing (r = Xk - Xk-1)
 #DEFAULT_ALGORITHM="SMSM"
-DEFAULT_ALGORITHM="SMSM"
+DEFAULT_ALGORITHM="AM"
 
 ########################################################
 ########################################################
@@ -24,11 +24,11 @@ DEFAULT_NP=8
 DEFAULT_NPB=4
 
 # Mesh size M x N
-DEFAULT_M=4096
-DEFAULT_N=4096
+DEFAULT_M=1024
+DEFAULT_N=1024
 
 # Number of inner iterations before minimization
-DEFAULT_S=6
+DEFAULT_S=4
 
 # RELATIVE ERROR FOR OUTER ITERATIONS
 DEFAULT_RELATIVE_TOLERANCE=1e-3
@@ -51,7 +51,7 @@ DEFAULT_INNER_KSP_PREFIX="inner_"
 ########################################################
 
 # Solver to use for outer iterations (Multisplitting)
-DEFAULT_OUTER_SOLVER="gmres"
+DEFAULT_OUTER_SOLVER="cg"
 # Maximum iterations for outer iterations
 DEFAULT_OUTER_MAX_ITERATIONS=100000
 # Relative tolerance used in default determination of convergence
@@ -68,7 +68,7 @@ DEFAULT_OUTER_KSP_PREFIX="outer_"
 #OTHER PETSC RUNTIME OPTIONS
 #DEFAULT_OTHER_PETSC_OPTIONS="-log_view ::ascii_xml"
 #DEFAULT_OTHER_PETSC_OPTIONS="-log_view ::ascii_flamegraph"
-DEFAULT_OTHER_PETSC_OPTIONS="-log_view"
+DEFAULT_OTHER_PETSC_OPTIONS=""
 
 
 
