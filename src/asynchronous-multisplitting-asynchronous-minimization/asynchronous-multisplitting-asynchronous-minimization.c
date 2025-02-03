@@ -188,12 +188,14 @@ int main(int argc, char **argv)
     PetscCall(VecDuplicate(x_minimized, &x_minimized_prev_iteration));
 
     PetscCall(VecGetLocalSize(x, &x_local_size));
-    vec_local_idx = (PetscInt *)malloc(x_local_size * sizeof(PetscInt));
+    // vec_local_idx = (PetscInt *)malloc(x_local_size * sizeof(PetscInt));
+    PetscMalloc1(x_local_size,&vec_local_idx);
     for (PetscInt i = 0; i < (x_local_size); i++)
     {
         vec_local_idx[i] = (proc_local_rank * x_local_size) + i;
     }
-    vector_to_insert_into_S = (PetscScalar *)malloc(x_local_size * sizeof(PetscScalar));
+    // vector_to_insert_into_S = (PetscScalar *)malloc(x_local_size * sizeof(PetscScalar));
+    PetscMalloc1(x_local_size,&vector_to_insert_into_S);
 
     PetscCall(VecDuplicate(x_minimized, &approximate_residual));
 
@@ -456,7 +458,10 @@ int main(int argc, char **argv)
         PetscCall(ISDestroy(&is_merged_vec[i]));
     }
 
-    free(vector_to_insert_into_S);
+    
+    PetscFree(vec_local_idx);
+    PetscFree(vector_to_insert_into_S);
+    PetscCall(VecDestroy(&x_minimized_prev_iteration));
     PetscCall(VecDestroy(&approximate_residual));
     PetscCall(ISDestroy(&is_jacobi_vec_parts));
     PetscCall(VecDestroy(&x));
@@ -464,11 +469,14 @@ int main(int argc, char **argv)
     PetscCall(VecDestroy(&b));
     PetscCall(VecDestroy(&x_initial_guess));
     PetscCall(MatDestroy(&A_block_jacobi));
+    PetscCall(MatDestroy(&A_block_jacobi_resdistributed));
     PetscCall(MatDestroy(&S));
+    PetscCall(MatDestroy(&R));
 
     PetscCall(PetscFree(send_multisplitting_data_buffer));
     PetscCall(PetscFree(rcv_multisplitting_data_buffer));
     PetscCall(KSPDestroy(&inner_ksp));
+    PetscCall(KSPDestroy(&outer_ksp));
     PetscCall(MatDestroy(&R_transpose_R));
     PetscCall(VecDestroy(&vec_R_transpose_b_block_jacobi));
     PetscCall(VecDestroy(&alpha));
