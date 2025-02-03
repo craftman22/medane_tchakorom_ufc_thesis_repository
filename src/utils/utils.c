@@ -773,6 +773,8 @@ PetscErrorCode create_redistributed_A_block_jacobi(MPI_Comm comm_jacobi_block, M
   PetscCall(MatCreateSubMatrix(A_block_jacobi, isrows, NULL, MAT_INITIAL_MATRIX, A_block_jacobi_redist));
 
   // MatView(*A_block_jacobi_redist, PETSC_VIEWER_STDOUT_(comm_jacobi_block));
+
+  PetscCall(ISDestroy(&isrows));
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
