@@ -190,6 +190,7 @@ int main(int argc, char **argv)
   PetscCall(ISDestroy(&is_jacobi_vec_parts));
   for (PetscInt i = 0; i < njacobi_blocks; i++)
   {
+    PetscCall(ISDestroy(&is_merged_vec[i]));
     PetscCall(ISDestroy(&is_cols_block_jacobi[i]));
     PetscCall(VecDestroy(&x_block_jacobi[i]));
     PetscCall(VecDestroy(&b_block_jacobi[i]));
@@ -201,6 +202,7 @@ int main(int argc, char **argv)
   PetscCall(VecDestroy(&x));
   PetscCall(VecDestroy(&b));
   PetscCall(VecDestroy(&x_initial_guess));
+  PetscCall(VecDestroy(&x_previous_iteration));
   PetscCall(MatDestroy(&A_block_jacobi));
   PetscCall(PetscFree(send_buffer));
   PetscCall(PetscFree(rcv_buffer));
