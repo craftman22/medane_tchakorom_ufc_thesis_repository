@@ -415,3 +415,4 @@ bin/**
 scripts/ideas.txt
 
 tmp/logs/**
+tmp/logs*
