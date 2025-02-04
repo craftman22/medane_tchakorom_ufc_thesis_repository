@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Set the duration for the timeout
-TIMEOUT_DURATION="120s"
+TIMEOUT_DURATION="12000s"
 
 # Additionnal grace period
 ADDITIONAL_GRACE_PERIOD="5s"
@@ -14,23 +14,145 @@ rm -drf ./tmp/logs/*
 
 
 
-timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --inner-ksp gmres --inner-pc-type none > ./tmp/logs/SM_log_1.log 2>&1   
-# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --inner-ksp gmres --inner-pc-type hypre > ./tmp/logs/SM_log_2.log 2>&1   
-# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --inner-ksp cg --inner-pc-type none > ./tmp/logs/SM_log_3.log 2>&1   
-# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --inner-ksp cg --inner-pc-type hypre > ./tmp/logs/SM_log_4.log 2>&1   
+# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --np 2 --npb 1 --alg SM --m 64 --n 64 --inner-ksp gmres --inner-pc-type none > ./tmp/logs/SM_log_64.log 2>&1   
+# petscfreesharedmemory
+
+# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --np 2 --npb 1 --alg SM --m 128 --n 128 --inner-ksp gmres --inner-pc-type none > ./tmp/logs/SM_log_128.log 2>&1   
+# petscfreesharedmemory
+
+# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --np 2 --npb 1 --alg SM --m 256 --n 256 --inner-ksp gmres --inner-pc-type none > ./tmp/logs/SM_log_256.log 2>&1   
+# petscfreesharedmemory
+
+# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --np 2 --npb 1 --alg SM --m 512 --n 512 --inner-ksp gmres --inner-pc-type none > ./tmp/logs/SM_log_512.log 2>&1   
+# petscfreesharedmemory
+# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --np 2 --npb 1 --alg SM --m 1024 --n 1024 --inner-ksp gmres --inner-pc-type none > ./tmp/logs/SM_log_1024.log 2>&1   
+# petscfreesharedmemory
+# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --np 2 --npb 1 --alg SM --m 2048 --n 2048 --inner-ksp gmres --inner-pc-type none > ./tmp/logs/SM_log_2048.log 2>&1   
+# petscfreesharedmemory
+
+
+# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --np 8 --npb 4 --alg SM --m 4096 --n 4096 --inner-ksp gmres --inner-pc-type none > ./tmp/logs/SM_log_4096.log 2>&1   
+# petscfreesharedmemory
+
+# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --np 8 --npb 4 --alg SM --m 8192 --n 8192 --inner-ksp gmres --inner-pc-type none > ./tmp/logs/SM_log_8192.log 2>&1   
+# petscfreesharedmemory
+# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --np 8 --npb 4 --alg SM --m 16384 --n 16384 --inner-ksp gmres --inner-pc-type none > ./tmp/logs/SM_log_16384.log 2>&1   
+# petscfreesharedmemory
+# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --np 8 --npb 4 --alg SM --m 32768 --n 32768 --inner-ksp gmres --inner-pc-type none > ./tmp/logs/SM_log_32768.log 2>&1   
+# petscfreesharedmemory
+# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --np 8 --npb 4 --alg SM --m 65536 --n 65536 --inner-ksp gmres --inner-pc-type none > ./tmp/logs/SM_log_65536.log 2>&1   
+# petscfreesharedmemory
+
+#############################################@
+#############################################@
+#############################################@
+#############################################@
+
+
+# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --np 8 --npb 4 --alg AM --m 64 --n 64 --inner-ksp gmres --inner-pc-type none > ./tmp/logs/AM_log_64.log 2>&1   
+# petscfreesharedmemory
+
+# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --np 8 --npb 4 --alg AM --m 128 --n 128 --inner-ksp gmres --inner-pc-type none > ./tmp/logs/AM_log_128.log 2>&1   
+# petscfreesharedmemory
+
+# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --np 8 --npb 4 --alg AM --m 256 --n 256 --inner-ksp gmres --inner-pc-type none > ./tmp/logs/AM_log_256.log 2>&1   
+# petscfreesharedmemory
+
+# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --np 8 --npb 4 --alg AM --m 512 --n 512 --inner-ksp gmres --inner-pc-type none > ./tmp/logs/AM_log_512.log 2>&1   
+# petscfreesharedmemory
+
+
+# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --np 8 --npb 4 --alg AM --m 1024 --n 1024 --inner-ksp gmres --inner-pc-type none > ./tmp/logs/AM_log_1024.log 2>&1   
+# petscfreesharedmemory
+
+# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --np 8 --npb 4 --alg AM --m 2048 --n 2048 --inner-ksp gmres --inner-pc-type none > ./tmp/logs/AM_log_2048.log 2>&1   
+# petscfreesharedmemory
+
+
+# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --np 8 --npb 4 --alg AM --m 4096 --n 4096 --inner-ksp gmres --inner-pc-type none > ./tmp/logs/AM_log_4096.log 2>&1   
+# petscfreesharedmemory
+
+# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --np 8 --npb 4 --alg AM --m 8192 --n 8192 --inner-ksp gmres --inner-pc-type none > ./tmp/logs/AM_log_8192.log 2>&1   
+# petscfreesharedmemory
+# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --np 8 --npb 4 --alg AM --m 16384 --n 16384 --inner-ksp gmres --inner-pc-type none > ./tmp/logs/AM_log_16384.log 2>&1   
+# petscfreesharedmemory
+# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --np 8 --npb 4 --alg AM --m 32768 --n 32768 --inner-ksp gmres --inner-pc-type none > ./tmp/logs/AM_log_32768.log 2>&1   
+# petscfreesharedmemory
+# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --np 8 --npb 4 --alg AM --m 65536 --n 65536 --inner-ksp gmres --inner-pc-type none > ./tmp/logs/AM_log_65536.log 2>&1   
+# petscfreesharedmemory
+
+#############################################@
+#############################################@
+#############################################@
+#############################################@
+
+# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --np 4 --npb 2 --alg SMSM --m 64 --n 64 --inner-ksp gmres --inner-pc-type none --outer-ksp cg --outer-pc-type none > ./tmp/logs/SMSM_log_64.log 2>&1   
+# petscfreesharedmemory
+
+# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --np 4 --npb 2 --alg SMSM --m 128 --n 128 --inner-ksp gmres --inner-pc-type none --outer-ksp cg --outer-pc-type none > ./tmp/logs/SMSM_log_128.log 2>&1   
+# petscfreesharedmemory
+
+# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --np 4 --npb 2 --alg SMSM --m 256 --n 256 --inner-ksp gmres --inner-pc-type none --outer-ksp cg --outer-pc-type none > ./tmp/logs/SMSM_log_256.log 2>&1   
+# petscfreesharedmemory
+
+# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --np 4 --npb 2 --alg SMSM --m 512 --n 512 --inner-ksp gmres --inner-pc-type none --outer-ksp cg --outer-pc-type none > ./tmp/logs/SMSM_log_512.log 2>&1   
+# petscfreesharedmemory
+# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --np 4 --npb 2 --alg SMSM --m 1024 --n 1024 --inner-ksp gmres --inner-pc-type none --outer-ksp cg --outer-pc-type none > ./tmp/logs/SMSM_log_1024.log 2>&1   
+# petscfreesharedmemory
+# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --np 4 --npb 2 --alg SMSM --m 2048 --n 2048 --inner-ksp gmres --inner-pc-type none --outer-ksp cg --outer-pc-type none > ./tmp/logs/SMSM_log_2048.log 2>&1   
+# petscfreesharedmemory
 
 
 
+# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --np 8 --npb 4 --alg SMSM --m 4096 --n 4096 --inner-ksp gmres --inner-pc-type none --outer-ksp cg --outer-pc-type none > ./tmp/logs/SMSM_log_4096.log 2>&1   
+# petscfreesharedmemory
+
+# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --np 8 --npb 4 --alg SMSM --m 8192 --n 8192 --inner-ksp gmres --inner-pc-type none --outer-ksp cg --outer-pc-type none > ./tmp/logs/SMSM_log_8192.log 2>&1   
+# petscfreesharedmemory
+# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --np 8 --npb 4 --alg SMSM --m 16384 --n 16384 --inner-ksp gmres --inner-pc-type none --outer-ksp cg --outer-pc-type none > ./tmp/logs/SMSM_log_16384.log 2>&1   
+# petscfreesharedmemory
+# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --np 8 --npb 4 --alg SMSM --m 32768 --n 32768 --inner-ksp gmres --inner-pc-type none --outer-ksp cg --outer-pc-type none > ./tmp/logs/SMSM_log_32768.log 2>&1   
+# petscfreesharedmemory
+# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --np 8 --npb 4 --alg SMSM --m 65536 --n 65536 --inner-ksp gmres --inner-pc-type none --outer-ksp cg --outer-pc-type none > ./tmp/logs/SMSM_log_65536.log 2>&1   
+# petscfreesharedmemory
 
 
-timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --alg SMSM --inner-ksp gmres --inner-pc-type none --outer-ksp gmres --outer-pc-type none > ./tmp/logs/SMSM_log_1.log 2>&1   
-# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --alg SMSM --inner-ksp gmres --inner-pc-type hypre --outer-ksp gmres --outer-pc-type none > ./tmp/logs/SMSM_log_2.log 2>&1   
-# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --alg SMSM --inner-ksp gmres --inner-pc-type hypre --outer-ksp gmres --outer-pc-type hypre > ./tmp/logs/SMSM_log_3.log 2>&1   
-# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --alg SMSM --inner-ksp gmres --inner-pc-type none --outer-ksp gmres --outer-pc-type hypre > ./tmp/logs/SMSM_log_4.log 2>&1   
+#############################################@
+#############################################@
+#############################################@
+#############################################@
 
-# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --alg SMSM --inner-ksp gmres --inner-pc-type none --outer-ksp cg --outer-pc-type none > ./tmp/logs/SMSM_log_5.log 2>&1   
-# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --alg SMSM --inner-ksp gmres --inner-pc-type hypre --outer-ksp cg --outer-pc-type none > ./tmp/logs/SMSM_log_6.log 2>&1   
-# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --alg SMSM --inner-ksp cg --inner-pc-type hypre --outer-ksp cg --outer-pc-type none > ./tmp/logs/SMSM_log_7.log 2>&1   
-# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --alg SMSM --inner-ksp cg --inner-pc-type none --outer-ksp cg --outer-pc-type none > ./tmp/logs/SMSM_log_8.log 2>&1   
-# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --alg SMSM --inner-ksp cg --inner-pc-type none --outer-ksp cg --outer-pc-type hypre > ./tmp/logs/SMSM_log_9.log 2>&1   
+
+# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --np 8 --npb 4 --alg AMAM --m 64 --n 64 --inner-ksp gmres --inner-pc-type none --outer-ksp cg --outer-pc-type none > ./tmp/logs/AMAM_log_64.log 2>&1   
+# petscfreesharedmemory
+
+# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --np 8 --npb 4 --alg AMAM --m 128 --n 128 --inner-ksp gmres --inner-pc-type none --outer-ksp cg --outer-pc-type none > ./tmp/logs/AMAM_log_128.log 2>&1   
+# petscfreesharedmemory
+
+# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --np 8 --npb 4 --alg AMAM --m 128 --n 128 --inner-ksp gmres --inner-pc-type none --outer-ksp cg --outer-pc-type none > ./tmp/logs/AMAM_log_128.log 2>&1   
+# petscfreesharedmemory
+
+# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --np 8 --npb 4 --alg AMAM --m 256 --n 256 --inner-ksp gmres --inner-pc-type none --outer-ksp cg --outer-pc-type none > ./tmp/logs/AMAM_log_256.log 2>&1   
+# petscfreesharedmemory
+
+# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --np 8 --npb 4 --alg AMAM --m 512 --n 512 --inner-ksp gmres --inner-pc-type none --outer-ksp cg --outer-pc-type none > ./tmp/logs/AMAM_log_512.log 2>&1   
+# petscfreesharedmemory
+
+# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --np 8 --npb 4 --alg AMAM --m 1024 --n 1024 --inner-ksp gmres --inner-pc-type none --outer-ksp cg --outer-pc-type none > ./tmp/logs/AMAM_log_1024.log 2>&1   
+# petscfreesharedmemory
+
+# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --np 8 --npb 4 --alg AMAM --m 2048 --n 2048 --inner-ksp gmres --inner-pc-type none --outer-ksp cg --outer-pc-type none > ./tmp/logs/AMAM_log_2048.log 2>&1   
+# petscfreesharedmemory
+
+# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --np 8 --npb 4 --alg AMAM --m 4096 --n 4096 --inner-ksp gmres --inner-pc-type none --outer-ksp cg --outer-pc-type none > ./tmp/logs/AMAM_log_4096.log 2>&1   
+# petscfreesharedmemory
+
+# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --np 8 --npb 4 --alg AMAM --m 8192 --n 8192 --inner-ksp gmres --inner-pc-type none --outer-ksp cg --outer-pc-type none > ./tmp/logs/AMAM_log_8192.log 2>&1   
+# petscfreesharedmemory
+# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --np 8 --npb 4 --alg AMAM --m 16384 --n 16384 --inner-ksp gmres --inner-pc-type none --outer-ksp cg --outer-pc-type none > ./tmp/logs/AMAM_log_16384.log 2>&1   
+# petscfreesharedmemory
+# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --np 8 --npb 4 --alg AMAM --m 32768 --n 32768 --inner-ksp gmres --inner-pc-type none --outer-ksp cg --outer-pc-type none > ./tmp/logs/AMAM_log_32768.log 2>&1   
+# petscfreesharedmemory
+# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION  bash ./iSolve --np 8 --npb 4 --alg AMAM --m 65536 --n 65536 --inner-ksp gmres --inner-pc-type none --outer-ksp cg --outer-pc-type none > ./tmp/logs/AMAM_log_65536.log 2>&1   
+# petscfreesharedmemory
 

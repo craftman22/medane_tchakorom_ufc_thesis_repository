@@ -12,26 +12,26 @@ DEFAULT_FILENAME="default_run_variables"
 # AM --> Asynchronous Multisplitting with with approximate residual computing (r = Xk - Xk-1)
 # AMAM --> Asynchronous Multisplitting and Asynchronous Minimization with approximate residual computing (r = Xk - Xk-1)
 #DEFAULT_ALGORITHM="SMSM"
-DEFAULT_ALGORITHM="AM"
+DEFAULT_ALGORITHM="AMAM"
 
 ########################################################
 ########################################################
 
 # Number of processes
-DEFAULT_NP=8
+DEFAULT_NP=2
 
 # Number of processes per block
-DEFAULT_NPB=4
+DEFAULT_NPB=1
 
 # Mesh size M x N
-DEFAULT_M=1024
-DEFAULT_N=1024
+DEFAULT_M=256
+DEFAULT_N=256
 
 # Number of inner iterations before minimization
 DEFAULT_S=4
 
 # RELATIVE ERROR FOR OUTER ITERATIONS
-DEFAULT_RELATIVE_TOLERANCE=1e-3
+DEFAULT_RELATIVE_TOLERANCE=1e-4
 
 ########################################################
 ########################################################
@@ -39,9 +39,9 @@ DEFAULT_RELATIVE_TOLERANCE=1e-3
 # Solver to use for inner iterations (Multisplitting)
 DEFAULT_INNER_SOLVER="gmres"
 # Maximum iterations for inner iterations
-DEFAULT_INNER_MAX_ITERATIONS=100000
+DEFAULT_INNER_MAX_ITERATIONS=5
 # Relative tolerance used in default determination of convergence
-DEFAULT_INNER_RELATIVE_TOLERANCE=1e-3
+DEFAULT_INNER_RELATIVE_TOLERANCE=1e-40
 # Preconditionner type for inner ksp
 DEFAULT_INNER_PRECONDITIONNER_TYPE="none"
 # Inner iterations KSP prefix (DO NOT MODIFY THIS OPTION UNLESS YOU KNOW WHAT YOU ARE DOING)
@@ -68,6 +68,7 @@ DEFAULT_OUTER_KSP_PREFIX="outer_"
 #OTHER PETSC RUNTIME OPTIONS
 #DEFAULT_OTHER_PETSC_OPTIONS="-log_view ::ascii_xml"
 #DEFAULT_OTHER_PETSC_OPTIONS="-log_view ::ascii_flamegraph"
+; DEFAULT_OTHER_PETSC_OPTIONS="-log_view -memory_view -get_total_flops"
 DEFAULT_OTHER_PETSC_OPTIONS=""
 
 
