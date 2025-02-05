@@ -496,12 +496,12 @@ PetscErrorCode inner_solver(KSP ksp, Mat *A_block_jacobi_subMat, Vec *x_block_ja
   PetscCall(KSPSolve(ksp, local_right_side_vector, x_block_jacobi[rank_jacobi_block]));
   PetscInt n_iterations = 0;
   PetscCall(KSPGetIterationNumber(ksp, &n_iterations));
-  // if (rank_jacobi_block == 0)
-  // {
-  //   MPI_Comm tmp;
-  //   PetscCall(PetscObjectGetComm((PetscObject)local_right_side_vector, &tmp));
-  //   PetscCall(PetscPrintf(tmp, "NUMBER OF INNER ITERATIONS = %d  \n", n_iterations));
-  // }
+  if (rank_jacobi_block == 0)
+  {
+    MPI_Comm tmp;
+    PetscCall(PetscObjectGetComm((PetscObject)local_right_side_vector, &tmp));
+    PetscCall(PetscPrintf(tmp, "NUMBER OF INNER ITERATIONS = %d  \n", n_iterations));
+  }
 
   if (inner_solver_iterations != NULL)
   {
