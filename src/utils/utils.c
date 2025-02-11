@@ -783,7 +783,11 @@ PetscErrorCode getHalfSubMatrixFromR(Mat R, Mat *R_block_jacobi_subMat, PetscInt
   PetscFunctionBegin;
   PetscInt idx_first_row = rank_jacobi_block * ((n_grid_lines * n_grid_columns) / 2);
   PetscInt idx_one_plus_last_row = (rank_jacobi_block + 1) * ((n_grid_lines * n_grid_columns) / 2);
-  PetscCall(MatDenseGetSubMatrix(R, idx_first_row, idx_one_plus_last_row, PETSC_DECIDE, PETSC_DECIDE, &R_block_jacobi_subMat[rank_jacobi_block]));
+  if (rank_jacobi_block == 0)
+    PetscCall(MatDenseGetSubMatrix(R, idx_first_row, idx_one_plus_last_row, PETSC_DECIDE, PETSC_DECIDE, &R_block_jacobi_subMat[rank_jacobi_block]));
+  if (rank_jacobi_block == 1)
+    PetscCall(MatDenseGetSubMatrix(R, idx_first_row, PETSC_DECIDE, PETSC_DECIDE, PETSC_DECIDE, &R_block_jacobi_subMat[rank_jacobi_block]));
+    
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
