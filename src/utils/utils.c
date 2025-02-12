@@ -542,17 +542,17 @@ PetscErrorCode printFinalResidualNorm(PetscScalar global_residual_norm)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode printTotalNumberOfIterations(PetscInt iterations)
+PetscErrorCode printTotalNumberOfIterations(MPI_Comm comm_jacobi_block, PetscInt rank_jacobi_block, PetscInt iterations)
 {
   PetscFunctionBegin;
-  PetscCall(PetscPrintf(MPI_COMM_WORLD, "Total number of iterations (outer_iterations) = %d \n", iterations));
+  PetscCall(PetscPrintf(comm_jacobi_block, "[ Block rank %d ] Total number of iterations (outer_iterations) = %d \n", rank_jacobi_block, iterations));
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode printTotalNumberOfIterations_2(PetscInt iterations, PetscInt s)
+PetscErrorCode printTotalNumberOfIterations_2(MPI_Comm comm_jacobi_block, PetscInt rank_jacobi_block, PetscInt iterations, PetscInt s)
 {
   PetscFunctionBegin;
-  PetscCall(PetscPrintf(MPI_COMM_WORLD, "Total number of iterations (outer_iterations * s) = %d * %d = %d \n", iterations, s, s * iterations));
+  PetscCall(PetscPrintf(comm_jacobi_block, "[ Block rank %d ] Total number of iterations (outer_iterations * s) = %d * %d = %d \n", rank_jacobi_block, iterations, s, s * iterations));
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
@@ -783,7 +783,11 @@ PetscErrorCode getHalfSubMatrixFromR(Mat R, Mat *R_block_jacobi_subMat, PetscInt
   PetscFunctionBegin;
   PetscInt idx_first_row = rank_jacobi_block * ((n_grid_lines * n_grid_columns) / 2);
   PetscInt idx_one_plus_last_row = (rank_jacobi_block + 1) * ((n_grid_lines * n_grid_columns) / 2);
-  PetscCall(MatDenseGetSubMatrix(R, idx_first_row, idx_one_plus_last_row, PETSC_DECIDE, PETSC_DECIDE, &R_block_jacobi_subMat[rank_jacobi_block]));
+  if (rank_jacobi_block == 0)
+    PetscCall(MatDenseGetSubMatrix(R, idx_first_row, idx_one_plus_last_row, PETSC_DECIDE, PETSC_DECIDE, &R_block_jacobi_subMat[rank_jacobi_block]));
+  if (rank_jacobi_block == 1)
+    PetscCall(MatDenseGetSubMatrix(R, idx_first_row, PETSC_DECIDE, PETSC_DECIDE, PETSC_DECIDE, &R_block_jacobi_subMat[rank_jacobi_block]));
+    
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 

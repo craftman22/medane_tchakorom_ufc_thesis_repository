@@ -4,9 +4,6 @@
 #include <petscts.h>
 
 
-PetscErrorCode foo(Mat *R_block_jacobi, PetscInt rank_jacobi_block, PetscInt idx_non_current_block, PetscInt s,PetscInt proc_local_rank);
-
-
 PetscErrorCode create_matrix_dense(MPI_Comm comm, Mat *mat, PetscInt n, PetscInt m, MatType mat_type);
 PetscErrorCode create_matrix_sparse(MPI_Comm comm, Mat *mat, PetscInt n, PetscInt m, MatType mat_type, PetscInt d_nz, PetscInt o_nz);
 
@@ -47,9 +44,9 @@ PetscErrorCode printResidualNorm_no_data(PetscScalar approximation_residual_infi
 
 PetscErrorCode printFinalResidualNorm(PetscScalar global_residual_norm);
 
-PetscErrorCode printTotalNumberOfIterations(PetscInt iterations);
+PetscErrorCode printTotalNumberOfIterations(MPI_Comm comm_jacobi_block, PetscInt rank_jacobi_block, PetscInt iterations);
 
-PetscErrorCode printTotalNumberOfIterations_2(PetscInt iterations, PetscInt s);
+PetscErrorCode printTotalNumberOfIterations_2(MPI_Comm comm_jacobi_block, PetscInt rank_jacobi_block, PetscInt iterations, PetscInt s);
 
 PetscErrorCode exchange_R_block_jacobi(Mat R, Mat *R_block_jacobi_subMat, PetscInt s, PetscInt n_grid_lines, PetscInt n_grid_columns, PetscInt rank_jacobi_block, PetscInt njacobi_blocks, PetscInt proc_local_rank,PetscInt idx_non_current_block ,PetscInt nprocs_per_jacobi_block);
 

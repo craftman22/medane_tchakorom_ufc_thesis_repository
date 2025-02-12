@@ -200,16 +200,6 @@ int main(int argc, char **argv)
     else if (rank_jacobi_block == BLOCK_RANK_ONE)
     {
 
-      MPI_Iprobe(message_source, TAG_DATA, MPI_COMM_WORLD, &rcv_data_flag, MPI_STATUS_IGNORE);
-      if (rcv_data_flag)
-      {
-        PetscCallMPI(MPI_Irecv(rcv_buffer, vec_local_size, MPIU_SCALAR, message_source, TAG_DATA, MPI_COMM_WORLD, &rcv_data_request));
-        PetscCallMPI(MPI_Wait(&rcv_data_request, MPI_STATUS_IGNORE));
-        PetscCall(VecGetArray(x_block_jacobi[idx_non_current_block], &temp_buffer));
-        PetscCall(PetscArraycpy(temp_buffer, rcv_buffer, vec_local_size));
-        PetscCall(VecRestoreArray(x_block_jacobi[idx_non_current_block], &temp_buffer));
-      }
-
       MPI_Test(&send_data_request, &send_data_flag, MPI_STATUS_IGNORE);
       if (send_data_flag)
       {
@@ -219,6 +209,16 @@ int main(int argc, char **argv)
         PetscCallMPI(MPI_Isend(send_buffer, vec_local_size, MPIU_SCALAR, message_dest, TAG_DATA, MPI_COMM_WORLD, &send_data_request));
         // PetscCallMPI(MPI_Wait(&send_data_request, MPI_STATUS_IGNORE));
       }
+
+      MPI_Iprobe(message_source, TAG_DATA, MPI_COMM_WORLD, &rcv_data_flag, MPI_STATUS_IGNORE);
+      if (rcv_data_flag)
+      {
+        PetscCallMPI(MPI_Irecv(rcv_buffer, vec_local_size, MPIU_SCALAR, message_source, TAG_DATA, MPI_COMM_WORLD, &rcv_data_request));
+        PetscCallMPI(MPI_Wait(&rcv_data_request, MPI_STATUS_IGNORE));
+        PetscCall(VecGetArray(x_block_jacobi[idx_non_current_block], &temp_buffer));
+        PetscCall(PetscArraycpy(temp_buffer, rcv_buffer, vec_local_size));
+        PetscCall(VecRestoreArray(x_block_jacobi[idx_non_current_block], &temp_buffer));
+      }
     }
 
     PetscCall(VecWAXPY(approximation_residual, -1, x_block_jacobi_previous_iteration, x_block_jacobi[rank_jacobi_block]));
@@ -226,7 +226,7 @@ int main(int argc, char **argv)
     PetscCall(VecCopy(x_block_jacobi[rank_jacobi_block], x_block_jacobi_previous_iteration));
     PetscCall(printResidualNorm(approximation_residual_infinity_norm));
 
-    if (PetscApproximateLTE(approximation_residual_infinity_norm, relative_tolerance)) 
+    if (PetscApproximateLTE(approximation_residual_infinity_norm, relative_tolerance))
     {
       convergence_count++;
     }
@@ -279,9 +279,7 @@ int main(int argc, char **argv)
   PetscCallMPI(MPI_Barrier(MPI_COMM_WORLD));
   end_time = MPI_Wtime();
   PetscCall(printElapsedTime(start_time, end_time));
-  PetscCall(printTotalNumberOfIterations(number_of_iterations));
-
-
+  PetscCall(printTotalNumberOfIterations(comm_jacobi_block, rank_jacobi_block, number_of_iterations));
 
   PetscScalar *send_buffer_bis = NULL;
   PetscScalar *rcv_buffer_bis = NULL;
