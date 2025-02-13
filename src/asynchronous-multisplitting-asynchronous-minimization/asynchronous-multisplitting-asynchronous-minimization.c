@@ -332,7 +332,7 @@ int main(int argc, char **argv)
                     }
                 }
 
-                if (rend > (n_mesh_points / 2))
+                if (rstart > (n_mesh_points / 2))
                 {
                     PetscCall(PetscArraycpy(temp_minimization_data_buffer, rcv_minimization_data_buffer, R_local_values_count));
                 }
