@@ -257,6 +257,9 @@ int main(int argc, char **argv)
     PetscCall(restoreHalfSubMatrixToR(R, R_block_jacobi_subMat, rank_jacobi_block));
 
 
+    // PetscCall(exchange_R_block_jacobi(R, R_block_jacobi_subMat, s, n_mesh_lines, n_mesh_columns, rank_jacobi_block, njacobi_blocks, proc_local_rank, idx_non_current_block, nprocs_per_jacobi_block));
+
+
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -271,7 +274,7 @@ int main(int argc, char **argv)
       PetscCallMPI(MPI_Sendrecv(send_minimization_data_buffer, R_local_values_count, MPIU_SCALAR, (idx_non_current_block * nprocs_per_jacobi_block) + proc_local_rank, 2, rcv_minimization_data_buffer, R_local_values_count, MPIU_SCALAR, (idx_non_current_block * nprocs_per_jacobi_block) + proc_local_rank, 3, MPI_COMM_WORLD, MPI_STATUS_IGNORE));
 
       PetscCall(MatDenseGetArray(R, &temp_minimization_data_buffer));
-      if (rstart <= (n_mesh_points / 2) && (n_mesh_points / 2) < rend)
+      if (rstart < (n_mesh_points / 2) && (n_mesh_points / 2) < rend)
       {
         for (PetscInt j = 0; j < s; j++)
         {
@@ -280,7 +283,7 @@ int main(int argc, char **argv)
         }
       }
 
-      if (rstart > (n_mesh_points / 2))
+      if (rstart >= (n_mesh_points / 2))
       {
         PetscCall(PetscArraycpy(temp_minimization_data_buffer, rcv_minimization_data_buffer, R_local_values_count));
       }
@@ -298,7 +301,7 @@ int main(int argc, char **argv)
       PetscCallMPI(MPI_Sendrecv(send_minimization_data_buffer, R_local_values_count, MPIU_SCALAR, (idx_non_current_block * nprocs_per_jacobi_block) + proc_local_rank, 3, rcv_minimization_data_buffer, R_local_values_count, MPIU_SCALAR, (idx_non_current_block * nprocs_per_jacobi_block) + proc_local_rank, 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE));
 
       PetscCall(MatDenseGetArray(R, &temp_minimization_data_buffer));
-      if (rstart <= (n_mesh_points / 2) && (n_mesh_points / 2) < rend)
+      if (rstart < (n_mesh_points / 2) && (n_mesh_points / 2) < rend)
       {
         for (PetscInt j = 0; j < s; j++)
         {

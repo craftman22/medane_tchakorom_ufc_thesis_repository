@@ -322,7 +322,7 @@ int main(int argc, char **argv)
                 PetscCallMPI(MPI_Irecv(rcv_minimization_data_buffer, R_local_values_count, MPIU_SCALAR, (idx_non_current_block * nprocs_per_jacobi_block) + proc_local_rank, 3, MPI_COMM_WORLD, &rcv_minimization_data_request));
                 PetscCallMPI(MPI_Wait(&rcv_minimization_data_request, MPI_STATUS_IGNORE));
                 PetscCall(MatDenseGetArray(R, &temp_minimization_data_buffer));
-                if (rstart <= (n_mesh_points / 2) && (n_mesh_points / 2) < rend)
+                if (rstart < (n_mesh_points / 2) && (n_mesh_points / 2) < rend)
                 {
                     // PetscPrintf(comm_jacobi_block, "rank block 0 received\n");
                     for (PetscInt j = 0; j < s; j++)
@@ -332,7 +332,7 @@ int main(int argc, char **argv)
                     }
                 }
 
-                if (rstart > (n_mesh_points / 2))
+                if (rstart >= (n_mesh_points / 2))
                 {
                     PetscCall(PetscArraycpy(temp_minimization_data_buffer, rcv_minimization_data_buffer, R_local_values_count));
                 }
@@ -359,7 +359,7 @@ int main(int argc, char **argv)
                 PetscCallMPI(MPI_Irecv(rcv_minimization_data_buffer, R_local_values_count, MPIU_SCALAR, (idx_non_current_block * nprocs_per_jacobi_block) + proc_local_rank, 2, MPI_COMM_WORLD, &rcv_minimization_data_request));
                 PetscCallMPI(MPI_Wait(&rcv_minimization_data_request, MPI_STATUS_IGNORE));
                 PetscCall(MatDenseGetArray(R, &temp_minimization_data_buffer));
-                if (rstart <= (n_mesh_points / 2) && (n_mesh_points / 2) < rend)
+                if (rstart < (n_mesh_points / 2) && (n_mesh_points / 2) < rend)
                 {
                     // PetscPrintf(comm_jacobi_block, "rank block 1 received\n");
                     for (PetscInt j = 0; j < s; j++)
