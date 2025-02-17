@@ -220,7 +220,7 @@ int main(int argc, char **argv)
 
         while (n_vectors_inserted < s)
         {
-            PetscCall(inner_solver(inner_ksp, A_block_jacobi_subMat, x_block_jacobi, b_block_jacobi, rank_jacobi_block, NULL));
+            PetscCall(inner_solver(inner_ksp, A_block_jacobi_subMat, x_block_jacobi, b_block_jacobi, rank_jacobi_block, NULL,number_of_iterations));
 
             if (rank_jacobi_block == BLOCK_RANK_ZERO)
             {

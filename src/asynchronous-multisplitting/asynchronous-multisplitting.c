@@ -172,7 +172,7 @@ int main(int argc, char **argv)
   do
   {
 
-    PetscCall(inner_solver(inner_ksp, A_block_jacobi_subMat, x_block_jacobi, b_block_jacobi, rank_jacobi_block, &inner_solver_iterations));
+    PetscCall(inner_solver(inner_ksp, A_block_jacobi_subMat, x_block_jacobi, b_block_jacobi, rank_jacobi_block, &inner_solver_iterations,number_of_iterations));
 
     if (rank_jacobi_block == BLOCK_RANK_ZERO)
     {

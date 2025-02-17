@@ -131,7 +131,7 @@ int main(int argc, char **argv)
   do
   {
     PetscCall(VecCopy(x, x_previous_iteration)); // copy approximation solution at iteration k into approximation solution at iteration (k-1)
-    PetscCall(inner_solver(inner_ksp, A_block_jacobi_subMat, x_block_jacobi, b_block_jacobi, rank_jacobi_block, NULL));
+    PetscCall(inner_solver(inner_ksp, A_block_jacobi_subMat, x_block_jacobi, b_block_jacobi, rank_jacobi_block, NULL,number_of_iterations));
 
     if (rank_jacobi_block == BLOCK_RANK_ZERO)
     {

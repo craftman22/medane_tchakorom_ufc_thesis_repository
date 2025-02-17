@@ -478,7 +478,7 @@ PetscErrorCode computeDimensionRelatedVariables(PetscInt nprocs, PetscInt nprocs
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode inner_solver(KSP ksp, Mat *A_block_jacobi_subMat, Vec *x_block_jacobi, Vec *b_block_jacobi, PetscInt rank_jacobi_block, PetscInt *inner_solver_iterations)
+PetscErrorCode inner_solver(KSP ksp, Mat *A_block_jacobi_subMat, Vec *x_block_jacobi, Vec *b_block_jacobi, PetscInt rank_jacobi_block, PetscInt *inner_solver_iterations, PetscInt outer_iteration_number)
 {
 
   PetscFunctionBeginUser;
@@ -496,12 +496,11 @@ PetscErrorCode inner_solver(KSP ksp, Mat *A_block_jacobi_subMat, Vec *x_block_ja
   PetscCall(KSPSolve(ksp, local_right_side_vector, x_block_jacobi[rank_jacobi_block]));
   PetscInt n_iterations = 0;
   PetscCall(KSPGetIterationNumber(ksp, &n_iterations));
-  if (rank_jacobi_block == 0)
-  {
-    MPI_Comm tmp;
-    PetscCall(PetscObjectGetComm((PetscObject)local_right_side_vector, &tmp));
-    PetscCall(PetscPrintf(tmp, "NUMBER OF INNER ITERATIONS = %d  \n", n_iterations));
-  }
+
+  MPI_Comm tmp_comm;
+  PetscCall(PetscObjectGetComm((PetscObject)local_right_side_vector, &tmp_comm));
+  PetscCall(printInnerSolverIterations(tmp_comm,rank_jacobi_block,n_iterations, outer_iteration_number));
+  // PetscCall(PetscPrintf(tmp, "NUMBER OF INNER ITERATIONS = %d  \n", n_iterations));
 
   if (inner_solver_iterations != NULL)
   {
@@ -546,6 +545,13 @@ PetscErrorCode printTotalNumberOfIterations(MPI_Comm comm_jacobi_block, PetscInt
 {
   PetscFunctionBegin;
   PetscCall(PetscPrintf(comm_jacobi_block, "[ Block rank %d ] Total number of iterations (outer_iterations) = %d \n", rank_jacobi_block, iterations));
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+PetscErrorCode printInnerSolverIterations(MPI_Comm comm_jacobi_block, PetscInt rank_jacobi_block, PetscInt iterations,PetscInt outer_iteration_number)
+{
+  PetscFunctionBegin;
+  PetscCall(PetscPrintf(comm_jacobi_block, "[ Block rank %d ][ outer iter %d] NUMBER OF INNER ITERATIONS = %d  \n", rank_jacobi_block,outer_iteration_number, iterations));
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
@@ -787,7 +793,7 @@ PetscErrorCode getHalfSubMatrixFromR(Mat R, Mat *R_block_jacobi_subMat, PetscInt
     PetscCall(MatDenseGetSubMatrix(R, idx_first_row, idx_one_plus_last_row, PETSC_DECIDE, PETSC_DECIDE, &R_block_jacobi_subMat[rank_jacobi_block]));
   if (rank_jacobi_block == 1)
     PetscCall(MatDenseGetSubMatrix(R, idx_first_row, PETSC_DECIDE, PETSC_DECIDE, PETSC_DECIDE, &R_block_jacobi_subMat[rank_jacobi_block]));
-    
+
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
