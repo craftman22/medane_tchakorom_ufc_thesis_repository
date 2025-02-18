@@ -230,6 +230,14 @@ if [ "$algorithm_flag" = "SMSM" ]; then
     \t OUTER solver preconditionner : $outer_pc_type_flag \n"
 fi
 
+
+if [ "$algorithm_flag" = "AMAM" ]; then
+    echo -e "\
+    \t OUTER solver : $outer_ksp_flag \n\
+    \t OUTER solver relative tolerance : $outer_rtol_flag \n\
+    \t OUTER solver max iterations : $outer_max_iter_flag \n\
+    \t OUTER solver preconditionner : $outer_pc_type_flag \n"
+fi
 echo -e "\
 \t Other petsc options : ${other_petsc_options_flag} \n"
 
