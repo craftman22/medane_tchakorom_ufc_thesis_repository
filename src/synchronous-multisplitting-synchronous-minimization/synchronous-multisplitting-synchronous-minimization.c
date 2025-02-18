@@ -320,7 +320,7 @@ int main(int argc, char **argv)
 
 
 
-    PetscCall(outer_solver_global_R(comm_jacobi_block, &outer_ksp, x_minimized, R, S, R_transpose_R, vec_R_transpose_b_block_jacobi, alpha, b, rank_jacobi_block, s));
+    PetscCall(outer_solver_global_R(comm_jacobi_block, &outer_ksp, x_minimized, R, S, R_transpose_R, vec_R_transpose_b_block_jacobi, alpha, b, rank_jacobi_block, s,number_of_iterations));
 
     PetscCall(VecWAXPY(approximate_residual, -1.0, x_minimized_prev_iteration, x_minimized));
 
@@ -332,7 +332,7 @@ int main(int argc, char **argv)
     PetscCall(VecScatterBegin(scatter_jacobi_vec_part_to_merged_vec[rank_jacobi_block], x_minimized, x_block_jacobi[rank_jacobi_block], INSERT_VALUES, SCATTER_REVERSE));
     PetscCall(VecScatterEnd(scatter_jacobi_vec_part_to_merged_vec[rank_jacobi_block], x_minimized, x_block_jacobi[rank_jacobi_block], INSERT_VALUES, SCATTER_REVERSE));
 
-    PetscCall(printResidualNorm(approximation_residual_infinity_norm));
+    PetscCall(printResidualNorm(comm_jacobi_block,rank_jacobi_block, approximation_residual_infinity_norm));
 
     if (PetscApproximateLTE(approximation_residual_infinity_norm, relative_tolerance))
     {

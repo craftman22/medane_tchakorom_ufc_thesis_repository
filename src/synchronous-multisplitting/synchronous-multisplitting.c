@@ -167,7 +167,7 @@ int main(int argc, char **argv)
     PetscCall(VecWAXPY(approximation_residual, -1, x_previous_iteration, x));
     PetscCall(VecNorm(approximation_residual, NORM_INFINITY, &approximation_residual_infinity_norm));
 
-    PetscCall(printResidualNorm(approximation_residual_infinity_norm));
+    PetscCall(printResidualNorm(comm_jacobi_block,rank_jacobi_block, approximation_residual_infinity_norm));
 
     if (PetscApproximateLTE(approximation_residual_infinity_norm, relative_tolerance))
     {

@@ -499,7 +499,7 @@ PetscErrorCode inner_solver(KSP ksp, Mat *A_block_jacobi_subMat, Vec *x_block_ja
 
   MPI_Comm tmp_comm;
   PetscCall(PetscObjectGetComm((PetscObject)local_right_side_vector, &tmp_comm));
-  PetscCall(printInnerSolverIterations(tmp_comm,rank_jacobi_block,n_iterations, outer_iteration_number));
+  PetscCall(printInnerSolverIterations(tmp_comm, rank_jacobi_block, n_iterations, outer_iteration_number));
   // PetscCall(PetscPrintf(tmp, "NUMBER OF INNER ITERATIONS = %d  \n", n_iterations));
 
   if (inner_solver_iterations != NULL)
@@ -520,10 +520,10 @@ PetscErrorCode printElapsedTime(double start_time, double end_time)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode printResidualNorm(PetscScalar approximation_residual_infinity_norm)
+PetscErrorCode printResidualNorm(MPI_Comm comm_jacobi_block,PetscInt rank_jacobi_block, PetscScalar approximation_residual_infinity_norm)
 {
   PetscFunctionBegin;
-  PetscCall(PetscPrintf(MPI_COMM_WORLD, "Infinity norm of residual (Xk - Xk-1) = %e \n", approximation_residual_infinity_norm));
+  PetscCall(PetscPrintf(comm_jacobi_block, "[ Block rank %d ][ outer iter !] --------------- Infinity norm of residual (Xk - Xk-1) = %e \n",rank_jacobi_block, approximation_residual_infinity_norm));
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
@@ -548,10 +548,18 @@ PetscErrorCode printTotalNumberOfIterations(MPI_Comm comm_jacobi_block, PetscInt
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode printInnerSolverIterations(MPI_Comm comm_jacobi_block, PetscInt rank_jacobi_block, PetscInt iterations,PetscInt outer_iteration_number)
+PetscErrorCode printInnerSolverIterations(MPI_Comm comm_jacobi_block, PetscInt rank_jacobi_block, PetscInt iterations, PetscInt outer_iteration_number)
 {
   PetscFunctionBegin;
-  PetscCall(PetscPrintf(comm_jacobi_block, "[ Block rank %d ][ outer iter %d] NUMBER OF INNER ITERATIONS = %d  \n", rank_jacobi_block,outer_iteration_number, iterations));
+  PetscCall(PetscPrintf(comm_jacobi_block, "[ Block rank %d ][ outer iter %d] NUMBER OF INNER SOLVER ITERATIONS = %d  \n", rank_jacobi_block, outer_iteration_number, iterations));
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+
+PetscErrorCode printOuterSolverIterations(MPI_Comm comm_jacobi_block, PetscInt rank_jacobi_block, PetscInt iterations, PetscInt outer_iteration_number)
+{
+  PetscFunctionBegin;
+  PetscCall(PetscPrintf(comm_jacobi_block, "[ Block rank %d ][ outer iter %d] --------------- NUMBER OF OUTER SOLVER ITERATIONS = %d  \n", rank_jacobi_block, outer_iteration_number, iterations));
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
@@ -722,7 +730,7 @@ PetscErrorCode divideRintoSubMatrices(MPI_Comm comm_jacobi_block, Mat R, Mat *R_
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode outer_solver_global_R(MPI_Comm comm_jacobi_block, KSP *outer_ksp, Vec x_minimized, Mat R, Mat S, Mat R_transpose_R, Vec vec_R_transpose_b_block_jacobi, Vec alpha, Vec b, PetscInt rank_jacobi_block, PetscInt s)
+PetscErrorCode outer_solver_global_R(MPI_Comm comm_jacobi_block, KSP *outer_ksp, Vec x_minimized, Mat R, Mat S, Mat R_transpose_R, Vec vec_R_transpose_b_block_jacobi, Vec alpha, Vec b, PetscInt rank_jacobi_block, PetscInt s, PetscInt outer_iteration_number)
 {
 
   PetscFunctionBegin;
@@ -745,7 +753,16 @@ PetscErrorCode outer_solver_global_R(MPI_Comm comm_jacobi_block, KSP *outer_ksp,
   // PetscCall(PCGetType(pc, &pc_type));
   // PetscCall(KSPGetType(*outer_ksp, &ksp_type));
 
+
+
   PetscCall(KSPSolve(*outer_ksp, vec_R_transpose_b_block_jacobi, alpha));
+
+  PetscInt n_iterations = 0;
+  PetscCall(KSPGetIterationNumber(*outer_ksp, &n_iterations));
+
+  MPI_Comm tmp_comm;
+  PetscCall(PetscObjectGetComm((PetscObject)alpha, &tmp_comm));
+  PetscCall(printOuterSolverIterations(tmp_comm, rank_jacobi_block, n_iterations,outer_iteration_number));
 
   PetscCall(MatMult(S, alpha, x_minimized));
 
