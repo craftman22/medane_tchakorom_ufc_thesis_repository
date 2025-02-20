@@ -26,6 +26,8 @@ int main(int argc, char **argv)
   PetscInt s;
   PetscScalar relative_tolerance = 1e-5;
   PetscInt nprocs_per_jacobi_block = 1;
+
+  PetscInt MIN_CONVERGENCE_COUNT = 5;
   PetscFunctionBeginUser;
   PetscCall(PetscInitialize(&argc, &argv, NULL, NULL));
   PetscCallMPI(MPI_Comm_rank(PETSC_COMM_WORLD, &proc_global_rank));
@@ -35,6 +37,7 @@ int main(int argc, char **argv)
   PetscCall(PetscOptionsGetInt(NULL, NULL, "-m", &n_mesh_lines, NULL));
   PetscCall(PetscOptionsGetInt(NULL, NULL, "-n", &n_mesh_columns, NULL));
   PetscCall(PetscOptionsGetInt(NULL, NULL, "-s", &s, NULL));
+  PetscCall(PetscOptionsGetInt(NULL, NULL, "-min_convergence_count", &MIN_CONVERGENCE_COUNT, NULL));
   PetscCall(PetscOptionsGetInt(NULL, NULL, "-npb", &nprocs_per_jacobi_block, NULL));
   PetscCall(PetscOptionsGetReal(NULL, NULL, "-rtol", &relative_tolerance, NULL));
 
@@ -239,7 +242,7 @@ int main(int argc, char **argv)
     // {
     if (proc_local_rank == ZERO)
     {
-      if (convergence_count >= CONVERGENCE_COUNT_MIN)
+      if (convergence_count >= MIN_CONVERGENCE_COUNT)
         send_signal = CONVERGENCE_SIGNAL;
       else
         send_signal = NO_SIGNAL;
