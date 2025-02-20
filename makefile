@@ -103,7 +103,7 @@ print:
 
 # List the source directories you want to compile from
 
-SRC_DIRS :=  src/synchronous-multisplitting src/synchronous-multisplitting-synchronous-minimization src/asynchronous-multisplitting src/asynchronous-multisplitting-asynchronous-minimization
+SRC_DIRS :=  src/synchronous-multisplitting  src/asynchronous-multisplitting  src/synchronous-multisplitting-synchronous-minimization-local src/synchronous-multisplitting-synchronous-minimization-global  src/asynchronous-multisplitting-asynchronous-minimization-global src/asynchronous-multisplitting-asynchronous-minimization-local 
 
 
 

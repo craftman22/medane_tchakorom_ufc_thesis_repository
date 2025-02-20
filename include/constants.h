@@ -31,7 +31,7 @@
 #define BLOCK_RANK_ZERO 0
 #define BLOCK_RANK_ONE 1
 
-#define CONVERGENCE_COUNT_MIN 10
+// #define CONVERGENCE_COUNT_MIN 4
 
 
 #endif // CONSTANTS_H

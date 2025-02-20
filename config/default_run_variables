@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # Name of the file where to read variables values from
 DEFAULT_FILENAME="default_run_variables"
 
@@ -14,14 +16,15 @@ DEFAULT_FILENAME="default_run_variables"
 #DEFAULT_ALGORITHM="SMSM"
 DEFAULT_ALGORITHM="AM"
 
+
 ########################################################
 ########################################################
 
 # Number of processes
-DEFAULT_NP=8
+DEFAULT_NP=2
 
 # Number of processes per block
-DEFAULT_NPB=4
+DEFAULT_NPB=1
 
 # Mesh size M x N
 DEFAULT_M=1024
@@ -29,6 +32,9 @@ DEFAULT_N=1024
 
 # Number of inner iterations before minimization
 DEFAULT_S=4
+
+# Number of times convergence should occurs before end of asynchronous code
+DEFAULT_MIN_CONVERGENCE_COUNT=4
 
 # RELATIVE ERROR FOR OUTER ITERATIONS
 DEFAULT_RELATIVE_TOLERANCE=1e-3
@@ -39,7 +45,7 @@ DEFAULT_RELATIVE_TOLERANCE=1e-3
 # Solver to use for inner iterations (Multisplitting)
 DEFAULT_INNER_SOLVER="gmres"
 # Maximum iterations for inner iterations
-DEFAULT_INNER_MAX_ITERATIONS=100000
+DEFAULT_INNER_MAX_ITERATIONS=40
 # Relative tolerance used in default determination of convergence
 DEFAULT_INNER_RELATIVE_TOLERANCE=1e-3
 # Preconditionner type for inner ksp
@@ -55,7 +61,7 @@ DEFAULT_OUTER_SOLVER="cg"
 # Maximum iterations for outer iterations
 DEFAULT_OUTER_MAX_ITERATIONS=100000
 # Relative tolerance used in default determination of convergence
-DEFAULT_OUTER_RELATIVE_TOLERANCE=1e-20
+DEFAULT_OUTER_RELATIVE_TOLERANCE=1e-10
 # Preconditionner type for outer ksp
 DEFAULT_OUTER_PRECONDITIONNER_TYPE="none"
 # Inner iterations KSP prefix (DO NOT MODIFY THIS OPTION UNLESS YOU KNOW WHAT YOU ARE DOING)
