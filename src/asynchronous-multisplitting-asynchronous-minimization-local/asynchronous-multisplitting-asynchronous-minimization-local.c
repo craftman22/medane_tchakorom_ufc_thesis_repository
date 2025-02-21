@@ -412,8 +412,8 @@ int main(int argc, char **argv)
     PetscCall(MatDestroy(&S));
     PetscCall(MatDestroy(&R));
 
-    PetscCall(PetscFree(send_multisplitting_data_buffer));
-    PetscCall(PetscFree(rcv_multisplitting_data_buffer));
+    // PetscCall(PetscFree(send_multisplitting_data_buffer));
+    // PetscCall(PetscFree(rcv_multisplitting_data_buffer));
     PetscCall(KSPDestroy(&inner_ksp));
     PetscCall(KSPDestroy(&outer_ksp));
     PetscCall(MatDestroy(&R_transpose_R));
