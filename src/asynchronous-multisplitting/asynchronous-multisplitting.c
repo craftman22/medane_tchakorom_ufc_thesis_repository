@@ -351,10 +351,10 @@ int main(int argc, char **argv)
 
   PetscCall(PetscFree(send_buffer));
   PetscCall(PetscFree(rcv_buffer));
-  PetscCall(PetscFree(temp_buffer));
+  // PetscCall(PetscFree(temp_buffer));
   PetscCall(PetscFree(send_buffer_bis));
   PetscCall(PetscFree(rcv_buffer_bis));
-  PetscCall(PetscFree(temp_buffer_bis));
+  // PetscCall(PetscFree(temp_buffer_bis));
 
   // Discard any pending message
   PetscInt count;
