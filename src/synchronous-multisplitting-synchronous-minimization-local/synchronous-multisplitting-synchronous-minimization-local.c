@@ -381,7 +381,8 @@ int main(int argc, char **argv)
     }
   } while (message);
 
-  PetscCall(PetscCommDestroy(&comm_jacobi_block));
+  PetscCall(PetscSubcommDestroy(&sub_comm_context));
+  PetscCall(PetscCommDestroy(&dcomm));
   PetscCall(PetscFinalize());
   return 0;
 }

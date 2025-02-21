@@ -393,7 +393,8 @@ int main(int argc, char **argv)
   PetscCallMPI(MPI_Wait(&send_data_request, MPI_STATUS_IGNORE));
   PetscCallMPI(MPI_Wait(&send_signal_request, MPI_STATUS_IGNORE));
 
-  PetscCall(PetscCommDestroy(&comm_jacobi_block));
+  PetscCall(PetscSubcommDestroy(&sub_comm_context));
+  PetscCall(PetscCommDestroy(&dcomm));
   PetscCallMPI(MPI_Barrier(MPI_COMM_WORLD));
   PetscCall(PetscFinalize());
 

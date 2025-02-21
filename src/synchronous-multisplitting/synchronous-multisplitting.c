@@ -131,7 +131,7 @@ int main(int argc, char **argv)
   do
   {
     PetscCall(VecCopy(x, x_previous_iteration)); // copy approximation solution at iteration k into approximation solution at iteration (k-1)
-    PetscCall(inner_solver(inner_ksp, A_block_jacobi_subMat, x_block_jacobi, b_block_jacobi, rank_jacobi_block, NULL,number_of_iterations));
+    PetscCall(inner_solver(inner_ksp, A_block_jacobi_subMat, x_block_jacobi, b_block_jacobi, rank_jacobi_block, NULL, number_of_iterations));
 
     if (rank_jacobi_block == BLOCK_RANK_ZERO)
     {
@@ -167,7 +167,7 @@ int main(int argc, char **argv)
     PetscCall(VecWAXPY(approximation_residual, -1, x_previous_iteration, x));
     PetscCall(VecNorm(approximation_residual, NORM_INFINITY, &approximation_residual_infinity_norm));
 
-    PetscCall(printResidualNorm(comm_jacobi_block,rank_jacobi_block, approximation_residual_infinity_norm));
+    PetscCall(printResidualNorm(comm_jacobi_block, rank_jacobi_block, approximation_residual_infinity_norm));
 
     if (PetscApproximateLTE(approximation_residual_infinity_norm, relative_tolerance))
     {
@@ -208,6 +208,8 @@ int main(int argc, char **argv)
   PetscCall(PetscFree(send_multisplitting_data_buffer));
   PetscCall(PetscFree(rcv_multisplitting_data_buffer));
   PetscCall(KSPDestroy(&inner_ksp));
+  PetscCall(PetscSubcommDestroy(&sub_comm_context));
+  PetscCall(PetscCommDestroy(&dcomm));
 
   PetscCall(PetscFinalize());
   return 0;

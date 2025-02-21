@@ -416,6 +416,8 @@ int main(int argc, char **argv)
 
   PetscCall(PetscFree(send_multisplitting_data_buffer));
   PetscCall(PetscFree(rcv_multisplitting_data_buffer));
+  PetscCall(PetscFree(send_minimization_data_buffer));
+  PetscCall(PetscFree(rcv_minimization_data_buffer));
   PetscCall(KSPDestroy(&inner_ksp));
   PetscCall(KSPDestroy(&outer_ksp));
   PetscCall(MatDestroy(&R_transpose_R));
@@ -453,7 +455,8 @@ int main(int argc, char **argv)
     }
   } while (message);
 
-  PetscCall(PetscCommDestroy(&comm_jacobi_block));
+  PetscCall(PetscSubcommDestroy(&sub_comm_context));
+  PetscCall(PetscCommDestroy(&dcomm));
   PetscCall(PetscFinalize());
   return 0;
 }

@@ -183,8 +183,8 @@ int main(int argc, char **argv)
     PetscCall(initializeKSP(comm_jacobi_block, &outer_ksp, NULL, rank_jacobi_block, PETSC_TRUE, OUTER_KSP_PREFIX, OUTER_PC_PREFIX));
 
     PetscCall(VecGetLocalSize(x_block_jacobi[rank_jacobi_block], &vec_local_size));
-    PetscMalloc1((size_t)vec_local_size, &send_multisplitting_data_buffer);
-    PetscMalloc1((size_t)vec_local_size, &rcv_multisplitting_data_buffer);
+    PetscMalloc1(vec_local_size, &send_multisplitting_data_buffer);
+    PetscMalloc1(vec_local_size, &rcv_multisplitting_data_buffer);
 
     PetscCall(create_vector(comm_jacobi_block, &x_minimized, n_mesh_points, VECMPI));
     PetscCall(VecSet(x_minimized, ZERO));
@@ -534,8 +534,10 @@ int main(int argc, char **argv)
     PetscCall(MatDestroy(&S));
     PetscCall(MatDestroy(&R));
 
-    // PetscCall(PetscFree(send_multisplitting_data_buffer));
-    // PetscCall(PetscFree(rcv_multisplitting_data_buffer));
+    PetscCall(PetscFree(send_multisplitting_data_buffer));
+    PetscCall(PetscFree(rcv_multisplitting_data_buffer));
+    PetscCall(PetscFree(send_minimization_data_buffer));
+    PetscCall(PetscFree(rcv_minimization_data_buffer));
     PetscCall(KSPDestroy(&inner_ksp));
     PetscCall(KSPDestroy(&outer_ksp));
     PetscCall(MatDestroy(&R_transpose_R));
@@ -579,7 +581,8 @@ int main(int argc, char **argv)
 
     PetscCallMPI(MPI_Wait(&send_signal_request, MPI_STATUS_IGNORE));
 
-    PetscCall(PetscCommDestroy(&comm_jacobi_block));
+    PetscCall(PetscSubcommDestroy(&sub_comm_context));
+    PetscCall(PetscCommDestroy(&dcomm));
     PetscCall(PetscFinalize());
     return 0;
 }
