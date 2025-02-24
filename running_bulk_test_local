@@ -6,19 +6,19 @@ TIMEOUT_DURATION="120s"
 # Additionnal grace period
 ADDITIONAL_GRACE_PERIOD="5s"
 
-mkdir -p ./tmp/logs
-mkdir -p ./tmp/logs_SM
-mkdir -p ./tmp/logs_AM
-mkdir -p ./tmp/logs_SMSM_LOCAL
-mkdir -p ./tmp/logs_AMAM_LOCAL
-mkdir -p ./tmp/logs_SMSM_GLOBAL
-mkdir -p ./tmp/logs_AMAM_GLOBAL
-rm -drf ./tmp/logs_SM/*
-rm -drf ./tmp/logs_AM/*
-rm -drf ./tmp/logs_SMSM_LOCAL/*
-rm -drf ./tmp/logs_AMAM_LOCAL/*
-rm -drf ./tmp/logs_SMSM_GLOBAL/*
-rm -drf ./tmp/logs_AMAM_GLOBAL/*
+# mkdir -p ./tmp/logs
+# mkdir -p ./tmp/logs_SM
+# mkdir -p ./tmp/logs_AM
+# mkdir -p ./tmp/logs_SMSM_LOCAL
+# mkdir -p ./tmp/logs_AMAM_LOCAL
+# mkdir -p ./tmp/logs_SMSM_GLOBAL
+# mkdir -p ./tmp/logs_AMAM_GLOBAL
+# rm -drf ./tmp/logs_SM/*
+# rm -drf ./tmp/logs_AM/*
+# rm -drf ./tmp/logs_SMSM_LOCAL/*
+# rm -drf ./tmp/logs_AMAM_LOCAL/*
+# rm -drf ./tmp/logs_SMSM_GLOBAL/*
+# rm -drf ./tmp/logs_AMAM_GLOBAL/*
 
 set -x  # Enable command tracing
 
@@ -27,59 +27,59 @@ set -x  # Enable command tracing
 # ==================================================================================================
 
 
-timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION bash \
-petscmpiexec -n 2 ./bin/synchronous-multisplitting -npb 1 \
- -m 2048 -n 2048  -rtol 1e-3 \
--inner_ksp_type gmres -inner_ksp_rtol 1e-3 -inner_ksp_max_it 40 -inner_pc_type none \
--options_view -options_left    > ./tmp/logs_SM/SM_log_1.yml 2>&1 
+# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION bash \
+# petscmpiexec -n 2 ./bin/synchronous-multisplitting -npb 1 \
+#  -m 2048 -n 2048  -rtol 1e-3 \
+# -inner_ksp_type gmres -inner_ksp_rtol 1e-3 -inner_ksp_max_it 40 -inner_pc_type none \
+# -options_view -options_left    > ./tmp/logs_SM/SM_log_1.yml 2>&1 
 
 # ==================================================================================================
 # ============================# # Asynchronous Multisplitting=======================================
 # ==================================================================================================
 
 
-timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION bash \
-petscmpiexec -n 2 ./bin/asynchronous-multisplitting  -npb 1 \
--m 2048 -n 2048 -min_convergence_count 4  -rtol 1e-3 \
--inner_ksp_type gmres -inner_ksp_rtol 1e-3 -inner_ksp_max_it 40 -inner_pc_type none \
--options_view -options_left    > ./tmp/logs_AM/AM_log_1.yml 2>&1 
+# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION bash \
+# petscmpiexec -n 2 ./bin/asynchronous-multisplitting  -npb 1 \
+# -m 2048 -n 2048 -min_convergence_count 4  -rtol 1e-3 \
+# -inner_ksp_type gmres -inner_ksp_rtol 1e-3 -inner_ksp_max_it 40 -inner_pc_type none \
+# -options_view -options_left    > ./tmp/logs_AM/AM_log_1.yml 2>&1 
 
 # ==================================================================================================
 # =========================# Synchronous Multisplitting & Synchronous LOCAL minimization============
 # ==================================================================================================
 
 
-timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION bash \
-petscmpiexec -n 2 ./bin/synchronous-multisplitting-synchronous-minimization-local -npb 1 \
--m 2048 -n 2048   -s 4   -rtol 1e-3 \
--inner_ksp_type gmres -inner_ksp_rtol 1e-3 -inner_ksp_max_it 20 -inner_pc_type none \
--outer_ksp_type cg -outer_ksp_rtol 1e-20 -outer_ksp_max_it 100000 -outer_pc_type none \
--options_view -options_left    > ./tmp/logs_SMSM_LOCAL/SMSM_LOCAL_log_1.yml 2>&1 
+# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION bash \
+# petscmpiexec -n 2 ./bin/synchronous-multisplitting-synchronous-minimization-local -npb 1 \
+# -m 2048 -n 2048   -s 4   -rtol 1e-3 \
+# -inner_ksp_type gmres -inner_ksp_rtol 1e-3 -inner_ksp_max_it 20 -inner_pc_type none \
+# -outer_ksp_type cg -outer_ksp_rtol 1e-20 -outer_ksp_max_it 100000 -outer_pc_type none \
+# -options_view -options_left    > ./tmp/logs_SMSM_LOCAL/SMSM_LOCAL_log_1.yml 2>&1 
 
 
 
-timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION bash \
-petscmpiexec -n 2 ./bin/synchronous-multisplitting-synchronous-minimization-local -npb 1 \
--m 2048 -n 2048   -s 4   -rtol 1e-3 \
--inner_ksp_type gmres -inner_ksp_rtol 1e-3 -inner_ksp_max_it 30 -inner_pc_type none \
--outer_ksp_type cg -outer_ksp_rtol 1e-20 -outer_ksp_max_it 100000 -outer_pc_type none \
--options_view -options_left    > ./tmp/logs_SMSM_LOCAL/SMSM_LOCAL_log_2.yml 2>&1 
+# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION bash \
+# petscmpiexec -n 2 ./bin/synchronous-multisplitting-synchronous-minimization-local -npb 1 \
+# -m 2048 -n 2048   -s 4   -rtol 1e-3 \
+# -inner_ksp_type gmres -inner_ksp_rtol 1e-3 -inner_ksp_max_it 30 -inner_pc_type none \
+# -outer_ksp_type cg -outer_ksp_rtol 1e-20 -outer_ksp_max_it 100000 -outer_pc_type none \
+# -options_view -options_left    > ./tmp/logs_SMSM_LOCAL/SMSM_LOCAL_log_2.yml 2>&1 
 
 
-timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION bash \
-petscmpiexec -n 2 ./bin/synchronous-multisplitting-synchronous-minimization-local -npb 1 \
--m 2048 -n 2048   -s 4   -rtol 1e-3 \
--inner_ksp_type gmres -inner_ksp_rtol 1e-3 -inner_ksp_max_it 40 -inner_pc_type none \
--outer_ksp_type cg -outer_ksp_rtol 1e-20 -outer_ksp_max_it 100000 -outer_pc_type none \
--options_view -options_left    > ./tmp/logs_SMSM_LOCAL/SMSM_LOCAL_log_3.yml 2>&1 
+# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION bash \
+# petscmpiexec -n 2 ./bin/synchronous-multisplitting-synchronous-minimization-local -npb 1 \
+# -m 2048 -n 2048   -s 4   -rtol 1e-3 \
+# -inner_ksp_type gmres -inner_ksp_rtol 1e-3 -inner_ksp_max_it 40 -inner_pc_type none \
+# -outer_ksp_type cg -outer_ksp_rtol 1e-20 -outer_ksp_max_it 100000 -outer_pc_type none \
+# -options_view -options_left    > ./tmp/logs_SMSM_LOCAL/SMSM_LOCAL_log_3.yml 2>&1 
 
 
-timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION bash \
-petscmpiexec -n 2 ./bin/synchronous-multisplitting-synchronous-minimization-local -npb 1 \
--m 2048 -n 2048   -s 4   -rtol 1e-3 \
--inner_ksp_type gmres -inner_ksp_rtol 1e-3 -inner_ksp_max_it 50 -inner_pc_type none \
--outer_ksp_type cg -outer_ksp_rtol 1e-20 -outer_ksp_max_it 100000 -outer_pc_type none \
--options_view -options_left    > ./tmp/logs_SMSM_LOCAL/SMSM_LOCAL_log_4.yml 2>&1 
+# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION bash \
+# petscmpiexec -n 2 ./bin/synchronous-multisplitting-synchronous-minimization-local -npb 1 \
+# -m 2048 -n 2048   -s 4   -rtol 1e-3 \
+# -inner_ksp_type gmres -inner_ksp_rtol 1e-3 -inner_ksp_max_it 50 -inner_pc_type none \
+# -outer_ksp_type cg -outer_ksp_rtol 1e-20 -outer_ksp_max_it 100000 -outer_pc_type none \
+# -options_view -options_left    > ./tmp/logs_SMSM_LOCAL/SMSM_LOCAL_log_4.yml 2>&1 
 
 
 # ==================================================================================================
@@ -90,31 +90,31 @@ petscmpiexec -n 2 ./bin/synchronous-multisplitting-synchronous-minimization-loca
 timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION bash \
 petscmpiexec -n 2 ./bin/asynchronous-multisplitting-asynchronous-minimization-local  -npb 1 \
 -m 2048 -n 2048  -s 4 -min_convergence_count 4 -rtol 1e-3  \
--inner_ksp_type gmres -inner_ksp_rtol 1e-3 -inner_ksp_max_it 20 -inner_pc_type none \
--outer_ksp_type cg -outer_ksp_rtol 1e-10 -outer_ksp_max_it 100000 -outer_pc_type none \
--options_view -options_left    > ./tmp/logs_AMAM_LOCAL/AMAM_LOCAL_log_1.yml 2>&1
-
-timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION bash \
-petscmpiexec -n 2 ./bin/asynchronous-multisplitting-asynchronous-minimization-local  -npb 1 \
--m 2048 -n 2048  -s 4 -min_convergence_count 4 -rtol 1e-3  \
--inner_ksp_type gmres -inner_ksp_rtol 1e-3 -inner_ksp_max_it 30 -inner_pc_type none \
--outer_ksp_type cg -outer_ksp_rtol 1e-10 -outer_ksp_max_it 100000 -outer_pc_type none \
--options_view -options_left    > ./tmp/logs_AMAM_LOCAL/AMAM_LOCAL_log_2.yml 2>&1
-
-timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION bash \
-petscmpiexec -n 2 ./bin/asynchronous-multisplitting-asynchronous-minimization-local  -npb 1 \
--m 2048 -n 2048  -s 4 -min_convergence_count 4 -rtol 1e-3  \
 -inner_ksp_type gmres -inner_ksp_rtol 1e-3 -inner_ksp_max_it 40 -inner_pc_type none \
 -outer_ksp_type cg -outer_ksp_rtol 1e-10 -outer_ksp_max_it 100000 -outer_pc_type none \
--options_view -options_left    > ./tmp/logs_AMAM_LOCAL/AMAM_LOCAL_log_3.yml 2>&1
+-options_view -options_left  -inner_ksp_min_it 2 > ./tmp/logs_AMAM_LOCAL/AMAM_LOCAL_log_1.yml 2>&1
+
+# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION bash \
+# petscmpiexec -n 2 ./bin/asynchronous-multisplitting-asynchronous-minimization-local  -npb 1 \
+# -m 2048 -n 2048  -s 4 -min_convergence_count 4 -rtol 1e-3  \
+# -inner_ksp_type gmres -inner_ksp_rtol 1e-3 -inner_ksp_max_it 30 -inner_pc_type none \
+# -outer_ksp_type cg -outer_ksp_rtol 1e-10 -outer_ksp_max_it 100000 -outer_pc_type none \
+# -options_view -options_left    > ./tmp/logs_AMAM_LOCAL/AMAM_LOCAL_log_2.yml 2>&1
+
+# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION bash \
+# petscmpiexec -n 2 ./bin/asynchronous-multisplitting-asynchronous-minimization-local  -npb 1 \
+# -m 2048 -n 2048  -s 4 -min_convergence_count 4 -rtol 1e-3  \
+# -inner_ksp_type gmres -inner_ksp_rtol 1e-3 -inner_ksp_max_it 40 -inner_pc_type none \
+# -outer_ksp_type cg -outer_ksp_rtol 1e-10 -outer_ksp_max_it 100000 -outer_pc_type none \
+# -options_view -options_left    > ./tmp/logs_AMAM_LOCAL/AMAM_LOCAL_log_3.yml 2>&1
 
 
-timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION bash \
-petscmpiexec -n 2 ./bin/asynchronous-multisplitting-asynchronous-minimization-local  -npb 1 \
--m 2048 -n 2048  -s 4 -min_convergence_count 4 -rtol 1e-3  \
--inner_ksp_type gmres -inner_ksp_rtol 1e-3 -inner_ksp_max_it 50 -inner_pc_type none \
--outer_ksp_type cg -outer_ksp_rtol 1e-10 -outer_ksp_max_it 100000 -outer_pc_type none \
--options_view -options_left    > ./tmp/logs_AMAM_LOCAL/AMAM_LOCAL_log_4.yml 2>&1
+# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION bash \
+# petscmpiexec -n 2 ./bin/asynchronous-multisplitting-asynchronous-minimization-local  -npb 1 \
+# -m 2048 -n 2048  -s 4 -min_convergence_count 4 -rtol 1e-3  \
+# -inner_ksp_type gmres -inner_ksp_rtol 1e-3 -inner_ksp_max_it 50 -inner_pc_type none \
+# -outer_ksp_type cg -outer_ksp_rtol 1e-10 -outer_ksp_max_it 100000 -outer_pc_type none \
+# -options_view -options_left    > ./tmp/logs_AMAM_LOCAL/AMAM_LOCAL_log_4.yml 2>&1
 
 # ==================================================================================================
 # ===========# # Synchronous Multisplitting & Synchronous GLOBAL minimization=======================
@@ -122,38 +122,38 @@ petscmpiexec -n 2 ./bin/asynchronous-multisplitting-asynchronous-minimization-lo
 
 
 
-timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION bash \
-petscmpiexec -n 2 ./bin/synchronous-multisplitting-synchronous-minimization-global -npb 1  \
--m 2048 -n 2048   -s 4  -rtol 1e-3 \
--inner_ksp_type gmres -inner_ksp_rtol 1e-3 -inner_ksp_max_it 40 -inner_pc_type none \
--outer_ksp_type cg -outer_ksp_rtol 1e-20 -outer_ksp_max_it 100000 -outer_pc_type none \
--options_view -options_left    > ./tmp/logs_SMSM_GLOBAL/SMSM_GLOBAL_log_1.yml 2>&1
+# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION bash \
+# petscmpiexec -n 2 ./bin/synchronous-multisplitting-synchronous-minimization-global -npb 1  \
+# -m 2048 -n 2048   -s 4  -rtol 1e-3 \
+# -inner_ksp_type gmres -inner_ksp_rtol 1e-3 -inner_ksp_max_it 40 -inner_pc_type none \
+# -outer_ksp_type cg -outer_ksp_rtol 1e-20 -outer_ksp_max_it 100000 -outer_pc_type none \
+# -options_view -options_left    > ./tmp/logs_SMSM_GLOBAL/SMSM_GLOBAL_log_1.yml 2>&1
 
 # ==================================================================================================
 # ========= # Asynchronous Multisplitting & Asynchronous GLOBAL minimization========================
 # ==================================================================================================
 
-timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION bash \
-petscmpiexec -n 2 ./bin/asynchronous-multisplitting-asynchronous-minimization-global  -npb 1 \
--m 2048 -n 2048  -s 4 -min_convergence_count 4 -rtol 1e-3  \
--inner_ksp_type gmres -inner_ksp_rtol 1e-3 -inner_ksp_max_it 40 -inner_pc_type none \
--outer_ksp_type cg -outer_ksp_rtol 1e-10 -outer_ksp_max_it 100000 -outer_pc_type none \
--options_view -options_left    > ./tmp/logs_AMAM_GLOBAL/AMAM_GLOBAL_log_1.yml 2>&1
+# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION bash \
+# petscmpiexec -n 2 ./bin/asynchronous-multisplitting-asynchronous-minimization-global  -npb 1 \
+# -m 2048 -n 2048  -s 4 -min_convergence_count 4 -rtol 1e-3  \
+# -inner_ksp_type gmres -inner_ksp_rtol 1e-3 -inner_ksp_max_it 40 -inner_pc_type none \
+# -outer_ksp_type cg -outer_ksp_rtol 1e-10 -outer_ksp_max_it 100000 -outer_pc_type none \
+# -options_view -options_left    > ./tmp/logs_AMAM_GLOBAL/AMAM_GLOBAL_log_1.yml 2>&1
 
-timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION bash \
-petscmpiexec -n 2 ./bin/asynchronous-multisplitting-asynchronous-minimization-global  -npb 1 \
--m 2048 -n 2048  -s 4 -min_convergence_count 4 -rtol 1e-3  \
--inner_ksp_type gmres -inner_ksp_rtol 1e-3 -inner_ksp_max_it 50 -inner_pc_type none \
--outer_ksp_type cg -outer_ksp_rtol 1e-10 -outer_ksp_max_it 100000 -outer_pc_type none \
--options_view -options_left    > ./tmp/logs_AMAM_GLOBAL/AMAM_GLOBAL_log_2.yml 2>&1
+# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION bash \
+# petscmpiexec -n 2 ./bin/asynchronous-multisplitting-asynchronous-minimization-global  -npb 1 \
+# -m 2048 -n 2048  -s 4 -min_convergence_count 4 -rtol 1e-3  \
+# -inner_ksp_type gmres -inner_ksp_rtol 1e-3 -inner_ksp_max_it 50 -inner_pc_type none \
+# -outer_ksp_type cg -outer_ksp_rtol 1e-10 -outer_ksp_max_it 100000 -outer_pc_type none \
+# -options_view -options_left    > ./tmp/logs_AMAM_GLOBAL/AMAM_GLOBAL_log_2.yml 2>&1
 
 
-timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION bash \
-petscmpiexec -n 2 ./bin/asynchronous-multisplitting-asynchronous-minimization-global  -npb 1 \
--m 2048 -n 2048  -s 4 -min_convergence_count 4 -rtol 1e-3  \
--inner_ksp_type gmres -inner_ksp_rtol 1e-3 -inner_ksp_max_it 60 -inner_pc_type none \
--outer_ksp_type cg -outer_ksp_rtol 1e-10 -outer_ksp_max_it 100000 -outer_pc_type none \
--options_view -options_left    > ./tmp/logs_AMAM_GLOBAL/AMAM_GLOBAL_log_3.yml 2>&1
+# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION bash \
+# petscmpiexec -n 2 ./bin/asynchronous-multisplitting-asynchronous-minimization-global  -npb 1 \
+# -m 2048 -n 2048  -s 4 -min_convergence_count 4 -rtol 1e-3  \
+# -inner_ksp_type gmres -inner_ksp_rtol 1e-3 -inner_ksp_max_it 60 -inner_pc_type none \
+# -outer_ksp_type cg -outer_ksp_rtol 1e-10 -outer_ksp_max_it 100000 -outer_pc_type none \
+# -options_view -options_left    > ./tmp/logs_AMAM_GLOBAL/AMAM_GLOBAL_log_3.yml 2>&1
 
 
 # ==================================================================================================

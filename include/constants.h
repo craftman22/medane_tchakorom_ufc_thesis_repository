@@ -20,13 +20,14 @@
 #define DIVERGENCE_SIGNAL 421
 #define TERMINATE_SIGNAL 884
 
-#define TAG_INIT 0      // Initialization phase
-#define TAG_DATA 1      // Standard data transmission
-#define TAG_CONTROL 2   // Control or command messages
-#define TAG_TERMINATE 3 // Termination signal
-#define TAG_STATUS 4    // Status or heartbeat messages
-#define TAG_DATA_MINIMIZATION 5
-#define TAG_DATA_OUT_LOOP 6
+#define TAG_INIT 0      
+#define TAG_MULTISPLITTING_DATA 10      
+#define TAG_MINIMIZATION_DATA 20
+#define TAG_STATUS 30    
+#define TAG_FINAL_DATA_EXCHANGE 40     
+// #define TAG_CONTROL 2   // Control or command messages
+// #define TAG_TERMINATE 3 // Termination signal
+// #define TAG_DATA_OUT_LOOP 6
 
 #define BLOCK_RANK_ZERO 0
 #define BLOCK_RANK_ONE 1

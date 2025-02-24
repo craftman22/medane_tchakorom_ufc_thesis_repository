@@ -754,7 +754,7 @@ PetscErrorCode outer_solver_global_R(MPI_Comm comm_jacobi_block, KSP *outer_ksp,
   // PetscCall(KSPGetType(*outer_ksp, &ksp_type));
 
 
-
+  PetscCall(KSPSetInitialGuessNonzero(*outer_ksp, PETSC_TRUE));
   PetscCall(KSPSolve(*outer_ksp, vec_R_transpose_b_block_jacobi, alpha));
 
   PetscInt n_iterations = 0;

@@ -16,12 +16,12 @@ int main(int argc, char **argv)
   Vec x_initial_guess = NULL;
 
   PetscMPIInt nprocs;
-  PetscInt proc_global_rank;
+  PetscMPIInt proc_global_rank;
   PetscInt n_mesh_lines = 4;
   PetscInt n_mesh_columns = 4;
   PetscInt njacobi_blocks;
-  PetscInt rank_jacobi_block;
-  PetscInt proc_local_rank;
+  PetscMPIInt rank_jacobi_block;
+  PetscMPIInt proc_local_rank;
   PetscInt n_mesh_points;
   PetscInt jacobi_block_size;
 
@@ -83,7 +83,7 @@ int main(int argc, char **argv)
   // domain decomposition of matrix and vectors
   PetscCall(divideSubDomainIntoBlockMatrices(comm_jacobi_block, A_block_jacobi, A_block_jacobi_subMat, is_cols_block_jacobi, rank_jacobi_block, njacobi_blocks, proc_local_rank, nprocs_per_jacobi_block));
 
-  for (PetscInt i = 0; i < njacobi_blocks; i++)
+  for (PetscMPIInt i = 0; i < njacobi_blocks; i++)
   {
     PetscCall(create_vector(comm_jacobi_block, &x_block_jacobi[i], jacobi_block_size, VECMPI));
     PetscCall(create_vector(comm_jacobi_block, &b_block_jacobi[i], jacobi_block_size, VECMPI));
@@ -95,7 +95,7 @@ int main(int argc, char **argv)
   IS is_merged_vec[njacobi_blocks];
 
   PetscCall(ISCreateStride(comm_jacobi_block, jacobi_block_size, ZERO, ONE, &is_jacobi_vec_parts));
-  for (PetscInt i = 0; i < njacobi_blocks; i++)
+  for (PetscMPIInt i = 0; i < njacobi_blocks; i++)
   {
     PetscCall(ISCreateStride(comm_jacobi_block, jacobi_block_size, (i * (jacobi_block_size)), ONE, &is_merged_vec[i]));
     PetscCall(VecScatterCreate(b_block_jacobi[i], is_jacobi_vec_parts, b, is_merged_vec[i], &scatter_jacobi_vec_part_to_merged_vec[i]));
@@ -106,7 +106,7 @@ int main(int argc, char **argv)
 
   PetscBool stop_condition = PETSC_FALSE;
   PetscInt number_of_iterations = 0;
-  PetscInt idx_non_current_block = (rank_jacobi_block == ZERO) ? ONE : ZERO;
+  PetscMPIInt idx_non_current_block = (rank_jacobi_block == ZERO) ? ONE : ZERO;
   PetscScalar approximation_residual_infinity_norm = PETSC_MAX_REAL;
 
   KSP inner_ksp = NULL;
@@ -115,12 +115,10 @@ int main(int argc, char **argv)
   PetscScalar *send_multisplitting_data_buffer = NULL;
   PetscScalar *rcv_multisplitting_data_buffer = NULL;
   PetscScalar *temp_multisplitting_data_buffer = NULL;
-  // MPI_Request send_request = MPI_REQUEST_NULL;
-  // MPI_Request rcv_request = MPI_REQUEST_NULL;
-  PetscInt vec_local_size = 0;
+  PetscMPIInt vec_local_size = 0;
   PetscCall(VecGetLocalSize(x_block_jacobi[rank_jacobi_block], &vec_local_size));
-  PetscMalloc1((size_t)vec_local_size, &send_multisplitting_data_buffer);
-  PetscMalloc1((size_t)vec_local_size, &rcv_multisplitting_data_buffer);
+  PetscMalloc1(vec_local_size, &send_multisplitting_data_buffer);
+  PetscMalloc1(vec_local_size, &rcv_multisplitting_data_buffer);
   Vec approximation_residual;
   PetscCall(VecDuplicate(x, &approximation_residual));
 
@@ -133,38 +131,22 @@ int main(int argc, char **argv)
     PetscCall(VecCopy(x, x_previous_iteration)); // copy approximation solution at iteration k into approximation solution at iteration (k-1)
     PetscCall(inner_solver(inner_ksp, A_block_jacobi_subMat, x_block_jacobi, b_block_jacobi, rank_jacobi_block, NULL, number_of_iterations));
 
-    if (rank_jacobi_block == BLOCK_RANK_ZERO)
-    {
+    PetscCall(VecGetArray(x_block_jacobi[rank_jacobi_block], &temp_multisplitting_data_buffer));
+    PetscCall(PetscArraycpy(send_multisplitting_data_buffer, temp_multisplitting_data_buffer, vec_local_size));
+    PetscCall(VecRestoreArray(x_block_jacobi[rank_jacobi_block], &temp_multisplitting_data_buffer));
 
-      PetscCall(VecGetArray(x_block_jacobi[rank_jacobi_block], &temp_multisplitting_data_buffer));
-      PetscCall(PetscArraycpy(send_multisplitting_data_buffer, temp_multisplitting_data_buffer, vec_local_size));
-      PetscCall(VecRestoreArray(x_block_jacobi[rank_jacobi_block], &temp_multisplitting_data_buffer));
+    PetscCallMPI(MPI_Sendrecv(send_multisplitting_data_buffer, vec_local_size, MPIU_SCALAR, (idx_non_current_block * nprocs_per_jacobi_block) + proc_local_rank, (TAG_MULTISPLITTING_DATA + rank_jacobi_block), rcv_multisplitting_data_buffer, vec_local_size, MPIU_SCALAR, (idx_non_current_block * nprocs_per_jacobi_block) + proc_local_rank, (TAG_MULTISPLITTING_DATA + idx_non_current_block), MPI_COMM_WORLD, MPI_STATUS_IGNORE));
 
-      PetscCallMPI(MPI_Sendrecv(send_multisplitting_data_buffer, vec_local_size, MPIU_SCALAR, (idx_non_current_block * nprocs_per_jacobi_block) + proc_local_rank, 0, rcv_multisplitting_data_buffer, vec_local_size, MPIU_SCALAR, (idx_non_current_block * nprocs_per_jacobi_block) + proc_local_rank, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE));
-
-      PetscCall(VecGetArray(x_block_jacobi[idx_non_current_block], &temp_multisplitting_data_buffer));
-      PetscCall(PetscArraycpy(temp_multisplitting_data_buffer, rcv_multisplitting_data_buffer, vec_local_size));
-      PetscCall(VecRestoreArray(x_block_jacobi[idx_non_current_block], &temp_multisplitting_data_buffer));
-    }
-    else if (rank_jacobi_block == BLOCK_RANK_ONE)
-    {
-      PetscCall(VecGetArray(x_block_jacobi[rank_jacobi_block], &temp_multisplitting_data_buffer));
-      PetscCall(PetscArraycpy(send_multisplitting_data_buffer, temp_multisplitting_data_buffer, vec_local_size));
-      PetscCall(VecRestoreArray(x_block_jacobi[rank_jacobi_block], &temp_multisplitting_data_buffer));
-
-      PetscCallMPI(MPI_Sendrecv(send_multisplitting_data_buffer, vec_local_size, MPIU_SCALAR, (idx_non_current_block * nprocs_per_jacobi_block) + proc_local_rank, 1, rcv_multisplitting_data_buffer, vec_local_size, MPIU_SCALAR, (idx_non_current_block * nprocs_per_jacobi_block) + proc_local_rank, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE));
-
-      PetscCall(VecGetArray(x_block_jacobi[idx_non_current_block], &temp_multisplitting_data_buffer));
-      PetscCall(PetscArraycpy(temp_multisplitting_data_buffer, rcv_multisplitting_data_buffer, vec_local_size));
-      PetscCall(VecRestoreArray(x_block_jacobi[idx_non_current_block], &temp_multisplitting_data_buffer));
-    }
+    PetscCall(VecGetArray(x_block_jacobi[idx_non_current_block], &temp_multisplitting_data_buffer));
+    PetscCall(PetscArraycpy(temp_multisplitting_data_buffer, rcv_multisplitting_data_buffer, vec_local_size));
+    PetscCall(VecRestoreArray(x_block_jacobi[idx_non_current_block], &temp_multisplitting_data_buffer));
 
     PetscCall(VecScatterBegin(scatter_jacobi_vec_part_to_merged_vec[rank_jacobi_block], x_block_jacobi[rank_jacobi_block], x, INSERT_VALUES, SCATTER_FORWARD));
     PetscCall(VecScatterEnd(scatter_jacobi_vec_part_to_merged_vec[rank_jacobi_block], x_block_jacobi[rank_jacobi_block], x, INSERT_VALUES, SCATTER_FORWARD));
     PetscCall(VecScatterBegin(scatter_jacobi_vec_part_to_merged_vec[idx_non_current_block], x_block_jacobi[idx_non_current_block], x, INSERT_VALUES, SCATTER_FORWARD));
     PetscCall(VecScatterEnd(scatter_jacobi_vec_part_to_merged_vec[idx_non_current_block], x_block_jacobi[idx_non_current_block], x, INSERT_VALUES, SCATTER_FORWARD));
 
-    PetscCall(VecWAXPY(approximation_residual, -1, x_previous_iteration, x));
+    PetscCall(VecWAXPY(approximation_residual, -1.0, x_previous_iteration, x));
     PetscCall(VecNorm(approximation_residual, NORM_INFINITY, &approximation_residual_infinity_norm));
 
     PetscCall(printResidualNorm(comm_jacobi_block, rank_jacobi_block, approximation_residual_infinity_norm));
