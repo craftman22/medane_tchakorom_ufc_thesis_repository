@@ -388,35 +388,6 @@ PetscErrorCode computeFinalResidualNorm_new(Mat A_block_jacobi, Vec *x, Vec *b_b
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode outer_solver(MPI_Comm comm_jacobi_block, KSP *outer_ksp, Vec x_minimized, Mat R, Mat S, Mat R_transpose_R, Vec vec_R_transpose_b_block_jacobi, Vec alpha, Vec *b_block_jacobi, PetscInt rank_jacobi_block, PetscInt s)
-{
-
-  PetscFunctionBegin;
-
-  PetscCall(MatTransposeMatMult(R, R, MAT_REUSE_MATRIX, PETSC_DETERMINE, &R_transpose_R));
-
-  PetscCall(MatMultTranspose(R, b_block_jacobi[rank_jacobi_block], vec_R_transpose_b_block_jacobi));
-
-  PetscCall(updateKSPoperators(outer_ksp, R_transpose_R));
-
-  // PetscScalar ksp_rtol;
-  // PetscInt kps_max_iters;
-  // KSPType ksp_type;
-  // PCType pc_type;
-  // PC pc;
-
-  // PetscCall(KSPGetTolerances(*outer_ksp, &ksp_rtol, NULL, NULL, &kps_max_iters));
-  // PetscCall(KSPGetType(*outer_ksp, &ksp_type));
-  // PetscCall((KSPGetPC(*outer_ksp, &pc)));
-  // PetscCall(PCGetType(pc, &pc_type));
-  // PetscCall(KSPGetType(*outer_ksp, &ksp_type));
-
-  PetscCall(KSPSolve(*outer_ksp, vec_R_transpose_b_block_jacobi, alpha));
-
-  PetscCall(MatMult(S, alpha, x_minimized));
-
-  PetscFunctionReturn(PETSC_SUCCESS);
-}
 
 // Compute the right hand side b in each block and then assemble the vector b
 PetscErrorCode computeTheRightHandSideWithInitialGuess(MPI_Comm comm_jacobi_block, VecScatter *scatter_jacobi_vec_part_to_merged_vec, Mat A_block_jacobi, Vec *b, Vec *b_block_jacobi, Vec x_initial_guess, PetscInt rank_jacobi_block, PetscInt jacobi_block_size, PetscInt nprocs_per_jacobi_block, PetscInt proc_local_rank)
@@ -478,40 +449,7 @@ PetscErrorCode computeDimensionRelatedVariables(PetscInt nprocs, PetscInt nprocs
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode inner_solver(KSP ksp, Mat *A_block_jacobi_subMat, Vec *x_block_jacobi, Vec *b_block_jacobi, PetscInt rank_jacobi_block, PetscInt *inner_solver_iterations, PetscInt outer_iteration_number)
-{
 
-  PetscFunctionBeginUser;
-  Vec local_right_side_vector = NULL, mat_mult_vec_result = NULL;
-  PetscCall(VecDuplicate(b_block_jacobi[rank_jacobi_block], &local_right_side_vector));
-  PetscCall(VecCopy(b_block_jacobi[rank_jacobi_block], local_right_side_vector));
-  PetscCall(VecDuplicate(b_block_jacobi[rank_jacobi_block], &mat_mult_vec_result));
-
-  PetscInt idx = (rank_jacobi_block == ZERO ? ONE : ZERO);
-  PetscCall(MatMult(A_block_jacobi_subMat[idx], x_block_jacobi[idx], mat_mult_vec_result));
-  PetscCall(VecAXPY(local_right_side_vector, -1.0, mat_mult_vec_result));
-  // PetscCall(VecWAXPY(local_right_side_vector, -1.0, mat_mult_vec_result, local_right_side_vector));
-
-  PetscCall(KSPSetInitialGuessNonzero(ksp, PETSC_TRUE));
-  PetscCall(KSPSolve(ksp, local_right_side_vector, x_block_jacobi[rank_jacobi_block]));
-  PetscInt n_iterations = 0;
-  PetscCall(KSPGetIterationNumber(ksp, &n_iterations));
-
-  MPI_Comm tmp_comm;
-  PetscCall(PetscObjectGetComm((PetscObject)local_right_side_vector, &tmp_comm));
-  PetscCall(printInnerSolverIterations(tmp_comm, rank_jacobi_block, n_iterations, outer_iteration_number));
-  // PetscCall(PetscPrintf(tmp, "NUMBER OF INNER ITERATIONS = %d  \n", n_iterations));
-
-  if (inner_solver_iterations != NULL)
-  {
-    *inner_solver_iterations = n_iterations;
-  }
-
-  PetscCall(VecDestroy(&local_right_side_vector));
-  PetscCall(VecDestroy(&mat_mult_vec_result));
-
-  PetscFunctionReturn(PETSC_SUCCESS);
-}
 
 PetscErrorCode printElapsedTime(double start_time, double end_time)
 {
@@ -520,10 +458,10 @@ PetscErrorCode printElapsedTime(double start_time, double end_time)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode printResidualNorm(MPI_Comm comm_jacobi_block,PetscInt rank_jacobi_block, PetscScalar approximation_residual_infinity_norm)
+PetscErrorCode printResidualNorm(MPI_Comm comm_jacobi_block, PetscInt rank_jacobi_block, PetscScalar approximation_residual_infinity_norm)
 {
   PetscFunctionBegin;
-  PetscCall(PetscPrintf(comm_jacobi_block, "[ Block rank %d ][ outer iter !] --------------- Infinity norm of residual (Xk - Xk-1) = %e \n",rank_jacobi_block, approximation_residual_infinity_norm));
+  PetscCall(PetscPrintf(comm_jacobi_block, "[ Block rank %d ][ outer iter !] --------------- Infinity norm of residual (Xk - Xk-1) = %e \n", rank_jacobi_block, approximation_residual_infinity_norm));
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
@@ -554,7 +492,6 @@ PetscErrorCode printInnerSolverIterations(MPI_Comm comm_jacobi_block, PetscInt r
   PetscCall(PetscPrintf(comm_jacobi_block, "[ Block rank %d ][ outer iter %d] NUMBER OF INNER SOLVER ITERATIONS = %d  \n", rank_jacobi_block, outer_iteration_number, iterations));
   PetscFunctionReturn(PETSC_SUCCESS);
 }
-
 
 PetscErrorCode printOuterSolverIterations(MPI_Comm comm_jacobi_block, PetscInt rank_jacobi_block, PetscInt iterations, PetscInt outer_iteration_number)
 {
@@ -730,45 +667,6 @@ PetscErrorCode divideRintoSubMatrices(MPI_Comm comm_jacobi_block, Mat R, Mat *R_
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode outer_solver_global_R(MPI_Comm comm_jacobi_block, KSP *outer_ksp, Vec x_minimized, Mat R, Mat S, Mat R_transpose_R, Vec vec_R_transpose_b_block_jacobi, Vec alpha, Vec b, PetscInt rank_jacobi_block, PetscInt s, PetscInt outer_iteration_number)
-{
-
-  PetscFunctionBegin;
-
-  PetscCall(MatTransposeMatMult(R, R, MAT_REUSE_MATRIX, PETSC_DETERMINE, &R_transpose_R));
-
-  PetscCall(MatMultTranspose(R, b, vec_R_transpose_b_block_jacobi));
-
-  PetscCall(updateKSPoperators(outer_ksp, R_transpose_R));
-
-  // PetscScalar ksp_rtol;
-  // PetscInt kps_max_iters;
-  // KSPType ksp_type;
-  // PCType pc_type;
-  // PC pc;
-
-  // PetscCall(KSPGetTolerances(*outer_ksp, &ksp_rtol, NULL, NULL, &kps_max_iters));
-  // PetscCall(KSPGetType(*outer_ksp, &ksp_type));
-  // PetscCall((KSPGetPC(*outer_ksp, &pc)));
-  // PetscCall(PCGetType(pc, &pc_type));
-  // PetscCall(KSPGetType(*outer_ksp, &ksp_type));
-
-
-  PetscCall(KSPSetInitialGuessNonzero(*outer_ksp, PETSC_TRUE));
-  PetscCall(KSPSolve(*outer_ksp, vec_R_transpose_b_block_jacobi, alpha));
-
-  PetscInt n_iterations = 0;
-  PetscCall(KSPGetIterationNumber(*outer_ksp, &n_iterations));
-
-  MPI_Comm tmp_comm;
-  PetscCall(PetscObjectGetComm((PetscObject)alpha, &tmp_comm));
-  PetscCall(printOuterSolverIterations(tmp_comm, rank_jacobi_block, n_iterations,outer_iteration_number));
-
-  PetscCall(MatMult(S, alpha, x_minimized));
-
-  PetscFunctionReturn(PETSC_SUCCESS);
-}
-
 PetscErrorCode create_redistributed_A_block_jacobi(MPI_Comm comm_jacobi_block, Mat A_block_jacobi, Mat *A_block_jacobi_redist, PetscInt nprocs_per_jacobi_block, PetscInt proc_local_rank, PetscInt proc_local_size, PetscInt first_row_owned)
 {
 
@@ -820,3 +718,124 @@ PetscErrorCode restoreHalfSubMatrixToR(Mat R, Mat *R_block_jacobi_subMat, PetscI
   PetscCall(MatDenseRestoreSubMatrix(R, &R_block_jacobi_subMat[rank_jacobi_block]));
   PetscFunctionReturn(PETSC_SUCCESS);
 }
+
+
+
+// PetscErrorCode outer_solver(MPI_Comm comm_jacobi_block, KSP *outer_ksp, Vec x_minimized, Mat R, Mat S, Mat R_transpose_R, Vec vec_R_transpose_b_block_jacobi, Vec alpha, Vec *b_block_jacobi, PetscInt rank_jacobi_block, PetscInt s)
+// {
+
+//   PetscFunctionBegin;
+
+//   PetscCall(MatTransposeMatMult(R, R, MAT_REUSE_MATRIX, PETSC_DETERMINE, &R_transpose_R));
+
+//   PetscCall(MatMultTranspose(R, b_block_jacobi[rank_jacobi_block], vec_R_transpose_b_block_jacobi));
+
+//   PetscCall(updateKSPoperators(outer_ksp, R_transpose_R));
+
+//   // PetscScalar ksp_rtol;
+//   // PetscInt kps_max_iters;
+//   // KSPType ksp_type;
+//   // PCType pc_type;
+//   // PC pc;
+
+//   // PetscCall(KSPGetTolerances(*outer_ksp, &ksp_rtol, NULL, NULL, &kps_max_iters));
+//   // PetscCall(KSPGetType(*outer_ksp, &ksp_type));
+//   // PetscCall((KSPGetPC(*outer_ksp, &pc)));
+//   // PetscCall(PCGetType(pc, &pc_type));
+//   // PetscCall(KSPGetType(*outer_ksp, &ksp_type));
+
+//   PetscCall(KSPSolve(*outer_ksp, vec_R_transpose_b_block_jacobi, alpha));
+
+//   PetscCall(MatMult(S, alpha, x_minimized));
+
+//   PetscFunctionReturn(PETSC_SUCCESS);
+// }
+
+
+
+PetscErrorCode inner_solver(KSP ksp, Mat *A_block_jacobi_subMat, Vec *x_block_jacobi, Vec *b_block_jacobi, PetscInt rank_jacobi_block, PetscInt *inner_solver_iterations, PetscInt outer_iteration_number)
+{
+
+  PetscFunctionBeginUser;
+  Vec local_right_side_vector = NULL, mat_mult_vec_result = NULL;
+  PetscCall(VecDuplicate(b_block_jacobi[rank_jacobi_block], &local_right_side_vector));
+  PetscCall(VecCopy(b_block_jacobi[rank_jacobi_block], local_right_side_vector));
+  PetscCall(VecDuplicate(b_block_jacobi[rank_jacobi_block], &mat_mult_vec_result));
+
+  PetscInt idx = (rank_jacobi_block == ZERO ? ONE : ZERO);
+  PetscCall(MatMult(A_block_jacobi_subMat[idx], x_block_jacobi[idx], mat_mult_vec_result));
+  PetscCall(VecAXPY(local_right_side_vector, -1.0, mat_mult_vec_result));
+  // PetscCall(VecWAXPY(local_right_side_vector, -1.0, mat_mult_vec_result, local_right_side_vector));
+
+  PetscCall(KSPSetInitialGuessNonzero(ksp, PETSC_TRUE));
+  PetscCall(KSPSolve(ksp, local_right_side_vector, x_block_jacobi[rank_jacobi_block]));
+  PetscInt n_iterations = 0;
+  PetscCall(KSPGetIterationNumber(ksp, &n_iterations));
+
+  // if (n_iterations == 0)
+  // {
+  //   KSPSetTolerances(ksp,0.0001,PETSC_CURRENT,PETSC_CURRENT,2);
+  //   PetscCall(KSPSolve(ksp, local_right_side_vector, x_block_jacobi[rank_jacobi_block]));
+  //   PetscCall(KSPGetIterationNumber(ksp, &n_iterations));
+  // }
+
+  // KSPSetTolerances(ksp,0.001,PETSC_CURRENT,PETSC_CURRENT,40);
+
+
+  MPI_Comm tmp_comm;
+  PetscCall(PetscObjectGetComm((PetscObject)local_right_side_vector, &tmp_comm));
+  PetscCall(printInnerSolverIterations(tmp_comm, rank_jacobi_block, n_iterations, outer_iteration_number));
+
+
+  if (inner_solver_iterations != NULL)
+  {
+    *inner_solver_iterations = n_iterations;
+  }
+
+  PetscCall(VecDestroy(&local_right_side_vector));
+  PetscCall(VecDestroy(&mat_mult_vec_result));
+
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+
+
+PetscErrorCode outer_solver(MPI_Comm comm_jacobi_block, KSP *outer_ksp, Vec x_minimized, Mat R, Mat S, Mat R_transpose_R, Vec vec_R_transpose_b_block_jacobi, Vec alpha, Vec b, PetscInt rank_jacobi_block, PetscInt s, PetscInt outer_iteration_number)
+{
+
+  PetscFunctionBegin;
+
+  PetscCall(MatTransposeMatMult(R, R, MAT_REUSE_MATRIX, PETSC_DETERMINE, &R_transpose_R));
+
+  PetscCall(MatMultTranspose(R, b, vec_R_transpose_b_block_jacobi));
+
+  PetscCall(updateKSPoperators(outer_ksp, R_transpose_R));
+
+  // PetscScalar ksp_rtol;
+  // PetscInt kps_max_iters;
+  // KSPType ksp_type;
+  // PCType pc_type;
+  // PC pc;
+
+  // PetscCall(KSPGetTolerances(*outer_ksp, &ksp_rtol, NULL, NULL, &kps_max_iters));
+  // PetscCall(KSPGetType(*outer_ksp, &ksp_type));
+  // PetscCall((KSPGetPC(*outer_ksp, &pc)));
+  // PetscCall(PCGetType(pc, &pc_type));
+  // PetscCall(KSPGetType(*outer_ksp, &ksp_type));
+
+  // PetscCall(KSPSetInitialGuessNonzero(*outer_ksp, PETSC_TRUE));
+  PetscCall(KSPSolve(*outer_ksp, vec_R_transpose_b_block_jacobi, alpha));
+
+  PetscInt n_iterations = 0;
+  PetscCall(KSPGetIterationNumber(*outer_ksp, &n_iterations));
+
+  MPI_Comm tmp_comm;
+  PetscCall(PetscObjectGetComm((PetscObject)alpha, &tmp_comm));
+  PetscCall(printOuterSolverIterations(tmp_comm, rank_jacobi_block, n_iterations, outer_iteration_number));
+
+  PetscCall(MatMult(S, alpha, x_minimized));
+
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+

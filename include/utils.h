@@ -26,10 +26,10 @@ PetscErrorCode updateKSPoperators(KSP *ksp, Mat operator_matrix);
 PetscErrorCode inner_solver(KSP ksp, Mat *A_block_jacobi_subMat, Vec *x_block_jacobi, Vec *b_block_jacobi, PetscInt rank_jacobi_block, PetscInt *inner_solver_iterations, PetscInt outer_iteration_number);
 
 
-PetscErrorCode outer_solver(MPI_Comm comm_jacobi_block, KSP *outer_ksp, Vec x_minimized, Mat R, Mat S, Mat R_transpose_R, Vec vec_R_transpose_b_block_jacobi, Vec alpha, Vec *b_block_jacobi, PetscInt rank_jacobi_block, PetscInt s);
+// PetscErrorCode outer_solver(MPI_Comm comm_jacobi_block, KSP *outer_ksp, Vec x_minimized, Mat R, Mat S, Mat R_transpose_R, Vec vec_R_transpose_b_block_jacobi, Vec alpha, Vec *b_block_jacobi, PetscInt rank_jacobi_block, PetscInt s);
 
 
-PetscErrorCode outer_solver_global_R(MPI_Comm comm_jacobi_block, KSP *outer_ksp, Vec x_minimized, Mat R, Mat S, Mat R_transpose_R, Vec vec_R_transpose_b_block_jacobi, Vec alpha, Vec b, PetscInt rank_jacobi_block, PetscInt s, PetscInt outer_iteration_number);
+PetscErrorCode outer_solver(MPI_Comm comm_jacobi_block, KSP *outer_ksp, Vec x_minimized, Mat R, Mat S, Mat R_transpose_R, Vec vec_R_transpose_b_block_jacobi, Vec alpha, Vec b, PetscInt rank_jacobi_block, PetscInt s, PetscInt outer_iteration_number);
 
 PetscErrorCode computeFinalResidualNorm(Mat A_block_jacobi, Vec *x, Vec *b_block_jacobi, PetscInt rank_jacobi_block, PetscInt proc_local_rank, PetscScalar *direct_residual_norm);
 

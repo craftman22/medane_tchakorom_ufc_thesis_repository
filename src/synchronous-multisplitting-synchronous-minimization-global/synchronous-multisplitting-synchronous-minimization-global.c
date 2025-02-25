@@ -261,7 +261,7 @@ int main(int argc, char **argv)
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    PetscCall(outer_solver_global_R(comm_jacobi_block, &outer_ksp, x_minimized, R, S, R_transpose_R, vec_R_transpose_b_block_jacobi, alpha, b, rank_jacobi_block, s, number_of_iterations));
+    PetscCall(outer_solver(comm_jacobi_block, &outer_ksp, x_minimized, R, S, R_transpose_R, vec_R_transpose_b_block_jacobi, alpha, b, rank_jacobi_block, s, number_of_iterations));
 
     PetscCall(VecWAXPY(approximate_residual, -1.0, x_minimized_prev_iteration, x_minimized));
 
