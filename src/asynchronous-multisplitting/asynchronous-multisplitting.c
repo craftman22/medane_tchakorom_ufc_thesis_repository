@@ -183,7 +183,9 @@ int main(int argc, char **argv)
       PetscCall(VecRestoreArray(x_block_jacobi[rank_jacobi_block], &temp_buffer));
       PetscCallMPI(MPI_Isend(send_buffer, vec_local_size, MPIU_SCALAR, message_dest, TAG_MULTISPLITTING_DATA + rank_jacobi_block, MPI_COMM_WORLD, &send_data_request));
     }
+    
 
+    PetscCallMPI(MPI_Iprobe(message_source, (TAG_MULTISPLITTING_DATA + idx_non_current_block), MPI_COMM_WORLD, &rcv_data_flag, MPI_STATUS_IGNORE));
     if (rcv_data_flag)
     {
       do
@@ -201,7 +203,7 @@ int main(int argc, char **argv)
     PetscCall(VecWAXPY(approximation_residual, -1.0, x_block_jacobi_previous_iteration, x_block_jacobi[rank_jacobi_block]));
     PetscCall(VecNorm(approximation_residual, NORM_INFINITY, &approximation_residual_infinity_norm));
     PetscCall(VecCopy(x_block_jacobi[rank_jacobi_block], x_block_jacobi_previous_iteration));
-    PetscCall(printResidualNorm(comm_jacobi_block, rank_jacobi_block, approximation_residual_infinity_norm));
+    PetscCall(printResidualNorm(comm_jacobi_block, rank_jacobi_block, approximation_residual_infinity_norm,number_of_iterations));
 
     if (PetscApproximateLTE(approximation_residual_infinity_norm, relative_tolerance))
       convergence_count++;

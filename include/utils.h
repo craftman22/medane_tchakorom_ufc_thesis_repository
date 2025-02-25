@@ -43,7 +43,7 @@ PetscErrorCode computeDimensionRelatedVariables(PetscInt nprocs, PetscInt nprocs
 PetscErrorCode printElapsedTime(double start_time, double end_time);
 
 
-PetscErrorCode printResidualNorm(MPI_Comm comm_jacobi_block,PetscInt rank_jacobi_block, PetscScalar approximation_residual_infinity_norm);
+PetscErrorCode printResidualNorm(MPI_Comm comm_jacobi_block,PetscInt rank_jacobi_block, PetscScalar approximation_residual_infinity_norm,PetscInt outer_iteration_number);
 
 PetscErrorCode printOuterSolverIterations(MPI_Comm comm_jacobi_block, PetscInt rank_jacobi_block, PetscInt iterations, PetscInt outer_iteration_number);
 
