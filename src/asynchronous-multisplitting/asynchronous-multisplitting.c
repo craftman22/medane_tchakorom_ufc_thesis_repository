@@ -137,12 +137,12 @@ int main(int argc, char **argv)
   PetscMPIInt send_signal_flag = 0;
   PetscMPIInt rcv_signal_flag = 0;
 
-  MPI_Request rcv_data_request = MPI_REQUEST_NULL;
+  // MPI_Request rcv_data_request = MPI_REQUEST_NULL;
   MPI_Request send_data_request = MPI_REQUEST_NULL;
   // MPI_Status rcv_status;
   // MPI_Request request;
   MPI_Request send_signal_request = MPI_REQUEST_NULL;
-  MPI_Request rcv_signal_request = MPI_REQUEST_NULL;
+  // MPI_Request rcv_signal_request = MPI_REQUEST_NULL;
 
   PetscInt inner_solver_iterations = 0;
 
@@ -165,8 +165,7 @@ int main(int argc, char **argv)
     {
       do
       {
-        PetscCallMPI(MPI_Irecv(rcv_buffer, vec_local_size, MPIU_SCALAR, message_source, (TAG_MULTISPLITTING_DATA + idx_non_current_block), MPI_COMM_WORLD, &rcv_data_request));
-        PetscCallMPI(MPI_Wait(&rcv_data_request, MPI_STATUS_IGNORE));
+        PetscCallMPI(MPI_Recv(rcv_buffer,vec_local_size,MPIU_SCALAR, message_source, (TAG_MULTISPLITTING_DATA + idx_non_current_block), MPI_COMM_WORLD,MPI_STATUS_IGNORE));
         PetscCallMPI(MPI_Iprobe(message_source, (TAG_MULTISPLITTING_DATA + idx_non_current_block), MPI_COMM_WORLD, &rcv_data_flag, MPI_STATUS_IGNORE));
       } while (rcv_data_flag);
       PetscCall(VecGetArray(x_block_jacobi[idx_non_current_block], &temp_buffer));
@@ -189,8 +188,7 @@ int main(int argc, char **argv)
     {
       do
       {
-        PetscCallMPI(MPI_Irecv(rcv_buffer, vec_local_size, MPIU_SCALAR, message_source, (TAG_MULTISPLITTING_DATA + idx_non_current_block), MPI_COMM_WORLD, &rcv_data_request));
-        PetscCallMPI(MPI_Wait(&rcv_data_request, MPI_STATUS_IGNORE));
+        PetscCallMPI(MPI_Recv(rcv_buffer,vec_local_size,MPIU_SCALAR, message_source, (TAG_MULTISPLITTING_DATA + idx_non_current_block), MPI_COMM_WORLD,MPI_STATUS_IGNORE));
         PetscCallMPI(MPI_Iprobe(message_source, (TAG_MULTISPLITTING_DATA + idx_non_current_block), MPI_COMM_WORLD, &rcv_data_flag, MPI_STATUS_IGNORE));
       } while (rcv_data_flag);
       PetscCall(VecGetArray(x_block_jacobi[idx_non_current_block], &temp_buffer));
@@ -229,8 +227,7 @@ int main(int argc, char **argv)
       PetscCallMPI(MPI_Iprobe(message_source, TAG_STATUS + idx_non_current_block, MPI_COMM_WORLD, &rcv_signal_flag, &status));
       if (rcv_signal_flag)
       {
-        PetscCallMPI(MPI_Irecv(&rcv_signal, ONE, MPIU_INT, message_source, TAG_STATUS + idx_non_current_block, MPI_COMM_WORLD, &rcv_signal_request));
-        PetscCallMPI(MPI_Wait(&rcv_signal_request, MPI_STATUS_IGNORE));
+        PetscCallMPI(MPI_Recv(&rcv_signal, ONE, MPIU_INT, message_source, TAG_STATUS + idx_non_current_block, MPI_COMM_WORLD,MPI_STATUS_IGNORE));
       }
     }
 

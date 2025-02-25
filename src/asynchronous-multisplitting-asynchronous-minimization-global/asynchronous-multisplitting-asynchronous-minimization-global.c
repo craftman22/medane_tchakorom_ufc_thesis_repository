@@ -52,9 +52,9 @@ int main(int argc, char **argv)
     PetscScalar *temp_minimization_data_buffer = NULL;
 
     MPI_Request send_multisplitting_data_request = MPI_REQUEST_NULL;
-    MPI_Request rcv_multisplitting_data_request = MPI_REQUEST_NULL;
+    // MPI_Request rcv_multisplitting_data_request = MPI_REQUEST_NULL;
     MPI_Request send_minimization_data_request = MPI_REQUEST_NULL;
-    MPI_Request rcv_minimization_data_request = MPI_REQUEST_NULL;
+    // MPI_Request rcv_minimization_data_request = MPI_REQUEST_NULL;
 
     PetscMPIInt send_multisplitting_data_flag = 0;
     PetscMPIInt rcv_multisplitting_data_flag = 0;
@@ -68,7 +68,7 @@ int main(int argc, char **argv)
     PetscInt MIN_CONVERGENCE_COUNT = 5;
 
     MPI_Request send_signal_request = MPI_REQUEST_NULL;
-    MPI_Request rcv_signal_request = MPI_REQUEST_NULL;
+    // MPI_Request rcv_signal_request = MPI_REQUEST_NULL;
 
     MPI_Status status;
 
@@ -224,10 +224,24 @@ int main(int argc, char **argv)
 
         while (n_vectors_inserted < s)
         {
+
+            PetscCallMPI(MPI_Iprobe(message_source, (TAG_MULTISPLITTING_DATA + idx_non_current_block), MPI_COMM_WORLD, &rcv_multisplitting_data_flag, MPI_STATUS_IGNORE));
+            if (rcv_multisplitting_data_flag)
+            {
+                do
+                {
+                    PetscCallMPI(MPI_Recv(rcv_multisplitting_data_buffer, vec_local_size, MPIU_SCALAR, message_source, (TAG_MULTISPLITTING_DATA + idx_non_current_block), MPI_COMM_WORLD, MPI_STATUS_IGNORE));
+                    PetscCallMPI(MPI_Iprobe(message_source, (TAG_MULTISPLITTING_DATA + idx_non_current_block), MPI_COMM_WORLD, &rcv_multisplitting_data_flag, MPI_STATUS_IGNORE));
+                } while (rcv_multisplitting_data_flag);
+                PetscCall(VecGetArray(x_block_jacobi[idx_non_current_block], &temp_multisplitting_data_buffer));
+                PetscCall(PetscArraycpy(temp_multisplitting_data_buffer, rcv_multisplitting_data_buffer, vec_local_size));
+                PetscCall(VecRestoreArray(x_block_jacobi[idx_non_current_block], &temp_multisplitting_data_buffer));
+            }
+
             PetscCall(inner_solver(inner_ksp, A_block_jacobi_subMat, x_block_jacobi, b_block_jacobi, rank_jacobi_block, &inner_solver_iterations, number_of_iterations));
 
             PetscCallMPI(MPI_Test(&send_multisplitting_data_request, &send_multisplitting_data_flag, MPI_STATUS_IGNORE));
-            if (send_multisplitting_data_flag )
+            if (send_multisplitting_data_flag)
             {
 
                 PetscCall(VecGetArray(x_block_jacobi[rank_jacobi_block], &temp_multisplitting_data_buffer));
@@ -241,8 +255,7 @@ int main(int argc, char **argv)
             {
                 do
                 {
-                    PetscCallMPI(MPI_Irecv(rcv_multisplitting_data_buffer, vec_local_size, MPIU_SCALAR, message_source, (TAG_MULTISPLITTING_DATA + idx_non_current_block), MPI_COMM_WORLD, &rcv_multisplitting_data_request));
-                    PetscCallMPI(MPI_Wait(&rcv_multisplitting_data_request, MPI_STATUS_IGNORE));
+                    PetscCallMPI(MPI_Recv(rcv_multisplitting_data_buffer, vec_local_size, MPIU_SCALAR, message_source, (TAG_MULTISPLITTING_DATA + idx_non_current_block), MPI_COMM_WORLD, MPI_STATUS_IGNORE));
                     PetscCallMPI(MPI_Iprobe(message_source, (TAG_MULTISPLITTING_DATA + idx_non_current_block), MPI_COMM_WORLD, &rcv_multisplitting_data_flag, MPI_STATUS_IGNORE));
                 } while (rcv_multisplitting_data_flag);
                 PetscCall(VecGetArray(x_block_jacobi[idx_non_current_block], &temp_multisplitting_data_buffer));
@@ -271,6 +284,38 @@ int main(int argc, char **argv)
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+        PetscCallMPI(MPI_Iprobe(message_source, (TAG_MINIMIZATION_DATA + idx_non_current_block), MPI_COMM_WORLD, &rcv_minimization_data_flag, MPI_STATUS_IGNORE));
+        if (rcv_minimization_data_flag)
+        {
+
+            do
+            {
+                PetscCallMPI(MPI_Recv(rcv_minimization_data_buffer, R_local_values_count, MPIU_SCALAR, (idx_non_current_block * nprocs_per_jacobi_block) + proc_local_rank, (TAG_MINIMIZATION_DATA + idx_non_current_block), MPI_COMM_WORLD, MPI_STATUS_IGNORE));
+                PetscCallMPI(MPI_Iprobe(message_source, (TAG_MINIMIZATION_DATA + idx_non_current_block), MPI_COMM_WORLD, &rcv_minimization_data_flag, MPI_STATUS_IGNORE));
+            } while (rcv_minimization_data_flag);
+
+            PetscCall(MatDenseGetArray(R, &temp_minimization_data_buffer));
+            if (rstart < (n_mesh_points / 2) && (n_mesh_points / 2) < rend)
+            {
+                for (PetscInt j = 0; j < s; j++)
+                {
+                    PetscInt idx = (idx_non_current_block * (lda / 2)) + (j * lda);
+                    PetscCall(PetscArraycpy(&temp_minimization_data_buffer[idx], &rcv_minimization_data_buffer[idx], lda / 2));
+                }
+            }
+
+            if (rstart >= (n_mesh_points / 2) && rank_jacobi_block == BLOCK_RANK_ZERO)
+            {
+                PetscCall(PetscArraycpy(temp_minimization_data_buffer, rcv_minimization_data_buffer, R_local_values_count));
+            }
+
+            if (rend <= (n_mesh_points / 2) && rank_jacobi_block == BLOCK_RANK_ONE)
+            {
+                PetscCall(PetscArraycpy(temp_minimization_data_buffer, rcv_minimization_data_buffer, R_local_values_count));
+            }
+            PetscCall(MatDenseRestoreArray(R, &temp_minimization_data_buffer));
+        }
+
         PetscCallMPI(MPI_Test(&send_minimization_data_request, &send_minimization_data_flag, MPI_STATUS_IGNORE));
         if (send_minimization_data_flag)
         {
@@ -286,8 +331,7 @@ int main(int argc, char **argv)
 
             do
             {
-                PetscCallMPI(MPI_Irecv(rcv_minimization_data_buffer, R_local_values_count, MPIU_SCALAR, (idx_non_current_block * nprocs_per_jacobi_block) + proc_local_rank, (TAG_MINIMIZATION_DATA + idx_non_current_block), MPI_COMM_WORLD, &rcv_minimization_data_request));
-                PetscCallMPI(MPI_Wait(&rcv_minimization_data_request, MPI_STATUS_IGNORE));
+                PetscCallMPI(MPI_Recv(rcv_minimization_data_buffer, R_local_values_count, MPIU_SCALAR, (idx_non_current_block * nprocs_per_jacobi_block) + proc_local_rank, (TAG_MINIMIZATION_DATA + idx_non_current_block), MPI_COMM_WORLD, MPI_STATUS_IGNORE));
                 PetscCallMPI(MPI_Iprobe(message_source, (TAG_MINIMIZATION_DATA + idx_non_current_block), MPI_COMM_WORLD, &rcv_minimization_data_flag, MPI_STATUS_IGNORE));
             } while (rcv_minimization_data_flag);
 
@@ -354,8 +398,7 @@ int main(int argc, char **argv)
             PetscCallMPI(MPI_Iprobe(message_source, (TAG_STATUS + idx_non_current_block), MPI_COMM_WORLD, &rcv_signal_flag, &status));
             if (rcv_signal_flag)
             {
-                PetscCallMPI(MPI_Irecv(&rcv_signal, ONE, MPIU_INT, message_source, (TAG_STATUS + idx_non_current_block), MPI_COMM_WORLD, &rcv_signal_request));
-                PetscCallMPI(MPI_Wait(&rcv_signal_request, MPI_STATUS_IGNORE));
+                PetscCallMPI(MPI_Recv(&rcv_signal, ONE, MPIU_INT, message_source, (TAG_STATUS + idx_non_current_block), MPI_COMM_WORLD,MPI_STATUS_IGNORE));
             }
         }
 
