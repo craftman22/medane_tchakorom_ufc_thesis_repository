@@ -129,7 +129,7 @@ build: all
 
 # Rule to compile each binary
 $(BIN_DIR)/%: src/%.c | $(BIN_DIR)
-	@$(LINK.c) src/utils/utils.c   $^ $(LOADLIBES) $(LDLIBS) -I./include   -o $(BIN_DIR)/$(notdir $@)
+	@$(LINK.c) src/utils/utils.c src/utils/comm.c  $^ $(LOADLIBES) $(LDLIBS) -I./include   -o $(BIN_DIR)/$(notdir $@)
 	
 	
 # Ensure the bin directory exists
