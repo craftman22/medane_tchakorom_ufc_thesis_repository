@@ -12,7 +12,9 @@ PetscErrorCode comm_async_probe_and_receive(Vec *x_block_jacobi, PetscScalar *rc
         PetscCall(VecGetArray(x_block_jacobi[idx_non_current_block], &rcv_buffer));
         do
         {
+            // printf("=============Block rank %d START multipsplitting RCV communication\n", idx_non_current_block);
             PetscCallMPI(MPI_Recv(rcv_buffer, vec_local_size, MPIU_SCALAR, message_source, (TAG_MULTISPLITTING_DATA + idx_non_current_block), MPI_COMM_WORLD, MPI_STATUS_IGNORE));
+            // printf("=============Block rank %d END multipsplitting RCV communication\n", idx_non_current_block);
             PetscCallMPI(MPI_Iprobe(message_source, (TAG_MULTISPLITTING_DATA + idx_non_current_block), MPI_COMM_WORLD, &rcv_data_flag, MPI_STATUS_IGNORE));
         } while (rcv_data_flag);
         PetscCall(VecRestoreArray(x_block_jacobi[idx_non_current_block], &rcv_buffer));
@@ -116,10 +118,12 @@ PetscErrorCode comm_async_probe_and_receive_min(Mat R, PetscScalar *rcv_minimiza
     PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode comm_async_test_and_send_min(Mat R, PetscScalar *send_minimization_data_buffer, PetscScalar *temp_minimization_data_buffer, MPI_Request send_minimization_data_request, PetscMPIInt R_local_values_count, PetscMPIInt send_minimization_data_flag, PetscMPIInt message_dest, PetscMPIInt rank_jacobi_block)
+
+
+PetscErrorCode comm_async_test_and_send_min(Mat R, PetscScalar *send_minimization_data_buffer, PetscScalar *temp_minimization_data_buffer, MPI_Request send_minimization_data_request, PetscMPIInt R_local_values_count, PetscMPIInt message_dest, PetscMPIInt rank_jacobi_block)
 {
     PetscFunctionBeginUser;
-
+    PetscMPIInt send_minimization_data_flag;
     PetscCallMPI(MPI_Test(&send_minimization_data_request, &send_minimization_data_flag, MPI_STATUS_IGNORE));
     if (send_minimization_data_flag)
     {

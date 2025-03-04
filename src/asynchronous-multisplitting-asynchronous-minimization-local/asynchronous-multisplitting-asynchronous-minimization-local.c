@@ -183,6 +183,19 @@ int main(int argc, char **argv)
     double start_time, end_time;
     start_time = MPI_Wtime();
 
+
+    // const char *var = getenv("MPICH_DBG_LEVEL");  // Replace with your desired variable
+    // if (var) {
+    //     printf("MPICH_DBG_LEVEL: %s\n", var);
+    // } else {
+    //     printf("Environment variable not found.\n");
+    // }
+
+    // PetscCall(PetscFinalize());
+    // return 0;
+
+
+
     do
     {
 
@@ -192,13 +205,17 @@ int main(int argc, char **argv)
         while (n_vectors_inserted < s)
         {
 
-            PetscCall(comm_async_probe_and_receive(x_block_jacobi, rcv_multisplitting_data_buffer, vec_local_size, rcv_multisplitting_data_flag, message_source, idx_non_current_block));
+            // PetscCall(comm_async_probe_and_receive(x_block_jacobi, rcv_multisplitting_data_buffer, vec_local_size, rcv_multisplitting_data_flag, message_source, idx_non_current_block));
 
             PetscCall(inner_solver(inner_ksp, A_block_jacobi_subMat, x_block_jacobi, b_block_jacobi, rank_jacobi_block, &inner_solver_iterations, number_of_iterations));
 
+            // PetscCall(PetscPrintf(comm_jacobi_block,"Block rank %d START multipsplitting SEND communication\n", rank_jacobi_block));
             PetscCall(comm_async_test_and_send(x_block_jacobi, send_multisplitting_data_buffer, temp_multisplitting_data_buffer, &send_multisplitting_data_request, vec_local_size, send_multisplitting_data_flag, message_destination, rank_jacobi_block));
-
+            // PetscCall(PetscPrintf(comm_jacobi_block,"Block rank %d END multipsplitting SEND communication\n", rank_jacobi_block));
+            
+            // PetscCall(PetscPrintf(comm_jacobi_block,"Block rank %d START multipsplitting RCV communication\n", rank_jacobi_block));
             PetscCall(comm_async_probe_and_receive(x_block_jacobi, rcv_multisplitting_data_buffer, vec_local_size, rcv_multisplitting_data_flag, message_source, idx_non_current_block));
+            // PetscCall(PetscPrintf(comm_jacobi_block,"Block rank %d END multipsplitting RCV communication\n", rank_jacobi_block));
 
             PetscCall(VecScatterBegin(scatter_jacobi_vec_part_to_merged_vec[rank_jacobi_block], x_block_jacobi[rank_jacobi_block], x, INSERT_VALUES, SCATTER_FORWARD));
             PetscCall(VecScatterEnd(scatter_jacobi_vec_part_to_merged_vec[rank_jacobi_block], x_block_jacobi[rank_jacobi_block], x, INSERT_VALUES, SCATTER_FORWARD));
@@ -222,6 +239,7 @@ int main(int argc, char **argv)
 
         PetscCall(VecNorm(approximate_residual, NORM_INFINITY, &approximation_residual_infinity_norm));
 
+     
         PetscCall(VecScatterBegin(scatter_jacobi_vec_part_to_merged_vec[idx_non_current_block], x_minimized, x_block_jacobi[idx_non_current_block], INSERT_VALUES, SCATTER_REVERSE));
         PetscCall(VecScatterEnd(scatter_jacobi_vec_part_to_merged_vec[idx_non_current_block], x_minimized, x_block_jacobi[idx_non_current_block], INSERT_VALUES, SCATTER_REVERSE));
         PetscCall(VecScatterBegin(scatter_jacobi_vec_part_to_merged_vec[rank_jacobi_block], x_minimized, x_block_jacobi[rank_jacobi_block], INSERT_VALUES, SCATTER_REVERSE));

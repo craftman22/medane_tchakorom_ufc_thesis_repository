@@ -246,7 +246,7 @@ int main(int argc, char **argv)
 
         PetscCall(comm_async_probe_and_receive_min(R, rcv_minimization_data_buffer, temp_minimization_data_buffer, R_local_values_count, rcv_minimization_data_flag, message_source, rank_jacobi_block, idx_non_current_block, n_mesh_points, rstart, rend, lda, s));
 
-        PetscCall(comm_async_test_and_send_min(R, send_minimization_data_buffer, temp_minimization_data_buffer, send_multisplitting_data_request, vec_local_size, send_minimization_data_request, message_destination, rank_jacobi_block));
+        PetscCall(comm_async_test_and_send_min(R, send_minimization_data_buffer, temp_minimization_data_buffer, send_minimization_data_request, vec_local_size, message_destination, rank_jacobi_block));
 
         PetscCall(comm_async_probe_and_receive_min(R, rcv_minimization_data_buffer, temp_minimization_data_buffer, R_local_values_count, rcv_minimization_data_flag, message_source, rank_jacobi_block, idx_non_current_block, n_mesh_points, rstart, rend, lda, s));
 
