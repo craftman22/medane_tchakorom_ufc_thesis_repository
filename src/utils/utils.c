@@ -658,8 +658,8 @@ PetscErrorCode divideRintoSubMatrices(MPI_Comm comm_jacobi_block, Mat R, Mat *R_
     PetscCall(ISDestroy(&is_rows[i]));
   }
 
-  MatDestroy(&R_block_jacobi[0]);
-  MatDestroy(&R_block_jacobi[1]);
+ PetscCall( MatDestroy(&R_block_jacobi[0]));
+ PetscCall( MatDestroy(&R_block_jacobi[1]));
 
   PetscFunctionReturn(PETSC_SUCCESS);
 }

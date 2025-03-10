@@ -100,8 +100,8 @@ int main(int argc, char **argv)
   PetscCall(initializeKSP(comm_jacobi_block, &inner_ksp, A_block_jacobi_subMat[rank_jacobi_block], rank_jacobi_block, PETSC_FALSE, INNER_KSP_PREFIX, INNER_PC_PREFIX));
 
   PetscCall(VecGetLocalSize(x_block_jacobi[rank_jacobi_block], &vec_local_size));
-  PetscMalloc1(vec_local_size, &send_multisplitting_data_buffer);
-  PetscMalloc1(vec_local_size, &rcv_multisplitting_data_buffer);
+  PetscCall(PetscMalloc1(vec_local_size, &send_multisplitting_data_buffer));
+  PetscCall(PetscMalloc1(vec_local_size, &rcv_multisplitting_data_buffer));
   PetscCall(VecDuplicate(x, &approximation_residual));
 
   PetscCallMPI(MPI_Barrier(PETSC_COMM_WORLD));

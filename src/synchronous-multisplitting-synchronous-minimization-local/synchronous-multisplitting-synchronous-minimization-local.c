@@ -99,9 +99,9 @@ int main(int argc, char **argv)
   PetscCall(poisson2DMatrix(&A_block_jacobi, n_mesh_lines, n_mesh_columns, rank_jacobi_block, njacobi_blocks));
 
   PetscCall(create_matrix_dense(comm_jacobi_block, &R, n_mesh_points / njacobi_blocks, s, MATMPIDENSE));
-  MatZeroEntries(R);
-  MatAssemblyBegin(R, MAT_FINAL_ASSEMBLY);
-  MatAssemblyEnd(R, MAT_FINAL_ASSEMBLY);
+  PetscCall(MatZeroEntries(R));
+  PetscCall(MatAssemblyBegin(R, MAT_FINAL_ASSEMBLY));
+ PetscCall( MatAssemblyEnd(R, MAT_FINAL_ASSEMBLY));
 
   PetscCall(create_matrix_dense(comm_jacobi_block, &S, n_mesh_points / njacobi_blocks, s, MATMPIDENSE));
 

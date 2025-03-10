@@ -124,9 +124,9 @@ int main(int argc, char **argv)
     PetscCall(poisson2DMatrix(&A_block_jacobi, n_mesh_lines, n_mesh_columns, rank_jacobi_block, njacobi_blocks));
 
     PetscCall(create_matrix_dense(comm_jacobi_block, &R, n_mesh_points / njacobi_blocks, s, MATMPIDENSE));
-    MatZeroEntries(R);
-    MatAssemblyBegin(R, MAT_FINAL_ASSEMBLY);
-    MatAssemblyEnd(R, MAT_FINAL_ASSEMBLY);
+    PetscCall(MatZeroEntries(R));
+    PetscCall(MatAssemblyBegin(R, MAT_FINAL_ASSEMBLY));
+    PetscCall(MatAssemblyEnd(R, MAT_FINAL_ASSEMBLY));
 
     PetscCall(create_matrix_dense(comm_jacobi_block, &S, n_mesh_points / njacobi_blocks, s, MATMPIDENSE));
 
@@ -162,18 +162,18 @@ int main(int argc, char **argv)
     PetscCall(VecDuplicate(x_block_jacobi[rank_jacobi_block], &x_part_minimized_prev_iteration));
     PetscCall(VecDuplicate(x_block_jacobi[rank_jacobi_block], &approximate_residual));
 
-    PetscMalloc1(vec_local_size, &send_multisplitting_data_buffer);
-    PetscMalloc1(vec_local_size, &rcv_multisplitting_data_buffer);
+   PetscCall( PetscMalloc1(vec_local_size, &send_multisplitting_data_buffer));
+   PetscCall( PetscMalloc1(vec_local_size, &rcv_multisplitting_data_buffer));
 
     PetscCall(VecGetLocalSize(x, &x_local_size));
     PetscCall(VecGetLocalSize(x_block_jacobi[rank_jacobi_block], &x_part_local_size));
 
-    PetscMalloc1(x_part_local_size, &vec_local_idx);
+    PetscCall(PetscMalloc1(x_part_local_size, &vec_local_idx));
     for (PetscMPIInt i = 0; i < (x_part_local_size); i++)
     {
         vec_local_idx[i] = (proc_local_rank * x_part_local_size) + i;
     }
-    PetscMalloc1(x_part_local_size, &vector_to_insert_into_S);
+    PetscCall(PetscMalloc1(x_part_local_size, &vector_to_insert_into_S));
 
     PetscCallMPI(MPI_Barrier(MPI_COMM_WORLD));
     double start_time, end_time;

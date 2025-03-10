@@ -107,9 +107,9 @@ int main(int argc, char **argv)
   PetscCall(poisson2DMatrix(&A_block_jacobi, n_mesh_lines, n_mesh_columns, rank_jacobi_block, njacobi_blocks));
 
   PetscCall(create_matrix_dense(comm_jacobi_block, &R, n_mesh_points, s, MATMPIDENSE));
-  MatZeroEntries(R);
-  MatAssemblyBegin(R, MAT_FINAL_ASSEMBLY);
-  MatAssemblyEnd(R, MAT_FINAL_ASSEMBLY);
+  PetscCall(MatZeroEntries(R));
+  PetscCall(MatAssemblyBegin(R, MAT_FINAL_ASSEMBLY));
+  PetscCall(MatAssemblyEnd(R, MAT_FINAL_ASSEMBLY));
 
   PetscCall(getHalfSubMatrixFromR(R, R_block_jacobi_subMat, n_mesh_lines, n_mesh_columns, rank_jacobi_block));
 
@@ -122,8 +122,8 @@ int main(int argc, char **argv)
 
   PetscCall(MatDenseGetLDA(R, &lda));
   R_local_values_count = s * lda;
-  PetscMalloc1(R_local_values_count, &send_minimization_data_buffer);
-  PetscMalloc1(R_local_values_count, &rcv_minimization_data_buffer);
+  PetscCall(PetscMalloc1(R_local_values_count, &send_minimization_data_buffer));
+ PetscCall( PetscMalloc1(R_local_values_count, &rcv_minimization_data_buffer));
 
   PetscCall(create_matrix_dense(comm_jacobi_block, &S, n_mesh_points, s, MATMPIDENSE));
 
@@ -153,8 +153,8 @@ int main(int argc, char **argv)
   PetscCall(initializeKSP(comm_jacobi_block, &outer_ksp, NULL, rank_jacobi_block, PETSC_TRUE, OUTER_KSP_PREFIX, OUTER_PC_PREFIX));
 
   PetscCall(VecGetLocalSize(x_block_jacobi[rank_jacobi_block], &vec_local_size));
-  PetscMalloc1(vec_local_size, &send_multisplitting_data_buffer);
-  PetscMalloc1(vec_local_size, &rcv_multisplitting_data_buffer);
+  PetscCall(PetscMalloc1(vec_local_size, &send_multisplitting_data_buffer));
+  PetscCall(PetscMalloc1(vec_local_size, &rcv_multisplitting_data_buffer));
 
   PetscCall(create_vector(comm_jacobi_block, &x_minimized, n_mesh_points, VECMPI));
   PetscCall(VecSet(x_minimized, ZERO));
