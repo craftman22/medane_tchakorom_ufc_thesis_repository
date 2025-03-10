@@ -129,7 +129,13 @@ build: all
 
 # Rule to compile each binary
 $(BIN_DIR)/%: src/%.c | $(BIN_DIR)
-	@$(LINK.c) src/utils/utils.c src/utils/comm.c  $^ $(LOADLIBES) $(LDLIBS) -I./include   -o $(BIN_DIR)/$(notdir $@)
+	@if echo "$(@)" | grep -q "local"; then \
+		$(LINK.c) -DVERSION1 src/utils/utils.c src/utils/comm.c  $^ $(LOADLIBES) $(LDLIBS) -I./include   -o $(BIN_DIR)/$(notdir $@)"-v1"; \
+		$(LINK.c) -DVERSION2 src/utils/utils.c src/utils/comm.c  $^ $(LOADLIBES) $(LDLIBS) -I./include   -o $(BIN_DIR)/$(notdir $@)"-v2"; \
+	else \
+		$(LINK.c)  src/utils/utils.c src/utils/comm.c  $^ $(LOADLIBES) $(LDLIBS) -I./include   -o $(BIN_DIR)/$(notdir $@); \
+	fi
+
 	
 	
 # Ensure the bin directory exists
