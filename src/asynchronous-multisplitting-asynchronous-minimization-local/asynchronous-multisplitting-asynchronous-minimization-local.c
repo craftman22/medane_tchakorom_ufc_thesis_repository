@@ -33,9 +33,6 @@ int main(int argc, char **argv)
     MPI_Comm dcomm;
     MPI_Comm comm_jacobi_block;
     PetscMPIInt send_signal = NO_SIGNAL;
-    // PetscMPIInt rcv_signal = NO_SIGNAL;
-    // PetscMPIInt send_signal_flag = NO_SIGNAL;
-    // PetscMPIInt rcv_signal_flag = NO_SIGNAL;
     PetscInt rcv_signal = NO_SIGNAL;
 
     IS is_jacobi_vec_parts;
@@ -50,7 +47,7 @@ int main(int argc, char **argv)
     PetscScalar *temp_multisplitting_data_buffer = NULL;
 
     MPI_Request send_multisplitting_data_request = MPI_REQUEST_NULL;
-    // MPI_Request rcv_multisplitting_data_request = MPI_REQUEST_NULL;
+
 
     PetscMPIInt send_multisplitting_data_flag = 0;
     PetscMPIInt rcv_multisplitting_data_flag = 0;
@@ -60,8 +57,11 @@ int main(int argc, char **argv)
     PetscMPIInt x_part_local_size;
     PetscScalar *vector_to_insert_into_S;
 
+    Vec local_right_side_vector = NULL;
+    Vec mat_mult_vec_result = NULL;
+
     MPI_Request send_signal_request = MPI_REQUEST_NULL;
-    // MPI_Request rcv_signal_request = MPI_REQUEST_NULL;
+
 
     MPI_Status status;
 
@@ -112,7 +112,7 @@ int main(int argc, char **argv)
     PetscMPIInt message_destination = (idx_non_current_block * nprocs_per_jacobi_block) + proc_local_rank;
     PetscInt convergence_count = ZERO;
     PetscMPIInt broadcast_message = NO_MESSAGE;
-    PetscInt inner_solver_iterations;
+    // PetscInt inner_solver_iterations;
 
     for (PetscInt i = 0; i < njacobi_blocks; i++)
     {
@@ -162,6 +162,10 @@ int main(int argc, char **argv)
     PetscCall(VecDuplicate(x_block_jacobi[rank_jacobi_block], &x_part_minimized_prev_iteration));
     PetscCall(VecDuplicate(x_block_jacobi[rank_jacobi_block], &approximate_residual));
 
+    PetscCall(VecDuplicate(b_block_jacobi[rank_jacobi_block], &local_right_side_vector));
+    PetscCall(VecDuplicate(b_block_jacobi[rank_jacobi_block], &mat_mult_vec_result));
+  
+
    PetscCall( PetscMalloc1(vec_local_size, &send_multisplitting_data_buffer));
    PetscCall( PetscMalloc1(vec_local_size, &rcv_multisplitting_data_buffer));
 
@@ -190,8 +194,9 @@ int main(int argc, char **argv)
 
             PetscCall(comm_async_probe_and_receive(x_block_jacobi, rcv_multisplitting_data_buffer, vec_local_size, rcv_multisplitting_data_flag, message_source, idx_non_current_block));
 
-            PetscCall(inner_solver(inner_ksp, A_block_jacobi_subMat, x_block_jacobi, b_block_jacobi, rank_jacobi_block, &inner_solver_iterations, number_of_iterations));
-
+            PetscCall(updateLocalRHS(local_right_side_vector, A_block_jacobi_subMat,x_block_jacobi, b_block_jacobi, mat_mult_vec_result, rank_jacobi_block));
+            PetscCall(inner_solver(comm_jacobi_block, inner_ksp, A_block_jacobi_subMat, x_block_jacobi, b_block_jacobi, local_right_side_vector, rank_jacobi_block, NULL, number_of_iterations));
+      
             PetscCall(comm_async_test_and_send(x_block_jacobi, send_multisplitting_data_buffer, temp_multisplitting_data_buffer, &send_multisplitting_data_request, vec_local_size, send_multisplitting_data_flag, message_destination, rank_jacobi_block));
 
             PetscCall(comm_async_probe_and_receive(x_block_jacobi, rcv_multisplitting_data_buffer, vec_local_size, rcv_multisplitting_data_flag, message_source, idx_non_current_block));
@@ -208,8 +213,14 @@ int main(int argc, char **argv)
 
         PetscCall(MatMatMult(A_block_jacobi_subMat[rank_jacobi_block], S, MAT_REUSE_MATRIX, PETSC_DETERMINE, &R));
 
-        PetscCall(outer_solver(comm_jacobi_block, &outer_ksp, x_block_jacobi[rank_jacobi_block], R, S, R_transpose_R, vec_R_transpose_b_block_jacobi, alpha, b_block_jacobi[rank_jacobi_block], rank_jacobi_block, s, number_of_iterations));
-
+        #ifdef VERSION1
+        PetscCall(outer_solver(comm_jacobi_block, outer_ksp, x_block_jacobi[rank_jacobi_block], R, S, R_transpose_R, vec_R_transpose_b_block_jacobi, alpha, b_block_jacobi[rank_jacobi_block], rank_jacobi_block, s, number_of_iterations));
+    #endif
+    
+    #ifdef VERSION2
+        PetscCall(updateLocalRHS(local_right_side_vector, A_block_jacobi_subMat,x_block_jacobi, b_block_jacobi, mat_mult_vec_result, rank_jacobi_block));
+        PetscCall(outer_solver(comm_jacobi_block, outer_ksp, x_block_jacobi[rank_jacobi_block], R, S, R_transpose_R, vec_R_transpose_b_block_jacobi, alpha, local_right_side_vector, rank_jacobi_block, s, number_of_iterations));
+    #endif
         PetscCall(VecWAXPY(approximate_residual, -1.0, x_part_minimized_prev_iteration, x_block_jacobi[rank_jacobi_block]));
 
         PetscCall(VecNorm(approximate_residual, NORM_INFINITY, &approximation_residual_infinity_norm));
@@ -259,6 +270,8 @@ int main(int argc, char **argv)
     PetscFree(vec_local_idx);
     PetscFree(vector_to_insert_into_S);
     PetscCall(VecDestroy(&approximate_residual));
+    PetscCall(VecDestroy( &local_right_side_vector));
+    PetscCall(VecDestroy( &mat_mult_vec_result));
     PetscCall(ISDestroy(&is_jacobi_vec_parts));
     PetscCall(VecDestroy(&x));
     PetscCall(VecDestroy(&b));

@@ -29,6 +29,11 @@ int main(int argc, char **argv)
   PetscInt s;
   PetscInt nprocs_per_jacobi_block = 1;
   PetscScalar relative_tolerance = 1e-5;
+
+  Vec local_right_side_vector = NULL;
+  Vec mat_mult_vec_result = NULL;
+
+
   PetscFunctionBeginUser;
   PetscCall(PetscInitialize(&argc, &argv, NULL, NULL));
   PetscCallMPI(MPI_Comm_rank(PETSC_COMM_WORLD, &proc_global_rank));
@@ -102,7 +107,12 @@ int main(int argc, char **argv)
   PetscCall(VecGetLocalSize(x_block_jacobi[rank_jacobi_block], &vec_local_size));
   PetscCall(PetscMalloc1(vec_local_size, &send_multisplitting_data_buffer));
   PetscCall(PetscMalloc1(vec_local_size, &rcv_multisplitting_data_buffer));
+
+
   PetscCall(VecDuplicate(x, &approximation_residual));
+  PetscCall(VecDuplicate(b_block_jacobi[rank_jacobi_block], &local_right_side_vector));
+  PetscCall(VecDuplicate(b_block_jacobi[rank_jacobi_block], &mat_mult_vec_result));
+
 
   PetscCallMPI(MPI_Barrier(PETSC_COMM_WORLD));
   double start_time, end_time;
@@ -111,7 +121,9 @@ int main(int argc, char **argv)
   do
   {
     PetscCall(VecCopy(x, x_previous_iteration));
-    PetscCall(inner_solver(inner_ksp, A_block_jacobi_subMat, x_block_jacobi, b_block_jacobi, rank_jacobi_block, NULL, number_of_iterations));
+
+    PetscCall(updateLocalRHS(local_right_side_vector, A_block_jacobi_subMat,x_block_jacobi, b_block_jacobi, mat_mult_vec_result, rank_jacobi_block));
+    PetscCall(inner_solver(comm_jacobi_block, inner_ksp, A_block_jacobi_subMat, x_block_jacobi, b_block_jacobi, local_right_side_vector, rank_jacobi_block, NULL, number_of_iterations));
 
     PetscCall(comm_sync_send_and_receive(x_block_jacobi, vec_local_size, message_dest, message_source, rank_jacobi_block, idx_non_current_block));
 
@@ -159,6 +171,8 @@ int main(int argc, char **argv)
   PetscCall(VecDestroy(&x));
   PetscCall(VecDestroy(&b));
   PetscCall(VecDestroy(&x_initial_guess));
+  PetscCall(VecDestroy( &local_right_side_vector));
+  PetscCall(VecDestroy( &mat_mult_vec_result));
   PetscCall(VecDestroy(&x_previous_iteration));
   PetscCall(MatDestroy(&A_block_jacobi));
   PetscCall(PetscFree(send_multisplitting_data_buffer));

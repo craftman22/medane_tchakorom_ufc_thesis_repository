@@ -46,6 +46,8 @@ int main(int argc, char **argv)
   PetscMPIInt x_local_size;
   PetscMPIInt x_part_local_size;
   PetscScalar *vector_to_insert_into_S;
+  Vec local_right_side_vector = NULL;
+  Vec mat_mult_vec_result = NULL;
 
   // Minimization variables
 
@@ -101,7 +103,7 @@ int main(int argc, char **argv)
   PetscCall(create_matrix_dense(comm_jacobi_block, &R, n_mesh_points / njacobi_blocks, s, MATMPIDENSE));
   PetscCall(MatZeroEntries(R));
   PetscCall(MatAssemblyBegin(R, MAT_FINAL_ASSEMBLY));
- PetscCall( MatAssemblyEnd(R, MAT_FINAL_ASSEMBLY));
+  PetscCall(MatAssemblyEnd(R, MAT_FINAL_ASSEMBLY));
 
   PetscCall(create_matrix_dense(comm_jacobi_block, &S, n_mesh_points / njacobi_blocks, s, MATMPIDENSE));
 
@@ -135,6 +137,9 @@ int main(int argc, char **argv)
   PetscCall(VecDuplicate(x_block_jacobi[rank_jacobi_block], &x_part_minimized_prev_iteration));
   PetscCall(VecDuplicate(x_block_jacobi[rank_jacobi_block], &approximate_residual));
 
+  PetscCall(VecDuplicate(b_block_jacobi[rank_jacobi_block], &local_right_side_vector));
+  PetscCall(VecDuplicate(b_block_jacobi[rank_jacobi_block], &mat_mult_vec_result));
+
   PetscCall(VecGetLocalSize(x, &x_local_size));
   PetscCall(VecGetLocalSize(x_block_jacobi[rank_jacobi_block], &x_part_local_size));
 
@@ -157,7 +162,9 @@ int main(int argc, char **argv)
 
     while (n_vectors_inserted < s)
     {
-      PetscCall(inner_solver(inner_ksp, A_block_jacobi_subMat, x_block_jacobi, b_block_jacobi, rank_jacobi_block, NULL, number_of_iterations));
+
+      PetscCall(updateLocalRHS(local_right_side_vector, A_block_jacobi_subMat,x_block_jacobi, b_block_jacobi, mat_mult_vec_result, rank_jacobi_block));
+      PetscCall(inner_solver(comm_jacobi_block, inner_ksp, A_block_jacobi_subMat, x_block_jacobi, b_block_jacobi, local_right_side_vector, rank_jacobi_block, NULL, number_of_iterations));
 
       PetscCall(comm_sync_send_and_receive(x_block_jacobi, vec_local_size, message_dest, message_source, rank_jacobi_block, idx_non_current_block));
 
@@ -171,20 +178,16 @@ int main(int argc, char **argv)
     PetscCall(MatAssemblyBegin(S, MAT_FINAL_ASSEMBLY));
     PetscCall(MatAssemblyEnd(S, MAT_FINAL_ASSEMBLY));
 
-    // if (rank_jacobi_block == 0)
-    //   MatView(S, PETSC_VIEWER_STDOUT_(comm_jacobi_block));
-    // PetscSleep(10000);
-
     PetscCall(MatMatMult(A_block_jacobi_subMat[rank_jacobi_block], S, MAT_REUSE_MATRIX, PETSC_DETERMINE, &R));
 
-    // if (rank_jacobi_block == 0)
-    //   VecView(x_block_jacobi[rank_jacobi_block], PETSC_VIEWER_STDOUT_(comm_jacobi_block));
+#ifdef VERSION1
+    PetscCall(outer_solver(comm_jacobi_block, outer_ksp, x_block_jacobi[rank_jacobi_block], R, S, R_transpose_R, vec_R_transpose_b_block_jacobi, alpha, b_block_jacobi[rank_jacobi_block], rank_jacobi_block, s, number_of_iterations));
+#endif
 
-    PetscCall(outer_solver(comm_jacobi_block, &outer_ksp, x_block_jacobi[rank_jacobi_block], R, S, R_transpose_R, vec_R_transpose_b_block_jacobi, alpha, b_block_jacobi[rank_jacobi_block], rank_jacobi_block, s, number_of_iterations));
-
-    // if (rank_jacobi_block == 0)
-    //   VecView(x_block_jacobi[rank_jacobi_block], PETSC_VIEWER_STDOUT_(comm_jacobi_block));
-    // PetscSleep(10000);
+#ifdef VERSION2
+    PetscCall(updateLocalRHS(local_right_side_vector, A_block_jacobi_subMat,x_block_jacobi, b_block_jacobi, mat_mult_vec_result, rank_jacobi_block));
+    PetscCall(outer_solver(comm_jacobi_block, outer_ksp, x_block_jacobi[rank_jacobi_block], R, S, R_transpose_R, vec_R_transpose_b_block_jacobi, alpha, local_right_side_vector, rank_jacobi_block, s, number_of_iterations));
+#endif
 
     PetscCall(VecWAXPY(approximate_residual, -1.0, x_part_minimized_prev_iteration, x_block_jacobi[rank_jacobi_block]));
 
@@ -235,6 +238,8 @@ int main(int argc, char **argv)
   PetscCall(VecDestroy(&x_part_minimized_prev_iteration));
   PetscCall(VecDestroy(&approximate_residual));
   PetscCall(ISDestroy(&is_jacobi_vec_parts));
+  PetscCall(VecDestroy(&local_right_side_vector));
+  PetscCall(VecDestroy(&mat_mult_vec_result));
   PetscCall(VecDestroy(&x));
   PetscCall(VecDestroy(&b));
   PetscCall(VecDestroy(&x_initial_guess));
