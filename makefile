@@ -136,6 +136,7 @@ $(BIN_DIR)/%: src/%.c | $(BIN_DIR)
 	elif [ "$(notdir $@)" = "asynchronous-multisplitting" ]; then \
 		$(LINK.c) -DVERSION1 src/utils/utils.c src/utils/comm.c  $^ $(LOADLIBES) $(LDLIBS) -I./include   -o $(BIN_DIR)/$(notdir $@)"-v1"; \
 		$(LINK.c) -DVERSION2 src/utils/utils.c src/utils/comm.c  $^ $(LOADLIBES) $(LDLIBS) -I./include   -o $(BIN_DIR)/$(notdir $@)"-v2"; \
+		$(LINK.c) -DVERSION3 src/utils/utils.c src/utils/comm.c  $^ $(LOADLIBES) $(LDLIBS) -I./include   -o $(BIN_DIR)/$(notdir $@)"-v3"; \
 	else \
 		$(LINK.c)  src/utils/utils.c src/utils/comm.c  $^ $(LOADLIBES) $(LDLIBS) -I./include   -o $(BIN_DIR)/$(notdir $@); \
 	fi
