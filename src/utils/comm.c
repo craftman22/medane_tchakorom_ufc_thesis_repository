@@ -2,14 +2,15 @@
 #include "utils.h"
 #include "comm.h"
 
-PetscErrorCode comm_async_probe_and_receive(Vec *x_block_jacobi, PetscScalar *rcv_buffer, PetscMPIInt vec_local_size, PetscMPIInt rcv_data_flag, PetscMPIInt message_source, PetscMPIInt idx_non_current_block,PetscInt *message_received)
+PetscErrorCode comm_async_probe_and_receive(Vec *x_block_jacobi, PetscScalar *rcv_buffer, PetscMPIInt vec_local_size, PetscMPIInt rcv_data_flag, PetscMPIInt message_source, PetscMPIInt idx_non_current_block, PetscInt *message_received)
 {
     PetscFunctionBeginUser;
 
     PetscCallMPI(MPI_Iprobe(message_source, (TAG_MULTISPLITTING_DATA + idx_non_current_block), MPI_COMM_WORLD, &rcv_data_flag, MPI_STATUS_IGNORE));
     if (rcv_data_flag)
     {
-        (*message_received) = 1;
+        if (message_received != NULL)
+            (*message_received) = 1;
         PetscCall(VecGetArray(x_block_jacobi[idx_non_current_block], &rcv_buffer));
         do
         {
@@ -65,15 +66,15 @@ PetscErrorCode comm_async_convergence_detection(PetscMPIInt *broadcast_message, 
         PetscCallMPI(MPI_Iprobe(message_source, TAG_STATUS + idx_non_current_block, MPI_COMM_WORLD, &rcv_signal_flag, MPI_STATUS_IGNORE));
         if (rcv_signal_flag)
         {
-            do{
-                
+            do
+            {
+
                 // printf("=============Block rank %d START multipsplitting RCV communication - SIGNAL\n", idx_non_current_block);
                 PetscCallMPI(MPI_Recv(rcv_signal, ONE, MPIU_INT, message_source, TAG_STATUS + idx_non_current_block, MPI_COMM_WORLD, MPI_STATUS_IGNORE));
                 PetscCallMPI(MPI_Iprobe(message_source, TAG_STATUS + idx_non_current_block, MPI_COMM_WORLD, &rcv_signal_flag, MPI_STATUS_IGNORE));
                 // printf("=============Block rank %d END multipsplitting RCV communication - SIGNAL\n", idx_non_current_block);
-            }while(rcv_signal_flag);
+            } while (rcv_signal_flag);
         }
-
     }
 
     if (proc_local_rank == ZERO)
@@ -125,8 +126,6 @@ PetscErrorCode comm_async_probe_and_receive_min(Mat R, PetscScalar *rcv_minimiza
 
     PetscFunctionReturn(PETSC_SUCCESS);
 }
-
-
 
 PetscErrorCode comm_async_test_and_send_min(Mat R, PetscScalar *send_minimization_data_buffer, PetscScalar *temp_minimization_data_buffer, MPI_Request send_minimization_data_request, PetscMPIInt R_local_values_count, PetscMPIInt message_dest, PetscMPIInt rank_jacobi_block)
 {
@@ -195,7 +194,7 @@ PetscErrorCode comm_sync_convergence_detection(PetscMPIInt *broadcast_message, P
     PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode comm_sync_send_and_receive_minimization(Mat R,PetscScalar *send_minimization_data_buffer, PetscScalar *rcv_minimization_data_buffer, PetscMPIInt R_local_values_count,PetscMPIInt message_dest ,PetscMPIInt message_source, PetscMPIInt rank_jacobi_block, PetscMPIInt idx_non_current_block, PetscInt n_mesh_points, PetscInt rstart, PetscInt rend, PetscInt lda, PetscInt s)
+PetscErrorCode comm_sync_send_and_receive_minimization(Mat R, PetscScalar *send_minimization_data_buffer, PetscScalar *rcv_minimization_data_buffer, PetscMPIInt R_local_values_count, PetscMPIInt message_dest, PetscMPIInt message_source, PetscMPIInt rank_jacobi_block, PetscMPIInt idx_non_current_block, PetscInt n_mesh_points, PetscInt rstart, PetscInt rend, PetscInt lda, PetscInt s)
 {
     PetscFunctionBeginUser;
     PetscScalar *temp_minimization_data_buffer;
