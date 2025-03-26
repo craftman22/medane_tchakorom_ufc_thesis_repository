@@ -440,7 +440,7 @@ int main(int argc, char **argv)
     Vec approximation_residual_iter_zero = NULL;
     Vec x_block_jacobi_iter_zero = NULL;
     PetscScalar approximation_residual_infinity_norm_iter_zero = PETSC_MAX_REAL;
-    PetscInt message_received = 0;
+    PetscInt message_received __attribute__((unused)) = 0;
     PetscInt last_message_received_iter_number __attribute__((unused)) = 0 ;
     PetscInt inner_solver_iterations __attribute__((unused)) = ZERO ;
     

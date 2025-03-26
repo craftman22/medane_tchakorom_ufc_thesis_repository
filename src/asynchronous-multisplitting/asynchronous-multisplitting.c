@@ -390,9 +390,9 @@ int main(int argc, char **argv)
   PetscCall(VecDuplicate(b_block_jacobi[rank_jacobi_block], &mat_mult_vec_result));
 
   PetscScalar approximation_residual_infinity_norm_iter_zero = PETSC_MAX_REAL;
-  PetscInt inner_solver_iterations = ZERO;
-  PetscInt message_received = 0;
-  // PetscInt last_message_received_iter_number = 0;
+  PetscInt inner_solver_iterations __attribute__((unused)) = ZERO;
+  PetscInt message_received __attribute__((unused)) = 0;
+  PetscInt last_message_received_iter_number __attribute__((unused)) = 0;
   PetscCallMPI(MPI_Barrier(MPI_COMM_WORLD));
   double start_time, end_time;
   start_time = MPI_Wtime();
