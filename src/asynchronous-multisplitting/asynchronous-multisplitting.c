@@ -14,7 +14,7 @@ int main(int argc, char **argv)
 
   Mat A_block_jacobi = NULL; // Operator matrix
   Vec x = NULL;              // approximation solution at iteration (k)
-  Vec b = NULL;                // right hand side vector
+  Vec b = NULL;              // right hand side vector
   Vec x_initial_guess = NULL;
 
   PetscMPIInt nprocs;
@@ -258,14 +258,6 @@ int main(int argc, char **argv)
 }
 #endif
 
-
-
-
-
-
-
-
-
 #ifdef VERSION_1_1
 int main(int argc, char **argv)
 {
@@ -417,11 +409,11 @@ int main(int argc, char **argv)
 
     PetscCall(comm_async_probe_and_receive(x_block_jacobi, rcv_buffer, vec_local_size, rcv_data_flag, message_source, idx_non_current_block, &message_received));
 
-    // if (message_received && inner_solver_iterations > 0)
-    // {
-    //   message_received = 0;
-    //   last_message_received_iter_number = number_of_iterations;
-    // }
+    if (message_received && inner_solver_iterations > 0)
+    {
+      message_received = 0;
+      last_message_received_iter_number = number_of_iterations;
+    }
 
     PetscCall(VecWAXPY(approximation_residual, -1.0, x_block_jacobi_previous_iteration, x_block_jacobi[rank_jacobi_block]));
     PetscCall(VecNorm(approximation_residual, NORM_INFINITY, &approximation_residual_infinity_norm));
@@ -439,8 +431,8 @@ int main(int argc, char **argv)
     else
       convergence_count = ZERO;
 
-    // if (convergence_count >= MIN_CONVERGENCE_COUNT && (number_of_iterations - last_message_received_iter_number) > MIN_CONVERGENCE_COUNT)
-    //   convergence_count = ZERO;
+    if (convergence_count >= MIN_CONVERGENCE_COUNT && (number_of_iterations - last_message_received_iter_number) > MIN_CONVERGENCE_COUNT)
+      convergence_count = ZERO;
 
     PetscCall(comm_async_convergence_detection(&broadcast_message, convergence_count, MIN_CONVERGENCE_COUNT, &send_signal, &send_signal_request, &rcv_signal, message_dest, message_source, rank_jacobi_block, idx_non_current_block, proc_local_rank));
 
