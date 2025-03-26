@@ -11,6 +11,8 @@ PetscErrorCode comm_async_probe_and_receive(Vec *x_block_jacobi, PetscScalar *rc
     {
         if (message_received != NULL)
             (*message_received) = 1;
+
+        
         PetscCall(VecGetArray(x_block_jacobi[idx_non_current_block], &rcv_buffer));
         do
         {
