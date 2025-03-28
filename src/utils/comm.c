@@ -6,6 +6,12 @@ PetscErrorCode comm_async_probe_and_receive(Vec *x_block_jacobi, PetscScalar *rc
 {
     PetscFunctionBeginUser;
 
+    PetscMPIInt rank_jacobi_block;
+    if(idx_non_current_block == 1)
+        rank_jacobi_block = 0;
+    if(idx_non_current_block == 0)   
+        rank_jacobi_block = 1;
+
     PetscCallMPI(MPI_Iprobe(message_source, (TAG_MULTISPLITTING_DATA + idx_non_current_block), MPI_COMM_WORLD, &rcv_data_flag, MPI_STATUS_IGNORE));
     if (rcv_data_flag)
     {
@@ -16,13 +22,14 @@ PetscErrorCode comm_async_probe_and_receive(Vec *x_block_jacobi, PetscScalar *rc
         PetscCall(VecGetArray(x_block_jacobi[idx_non_current_block], &rcv_buffer));
         do
         {
-            printf("=============Block rank %d START multipsplitting RCV communication\n", idx_non_current_block);
+            printf("=============Block rank %d START multipsplitting RCV communication\n", rank_jacobi_block);
             PetscCallMPI(MPI_Recv(rcv_buffer, vec_local_size, MPIU_SCALAR, message_source, (TAG_MULTISPLITTING_DATA + idx_non_current_block), MPI_COMM_WORLD, MPI_STATUS_IGNORE));
-            printf("=============Block rank %d END multipsplitting RCV communication\n", idx_non_current_block);
+            printf("=============Block rank %d END multipsplitting RCV communication\n", rank_jacobi_block);
             PetscCallMPI(MPI_Iprobe(message_source, (TAG_MULTISPLITTING_DATA + idx_non_current_block), MPI_COMM_WORLD, &rcv_data_flag, MPI_STATUS_IGNORE));
         } while (rcv_data_flag);
         PetscCall(VecRestoreArray(x_block_jacobi[idx_non_current_block], &rcv_buffer));
     }
+    printf("=============Block rank %d END RCV communication function\n", rank_jacobi_block);
 
     PetscFunctionReturn(PETSC_SUCCESS);
 }
