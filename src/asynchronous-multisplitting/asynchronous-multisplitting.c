@@ -172,6 +172,7 @@ int main(int argc, char **argv)
 
   } while (broadcast_message != TERMINATE_SIGNAL);
 
+  PetscCall(PetscPrintf(comm_jacobi_block, "Rank %d: PROGRAMME TERMINE\n", rank_jacobi_block));
   PetscCallMPI(MPI_Barrier(MPI_COMM_WORLD));
   end_time = MPI_Wtime();
   PetscCall(printElapsedTime(start_time, end_time));
