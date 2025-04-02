@@ -287,6 +287,7 @@ int main(int argc, char **argv)
   PetscInt MIN_CONVERGENCE_COUNT = 5;
   PetscFunctionBeginUser;
   PetscCall(PetscInitialize(&argc, &argv, NULL, NULL));
+
   PetscCallMPI(MPI_Comm_rank(PETSC_COMM_WORLD, &proc_global_rank));
   PetscCallMPI(MPI_Comm_size(PETSC_COMM_WORLD, &nprocs));
 
@@ -427,7 +428,7 @@ int main(int argc, char **argv)
 
     PetscCall(printResidualNorm(comm_jacobi_block, rank_jacobi_block, approximation_residual_infinity_norm, number_of_iterations));
 
-    if (PetscApproximateGTE(approximation_residual_infinity_norm, 1e-20))
+    if (inner_solver_iterations > 0)
     {
       // if (PetscApproximateLTE(approximation_residual_infinity_norm, (relative_tolerance * approximation_residual_infinity_norm_iter_zero)))
       if (PetscApproximateLTE(approximation_residual_infinity_norm, relative_tolerance))
@@ -529,7 +530,6 @@ int main(int argc, char **argv)
   PetscCall(PetscCommDestroy(&dcomm));
   PetscCallMPI(MPI_Barrier(MPI_COMM_WORLD));
   PetscCall(PetscFinalize());
-
   return 0;
 }
 #endif
