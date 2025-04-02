@@ -435,6 +435,8 @@ int main(int argc, char **argv)
         convergence_count++;
       else
         convergence_count = ZERO;
+
+        PetscCall(PetscPrintf(comm_jacobi_block, "Rank %d: CONVERGENCE COUNT %d \n",  rank_jacobi_block,convergence_count));
     }
 
     // if (convergence_count >= MIN_CONVERGENCE_COUNT && (number_of_iterations - last_message_received_iter_number) > MIN_CONVERGENCE_COUNT)
