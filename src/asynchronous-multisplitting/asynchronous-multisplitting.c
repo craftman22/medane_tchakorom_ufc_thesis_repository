@@ -429,7 +429,8 @@ int main(int argc, char **argv)
 
     if (PetscApproximateGTE(approximation_residual_infinity_norm, 1e-20))
     {
-      if (PetscApproximateLTE(approximation_residual_infinity_norm, (relative_tolerance * approximation_residual_infinity_norm_iter_zero)))
+      // if (PetscApproximateLTE(approximation_residual_infinity_norm, (relative_tolerance * approximation_residual_infinity_norm_iter_zero)))
+      if (PetscApproximateLTE(approximation_residual_infinity_norm, relative_tolerance))
         convergence_count++;
       else
         convergence_count = ZERO;
