@@ -427,10 +427,13 @@ int main(int argc, char **argv)
 
     PetscCall(printResidualNorm(comm_jacobi_block, rank_jacobi_block, approximation_residual_infinity_norm, number_of_iterations));
 
-    if (PetscApproximateLTE(approximation_residual_infinity_norm, (relative_tolerance * approximation_residual_infinity_norm_iter_zero)))
-      convergence_count++;
-    else
-      convergence_count = ZERO;
+    if (PetscApproximateGTE(approximation_residual_infinity_norm, 1e-100))
+    {
+      if (PetscApproximateLTE(approximation_residual_infinity_norm, (relative_tolerance * approximation_residual_infinity_norm_iter_zero)))
+        convergence_count++;
+      else
+        convergence_count = ZERO;
+    }
 
     if (convergence_count >= MIN_CONVERGENCE_COUNT && (number_of_iterations - last_message_received_iter_number) > MIN_CONVERGENCE_COUNT)
       convergence_count = ZERO;
