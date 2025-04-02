@@ -437,8 +437,8 @@ int main(int argc, char **argv)
         convergence_count = ZERO;
     }
 
-    if (convergence_count >= MIN_CONVERGENCE_COUNT && (number_of_iterations - last_message_received_iter_number) > MIN_CONVERGENCE_COUNT)
-      convergence_count = ZERO;
+    // if (convergence_count >= MIN_CONVERGENCE_COUNT && (number_of_iterations - last_message_received_iter_number) > MIN_CONVERGENCE_COUNT)
+    //   convergence_count = ZERO;
 
     PetscCall(comm_async_convergence_detection(&broadcast_message, convergence_count, MIN_CONVERGENCE_COUNT, &send_signal, &send_signal_request, &rcv_signal, message_dest, message_source, rank_jacobi_block, idx_non_current_block, proc_local_rank));
 
