@@ -391,7 +391,7 @@ int main(int argc, char **argv)
   PetscCall(VecDuplicate(b_block_jacobi[rank_jacobi_block], &local_right_side_vector));
   PetscCall(VecDuplicate(b_block_jacobi[rank_jacobi_block], &mat_mult_vec_result));
 
-  PetscScalar approximation_residual_infinity_norm_iter_zero = PETSC_MAX_REAL;
+  PetscScalar approximation_residual_infinity_norm_iter_zero __attribute__((unused)) = PETSC_MAX_REAL;
   PetscInt inner_solver_iterations __attribute__((unused)) = ZERO;
   PetscInt message_received __attribute__((unused)) = 0;
   PetscInt last_message_received_iter_number __attribute__((unused)) = 0;
@@ -428,7 +428,7 @@ int main(int argc, char **argv)
 
     PetscCall(printResidualNorm(comm_jacobi_block, rank_jacobi_block, approximation_residual_infinity_norm, number_of_iterations));
 
-    if (inner_solver_iterations > 0)
+    if (message_received)
     {
       // if (PetscApproximateLTE(approximation_residual_infinity_norm, (relative_tolerance * approximation_residual_infinity_norm_iter_zero)))
       if (PetscApproximateLTE(approximation_residual_infinity_norm, relative_tolerance))
@@ -436,7 +436,7 @@ int main(int argc, char **argv)
       else
         convergence_count = ZERO;
 
-        PetscCall(PetscPrintf(comm_jacobi_block, "Rank %d: CONVERGENCE COUNT %d \n",  rank_jacobi_block,convergence_count));
+      PetscCall(PetscPrintf(comm_jacobi_block, "Rank %d: CONVERGENCE COUNT %d \n", rank_jacobi_block, convergence_count));
     }
 
     // if (convergence_count >= MIN_CONVERGENCE_COUNT && (number_of_iterations - last_message_received_iter_number) > MIN_CONVERGENCE_COUNT)
@@ -447,6 +447,16 @@ int main(int argc, char **argv)
     PetscCallMPI(MPI_Bcast(&broadcast_message, ONE, MPIU_INT, proc_local_rank, comm_jacobi_block));
 
     number_of_iterations = number_of_iterations + 1;
+
+    if (rank_jacobi_block == 0 && number_of_iterations == 2500)
+    {
+      break;
+    }
+
+    if (rank_jacobi_block == 1 && number_of_iterations == 300)
+    {
+      break;
+    }
 
   } while (broadcast_message != TERMINATE_SIGNAL);
 
