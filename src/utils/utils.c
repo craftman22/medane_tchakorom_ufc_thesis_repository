@@ -329,8 +329,6 @@ PetscErrorCode initializeKSP(MPI_Comm comm_jacobi_block, KSP *ksp, Mat operator_
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-
-
 PetscErrorCode computeFinalResidualNorm(Mat A_block_jacobi, Vec *x, Vec *b_block_jacobi, PetscInt rank_jacobi_block, PetscInt proc_local_rank, PetscScalar *direct_residual_norm)
 {
   PetscFunctionBegin;
@@ -709,7 +707,7 @@ PetscErrorCode restoreHalfSubMatrixToR(Mat R, Mat *R_block_jacobi_subMat, PetscI
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode updateLocalRHS(Vec local_right_side_vector, Mat *A_block_jacobi_subMat,Vec *x_block_jacobi, Vec *b_block_jacobi, Vec mat_mult_vec_result, PetscMPIInt rank_jacobi_block)
+PetscErrorCode updateLocalRHS(Vec local_right_side_vector, Mat *A_block_jacobi_subMat, Vec *x_block_jacobi, Vec *b_block_jacobi, Vec mat_mult_vec_result, PetscMPIInt rank_jacobi_block)
 {
   PetscFunctionBegin;
   PetscInt idx_non_current_block = (rank_jacobi_block == ZERO ? ONE : ZERO);
@@ -733,7 +731,6 @@ PetscErrorCode inner_solver(MPI_Comm comm_jacobi_block, KSP ksp, Mat *A_block_ja
   PetscInt n_iterations = 0;
   PetscCall(KSPGetIterationNumber(ksp, &n_iterations));
 
-
   PetscCall(printInnerSolverIterations(comm_jacobi_block, rank_jacobi_block, n_iterations, outer_iteration_number));
 
   if (inner_solver_iterations != NULL)
@@ -753,7 +750,6 @@ PetscErrorCode outer_solver(MPI_Comm comm_jacobi_block, KSP outer_ksp, Vec x_min
 
   PetscCall(MatMultTranspose(R, b, vec_R_transpose_b_block_jacobi));
 
-
   PetscCall(KSPSetOperators(outer_ksp, R_transpose_R, R_transpose_R));
 
   // PetscCall(KSPSetInitialGuessNonzero(*outer_ksp, PETSC_TRUE));
@@ -763,10 +759,10 @@ PetscErrorCode outer_solver(MPI_Comm comm_jacobi_block, KSP outer_ksp, Vec x_min
   PetscInt n_iterations = 0;
   PetscCall(KSPGetIterationNumber(outer_ksp, &n_iterations));
 
-
   PetscCall(printOuterSolverIterations(comm_jacobi_block, rank_jacobi_block, n_iterations, outer_iteration_number));
 
   PetscCall(MatMult(S, alpha, x_minimized));
+
 
   PetscFunctionReturn(PETSC_SUCCESS);
 }

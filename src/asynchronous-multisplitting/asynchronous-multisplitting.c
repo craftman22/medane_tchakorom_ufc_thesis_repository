@@ -428,7 +428,7 @@ int main(int argc, char **argv)
 
     PetscCall(printResidualNorm(comm_jacobi_block, rank_jacobi_block, approximation_residual_infinity_norm, number_of_iterations));
 
-    if (message_received)
+    if (message_received) // TODO: this too was added to make the convergence detection more robust
     {
       // if (PetscApproximateLTE(approximation_residual_infinity_norm, (relative_tolerance * approximation_residual_infinity_norm_iter_zero)))
       if (PetscApproximateLTE(approximation_residual_infinity_norm, relative_tolerance))
@@ -448,15 +448,15 @@ int main(int argc, char **argv)
 
     number_of_iterations = number_of_iterations + 1;
 
-    if (rank_jacobi_block == 0 && number_of_iterations == 2500)
-    {
-      break;
-    }
+    // if (rank_jacobi_block == 0 && number_of_iterations == 2500)
+    // {
+    //   break;
+    // }
 
-    if (rank_jacobi_block == 1 && number_of_iterations == 300)
-    {
-      break;
-    }
+    // if (rank_jacobi_block == 1 && number_of_iterations == 300)
+    // {
+    //   break;
+    // }
 
   } while (broadcast_message != TERMINATE_SIGNAL);
 

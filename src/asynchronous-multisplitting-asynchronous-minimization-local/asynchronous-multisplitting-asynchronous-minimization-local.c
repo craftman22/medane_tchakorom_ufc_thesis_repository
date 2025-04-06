@@ -9,8 +9,6 @@
 #include "petscdraw.h"
 #include "petscviewer.h"
 
-
-
 #ifdef VERSION_1_0
 
 int main(int argc, char **argv)
@@ -327,11 +325,6 @@ int main(int argc, char **argv)
 
 #endif
 
-
-
-
-
-
 #ifdef VERSION_1_1
 // Improve convergence detection, make it more robust
 
@@ -436,15 +429,13 @@ int main(int argc, char **argv)
     PetscMPIInt message_destination = (idx_non_current_block * nprocs_per_jacobi_block) + proc_local_rank;
     PetscInt convergence_count = ZERO;
     PetscMPIInt broadcast_message = NO_MESSAGE;
-    
-    Vec approximation_residual_iter_zero = NULL;
-    Vec x_block_jacobi_iter_zero = NULL;
-    PetscScalar approximation_residual_infinity_norm_iter_zero = PETSC_MAX_REAL;
-    PetscInt message_received __attribute__((unused)) = 0;
-    PetscInt last_message_received_iter_number __attribute__((unused)) = 0 ;
-    PetscInt inner_solver_iterations __attribute__((unused)) = ZERO ;
-    
 
+    Vec approximation_residual_iter_zero __attribute__((unused)) = NULL;
+    Vec x_block_jacobi_iter_zero = NULL;
+    PetscScalar approximation_residual_infinity_norm_iter_zero __attribute__((unused)) = PETSC_MAX_REAL;
+    PetscInt message_received __attribute__((unused)) = 0;
+    PetscInt last_message_received_iter_number __attribute__((unused)) = 0;
+    PetscInt inner_solver_iterations __attribute__((unused)) = ZERO;
 
     for (PetscInt i = 0; i < njacobi_blocks; i++)
     {
@@ -536,18 +527,6 @@ int main(int argc, char **argv)
 
             PetscCall(comm_async_probe_and_receive(x_block_jacobi, rcv_multisplitting_data_buffer, vec_local_size, rcv_multisplitting_data_flag, message_source, idx_non_current_block, &message_received));
 
-            if (number_of_iterations == 0)
-            {
-                PetscCall(VecWAXPY(approximation_residual_iter_zero, -1.0, x_block_jacobi_iter_zero, x_block_jacobi[rank_jacobi_block]));
-                PetscCall(VecNorm(approximation_residual_iter_zero, NORM_INFINITY, &approximation_residual_infinity_norm_iter_zero));
-            }
-
-            // if (message_received && inner_solver_iterations > 0)
-            // {
-            //     message_received = 0;
-            //     last_message_received_iter_number = number_of_iterations;
-            // }
-
             PetscCall(VecGetValues(x_block_jacobi[rank_jacobi_block], x_part_local_size, vec_local_idx, vector_to_insert_into_S));
 
             PetscCall(MatSetValuesLocal(S, x_part_local_size, vec_local_idx, ONE, &n_vectors_inserted, vector_to_insert_into_S, INSERT_VALUES));
@@ -569,13 +548,16 @@ int main(int argc, char **argv)
 
         PetscCall(printResidualNorm(comm_jacobi_block, rank_jacobi_block, approximation_residual_infinity_norm, number_of_iterations));
 
-        if (PetscApproximateLTE(approximation_residual_infinity_norm, (relative_tolerance * approximation_residual_infinity_norm_iter_zero)))
-            convergence_count++;
-        else
-            convergence_count = ZERO;
+        if (message_received)
+        {
+            // if (PetscApproximateLTE(approximation_residual_infinity_norm, (relative_tolerance * approximation_residual_infinity_norm_iter_zero)))
+            if (PetscApproximateLTE(approximation_residual_infinity_norm, (relative_tolerance)))
+                convergence_count++;
+            else
+                convergence_count = ZERO;
 
-        // if (convergence_count >= MIN_CONVERGENCE_COUNT && (number_of_iterations - last_message_received_iter_number) > MIN_CONVERGENCE_COUNT)
-        //     convergence_count = ZERO;
+            PetscCall(PetscPrintf(comm_jacobi_block, "Rank %d: CONVERGENCE COUNT %d \n", rank_jacobi_block, convergence_count));
+        }
 
         PetscCall(comm_async_convergence_detection(&broadcast_message, convergence_count, MIN_CONVERGENCE_COUNT, &send_signal, &send_signal_request, &rcv_signal, message_destination, message_source, rank_jacobi_block, idx_non_current_block, proc_local_rank));
 
@@ -675,4 +657,3 @@ int main(int argc, char **argv)
 }
 
 #endif
-
