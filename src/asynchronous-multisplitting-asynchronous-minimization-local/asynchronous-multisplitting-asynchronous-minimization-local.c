@@ -434,6 +434,7 @@ int main(int argc, char **argv)
     Vec x_block_jacobi_iter_zero = NULL;
     PetscScalar approximation_residual_infinity_norm_iter_zero __attribute__((unused)) = PETSC_MAX_REAL;
     PetscInt message_received __attribute__((unused)) = 0;
+    PetscInt message_received_plus_inner_iterations_happened __attribute__((unused)) = 0;
     PetscInt last_message_received_iter_number __attribute__((unused)) = 0;
     PetscInt inner_solver_iterations __attribute__((unused)) = ZERO;
 
@@ -515,6 +516,7 @@ int main(int argc, char **argv)
         n_vectors_inserted = 0;
         PetscCall(VecCopy(x_block_jacobi[rank_jacobi_block], x_part_minimized_prev_iteration));
 
+        message_received = 0;
         while (n_vectors_inserted < s)
         {
 
