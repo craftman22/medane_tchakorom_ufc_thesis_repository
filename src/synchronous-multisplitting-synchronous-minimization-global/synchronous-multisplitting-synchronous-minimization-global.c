@@ -9,6 +9,9 @@
 #include "petscdraw.h"
 #include "petscviewer.h"
 
+
+#ifdef VERSION_1_0
+
 int main(int argc, char **argv)
 {
 
@@ -330,3 +333,6 @@ int main(int argc, char **argv)
   PetscCall(PetscFinalize());
   return 0;
 }
+
+
+#endif
