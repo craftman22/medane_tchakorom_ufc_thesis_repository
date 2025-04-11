@@ -204,7 +204,7 @@ PetscErrorCode comm_async_probe_and_receive_min(Mat R, PetscScalar *rcv_minimiza
             PetscCallMPI(MPI_Recv(rcv_minimization_data_buffer, R_local_values_count, MPIU_SCALAR, message_source, (TAG_MINIMIZATION_DATA + idx_non_current_block), MPI_COMM_WORLD, MPI_STATUS_IGNORE));
             printf("=============Block rank %d END minimization RCV communication\n", rank_jacobi_block);
             loop_counter++;
-            if (loop_counter >= 3) // TODO: remember this, possibly make it an argument of the program
+            if (loop_counter >= 2) // TODO: remember this, possibly make it an argument of the program
             {
                 break;
             }

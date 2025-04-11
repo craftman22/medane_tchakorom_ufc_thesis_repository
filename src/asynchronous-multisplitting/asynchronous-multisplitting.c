@@ -448,15 +448,7 @@ int main(int argc, char **argv)
 
     number_of_iterations = number_of_iterations + 1;
 
-    // if (rank_jacobi_block == 0 && number_of_iterations == 2500)
-    // {
-    //   break;
-    // }
 
-    // if (rank_jacobi_block == 1 && number_of_iterations == 300)
-    // {
-    //   break;
-    // }
 
   } while (broadcast_message != TERMINATE_SIGNAL);
 

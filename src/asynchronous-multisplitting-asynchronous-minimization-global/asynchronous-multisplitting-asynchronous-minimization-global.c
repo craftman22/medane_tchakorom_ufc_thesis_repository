@@ -71,7 +71,7 @@ int main(int argc, char **argv)
     MPI_Request send_signal_request = MPI_REQUEST_NULL;
     // MPI_Request rcv_signal_request = MPI_REQUEST_NULL;
 
-    MPI_Status status;
+    MPI_Status status __attribute__((unused));
 
     // Minimization variables
 
