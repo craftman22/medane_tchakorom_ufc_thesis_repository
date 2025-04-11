@@ -340,40 +340,41 @@ int main(int argc, char **argv)
     PetscCall(VecDestroy(&vec_R_transpose_b_block_jacobi));
     PetscCall(VecDestroy(&alpha));
 
-    // Maybe delete the rest of this code, not necessary
-    PetscMPIInt message = ZERO;
-    PetscMPIInt count;
 
-    do
-    {
-        MPI_Datatype data_type = MPIU_INT;
-        PetscCallMPI(MPI_Iprobe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &message, &status));
-        if (message)
-        {
-            if (status.MPI_TAG == (TAG_MULTISPLITTING_DATA + rank_jacobi_block) || status.MPI_TAG == (TAG_MINIMIZATION_DATA + rank_jacobi_block))
-            {
-                data_type = MPIU_SCALAR;
-                PetscCall(MPI_Get_count(&status, data_type, &count));
-                PetscScalar *buffer;
-                PetscCall(PetscMalloc1(count, &buffer));
-                PetscCallMPI(MPI_Recv(buffer, count, data_type, status.MPI_SOURCE, status.MPI_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE));
-                PetscCall(PetscFree(buffer));
-            }
-            else
-            {
-                data_type = MPIU_INT;
-                PetscCall(MPI_Get_count(&status, data_type, &count));
-                PetscInt *buffer;
-                PetscCall(PetscMalloc1(count, &buffer));
-                PetscCallMPI(MPI_Recv(buffer, count, data_type, status.MPI_SOURCE, status.MPI_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE));
-                PetscCall(PetscFree(buffer));
-            }
-        }
-    } while (message);
 
-    PetscCallMPI(MPI_Wait(&send_minimization_data_request, MPI_STATUS_IGNORE));
-    PetscCallMPI(MPI_Wait(&send_multisplitting_data_request, MPI_STATUS_IGNORE));
-    PetscCallMPI(MPI_Wait(&send_signal_request, MPI_STATUS_IGNORE));
+    // PetscMPIInt message = ZERO;
+    // PetscMPIInt count;
+
+    // do
+    // {
+    //     MPI_Datatype data_type = MPIU_INT;
+    //     PetscCallMPI(MPI_Iprobe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &message, &status));
+    //     if (message)
+    //     {
+    //         if (status.MPI_TAG == (TAG_MULTISPLITTING_DATA + rank_jacobi_block) || status.MPI_TAG == (TAG_MINIMIZATION_DATA + rank_jacobi_block))
+    //         {
+    //             data_type = MPIU_SCALAR;
+    //             PetscCall(MPI_Get_count(&status, data_type, &count));
+    //             PetscScalar *buffer;
+    //             PetscCall(PetscMalloc1(count, &buffer));
+    //             PetscCallMPI(MPI_Recv(buffer, count, data_type, status.MPI_SOURCE, status.MPI_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE));
+    //             PetscCall(PetscFree(buffer));
+    //         }
+    //         else
+    //         {
+    //             data_type = MPIU_INT;
+    //             PetscCall(MPI_Get_count(&status, data_type, &count));
+    //             PetscInt *buffer;
+    //             PetscCall(PetscMalloc1(count, &buffer));
+    //             PetscCallMPI(MPI_Recv(buffer, count, data_type, status.MPI_SOURCE, status.MPI_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE));
+    //             PetscCall(PetscFree(buffer));
+    //         }
+    //     }
+    // } while (message);
+
+    // PetscCallMPI(MPI_Wait(&send_minimization_data_request, MPI_STATUS_IGNORE));
+    // PetscCallMPI(MPI_Wait(&send_multisplitting_data_request, MPI_STATUS_IGNORE));
+    // PetscCallMPI(MPI_Wait(&send_signal_request, MPI_STATUS_IGNORE));
 
     PetscCall(PetscFree(send_multisplitting_data_buffer));
     PetscCall(PetscFree(rcv_multisplitting_data_buffer));
