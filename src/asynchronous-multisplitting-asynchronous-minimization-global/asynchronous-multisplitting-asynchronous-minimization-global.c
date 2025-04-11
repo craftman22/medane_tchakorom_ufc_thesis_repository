@@ -275,6 +275,8 @@ int main(int argc, char **argv)
                 convergence_count++;
             else
                 convergence_count = ZERO;
+
+            PetscCall(PetscPrintf(comm_jacobi_block, "Rank %d: CONVERGENCE COUNT %d \n", rank_jacobi_block, convergence_count));
         }
 
         PetscCall(comm_async_convergence_detection(&broadcast_message, convergence_count, MIN_CONVERGENCE_COUNT, &send_signal, &send_signal_request, &rcv_signal, message_destination, message_source, rank_jacobi_block, idx_non_current_block, proc_local_rank));
@@ -284,6 +286,7 @@ int main(int argc, char **argv)
         number_of_iterations = number_of_iterations + 1;
 
     } while (broadcast_message != TERMINATE_SIGNAL);
+    PetscCall(PetscPrintf(comm_jacobi_block, "Rank %d: PROGRAMME TERMINE\n", rank_jacobi_block));
 
     PetscCallMPI(MPI_Barrier(MPI_COMM_WORLD));
     end_time = MPI_Wtime();
