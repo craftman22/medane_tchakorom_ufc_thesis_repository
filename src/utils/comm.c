@@ -186,22 +186,13 @@ PetscErrorCode comm_sync_send_and_receive_minimization(Mat R, PetscScalar *send_
 
     PetscCall(MatDenseRestoreArray(R, &temp_minimization_data_buffer));
 
-    // if (rank_jacobi_block == 0)
-    // {
-    //     PetscCall(MatView(R, PETSC_VIEWER_STDOUT_SELF));
-    // }
-
     PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode comm_async_probe_and_receive_min(Mat R, PetscScalar *rcv_minimization_data_buffer, PetscScalar *temp_minimization_data_buffer, PetscMPIInt R_local_values_count, PetscMPIInt rcv_minimization_data_flag, PetscMPIInt message_source, PetscMPIInt rank_jacobi_block, PetscMPIInt idx_non_current_block, PetscInt n_mesh_points, PetscInt rstart, PetscInt rend, PetscInt lda, PetscInt s)
 {
     PetscFunctionBeginUser;
-
-    // if (rank_jacobi_block == 0)
-    // {
-    //     printf(" rstart %d rend %d \n", rstart, rend);
-    // }
+    PetscMPIInt loop_counter = 0;
 
     PetscCallMPI(MPI_Iprobe(message_source, (TAG_MINIMIZATION_DATA + idx_non_current_block), MPI_COMM_WORLD, &rcv_minimization_data_flag, MPI_STATUS_IGNORE));
     if (rcv_minimization_data_flag)
@@ -212,9 +203,14 @@ PetscErrorCode comm_async_probe_and_receive_min(Mat R, PetscScalar *rcv_minimiza
             printf("=============Block rank %d START minimization RCV communication\n", rank_jacobi_block);
             PetscCallMPI(MPI_Recv(rcv_minimization_data_buffer, R_local_values_count, MPIU_SCALAR, message_source, (TAG_MINIMIZATION_DATA + idx_non_current_block), MPI_COMM_WORLD, MPI_STATUS_IGNORE));
             printf("=============Block rank %d END minimization RCV communication\n", rank_jacobi_block);
+            loop_counter++;
+            if (loop_counter >= 4) // TODO: remember this, possibly make it an argument of the program
+            {
+                break;
+            }
+
             PetscCallMPI(MPI_Iprobe(message_source, (TAG_MINIMIZATION_DATA + idx_non_current_block), MPI_COMM_WORLD, &rcv_minimization_data_flag, MPI_STATUS_IGNORE));
         } while (rcv_minimization_data_flag);
-
 
         PetscCall(MatDenseGetArray(R, &temp_minimization_data_buffer));
         if (rstart < (n_mesh_points / 2) && (n_mesh_points / 2) < rend)
@@ -226,7 +222,6 @@ PetscErrorCode comm_async_probe_and_receive_min(Mat R, PetscScalar *rcv_minimiza
             }
         }
 
-
         if (rstart >= (n_mesh_points / 2) && rank_jacobi_block == BLOCK_RANK_ZERO)
         {
             PetscCall(PetscArraycpy(temp_minimization_data_buffer, rcv_minimization_data_buffer, R_local_values_count));
@@ -237,8 +232,6 @@ PetscErrorCode comm_async_probe_and_receive_min(Mat R, PetscScalar *rcv_minimiza
             PetscCall(PetscArraycpy(temp_minimization_data_buffer, rcv_minimization_data_buffer, R_local_values_count));
         }
         PetscCall(MatDenseRestoreArray(R, &temp_minimization_data_buffer));
-
-
     }
 
     printf("=============Block rank %d END RCV minimization communication function\n", rank_jacobi_block);
@@ -255,21 +248,7 @@ PetscErrorCode comm_async_test_and_send_min(Mat R, PetscScalar *send_minimizatio
     {
         PetscCall(MatDenseGetArray(R, &temp_minimization_data_buffer));
         PetscCall(PetscArraycpy(send_minimization_data_buffer, temp_minimization_data_buffer, R_local_values_count));
-        // if (rank_jacobi_block == 0)
-        // {
-        //     PetscCall(MatView(R, PETSC_VIEWER_STDOUT_SELF));
-        //     for (PetscInt i = 0; i < R_local_values_count; i++)
-        //     {
-        //         printf("send [%d]  = %e \n", i, temp_minimization_data_buffer[i]);
-        //     }
-            
-        //     printf("==============\n");
 
-        //     for (PetscInt i = 0; i < R_local_values_count; i++)
-        //     {
-        //         printf("send [%d]  = %e \n", i, send_minimization_data_buffer[i]);
-        //     }
-        // }
         PetscCall(MatDenseRestoreArray(R, &temp_minimization_data_buffer));
         PetscCallMPI(MPI_Isend(send_minimization_data_buffer, R_local_values_count, MPIU_SCALAR, message_dest, (TAG_MINIMIZATION_DATA + rank_jacobi_block), MPI_COMM_WORLD, &send_minimization_data_request));
     }
