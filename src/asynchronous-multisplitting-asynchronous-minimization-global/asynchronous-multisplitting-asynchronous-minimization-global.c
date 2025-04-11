@@ -156,6 +156,7 @@ int main(int argc, char **argv)
     PetscCall(PetscMalloc1(R_local_values_count, &send_minimization_data_buffer));
     PetscCall(PetscArrayzero(send_minimization_data_buffer, R_local_values_count));
     PetscCall(PetscMalloc1(R_local_values_count, &rcv_minimization_data_buffer));
+    PetscCall(PetscArrayzero(rcv_minimization_data_buffer, R_local_values_count));
     PetscCall(MatGetOwnershipRange(R, &rstart, &rend));
 
     PetscCall(create_matrix_dense(comm_jacobi_block, &S, n_mesh_points, s, MATMPIDENSE));
@@ -187,7 +188,9 @@ int main(int argc, char **argv)
 
     PetscCall(VecGetLocalSize(x_block_jacobi[rank_jacobi_block], &vec_local_size));
     PetscCall(PetscMalloc1(vec_local_size, &send_multisplitting_data_buffer));
+    PetscCall(PetscArrayzero(send_multisplitting_data_buffer, vec_local_size));
     PetscCall(PetscMalloc1(vec_local_size, &rcv_multisplitting_data_buffer));
+    PetscCall(PetscArrayzero(rcv_multisplitting_data_buffer, vec_local_size));
 
     PetscCall(create_vector(comm_jacobi_block, &x_minimized, n_mesh_points, VECMPI));
     PetscCall(VecSet(x_minimized, ZERO));
