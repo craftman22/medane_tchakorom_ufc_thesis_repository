@@ -160,7 +160,7 @@ int main(int argc, char **argv)
   {
 
     n_vectors_inserted = 0;
-    PetscCall(VecCopy(x_block_jacobi[rank_jacobi_block], x_part_minimized_prev_iteration));
+    // PetscCall(VecCopy(x_block_jacobi[rank_jacobi_block], x_part_minimized_prev_iteration));
 
     while (n_vectors_inserted < s)
     {
@@ -178,13 +178,13 @@ int main(int argc, char **argv)
     }
 
     PetscCall(MatAssemblyBegin(S, MAT_FINAL_ASSEMBLY));
+    // PetscCall(VecCopy(x_block_jacobi[rank_jacobi_block], x_part_minimized_prev_iteration));
     PetscCall(MatAssemblyEnd(S, MAT_FINAL_ASSEMBLY));
 
     PetscCall(MatMatMult(A_block_jacobi_subMat[rank_jacobi_block], S, MAT_REUSE_MATRIX, PETSC_DETERMINE, &R));
 
     PetscCall(updateLocalRHS(local_right_side_vector, A_block_jacobi_subMat, x_block_jacobi, b_block_jacobi, mat_mult_vec_result, rank_jacobi_block));
     PetscCall(outer_solver(comm_jacobi_block, outer_ksp, x_block_jacobi[rank_jacobi_block], R, S, R_transpose_R, vec_R_transpose_b_block_jacobi, alpha, local_right_side_vector, rank_jacobi_block, s, number_of_iterations));
-
 
     PetscCall(VecWAXPY(approximate_residual, -1.0, x_part_minimized_prev_iteration, x_block_jacobi[rank_jacobi_block]));
 

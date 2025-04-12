@@ -211,7 +211,7 @@ int main(int argc, char **argv)
 
     PetscInt message_received __attribute__((unused)) = 0;
     PetscInt inner_solver_iterations __attribute__((unused)) = ZERO;
-    PetscBool message_received_iterations_happened __attribute__((unused)) = PETSC_FALSE;
+    PetscInt number_of_new_vector_inserted __attribute__((unused)) = 0;
 
     PetscCallMPI(MPI_Barrier(MPI_COMM_WORLD));
     double start_time, end_time;
@@ -221,17 +221,22 @@ int main(int argc, char **argv)
     {
 
         n_vectors_inserted = 0;
-        PetscCall(VecCopy(x_minimized, x_minimized_prev_iteration));
+        // PetscCall(VecCopy(x_minimized, x_minimized_prev_iteration));
 
         message_received = 0;
-
+        number_of_new_vector_inserted = 0;
         while (n_vectors_inserted < s)
         {
 
-             PetscCall(comm_async_probe_and_receive(x_block_jacobi, rcv_multisplitting_data_buffer, vec_local_size, rcv_multisplitting_data_flag, message_source, idx_non_current_block, &message_received));
+            PetscCall(comm_async_probe_and_receive(x_block_jacobi, rcv_multisplitting_data_buffer, vec_local_size, rcv_multisplitting_data_flag, message_source, idx_non_current_block, &message_received));
 
             PetscCall(updateLocalRHS(local_right_side_vector, A_block_jacobi_subMat, x_block_jacobi, b_block_jacobi, mat_mult_vec_result, rank_jacobi_block));
             PetscCall(inner_solver(comm_jacobi_block, inner_ksp, A_block_jacobi_subMat, x_block_jacobi, b_block_jacobi, local_right_side_vector, rank_jacobi_block, &inner_solver_iterations, number_of_iterations));
+
+            if (inner_solver_iterations > 0)
+            {
+                number_of_new_vector_inserted++;
+            }
 
             PetscCall(comm_async_test_and_send(x_block_jacobi, send_multisplitting_data_buffer, temp_multisplitting_data_buffer, &send_multisplitting_data_request, vec_local_size, send_multisplitting_data_flag, message_destination, rank_jacobi_block));
 
@@ -249,14 +254,16 @@ int main(int argc, char **argv)
             n_vectors_inserted++;
         }
 
+        
         PetscCall(MatAssemblyBegin(S, MAT_FINAL_ASSEMBLY));
+        PetscCall(VecCopy(x, x_minimized_prev_iteration));
         PetscCall(MatAssemblyEnd(S, MAT_FINAL_ASSEMBLY));
 
         PetscCall(getHalfSubMatrixFromR(R, R_block_jacobi_subMat, n_mesh_lines, n_mesh_columns, rank_jacobi_block));
         PetscCall(MatMatMult(A_block_jacobi_resdistributed, S, MAT_REUSE_MATRIX, PETSC_DETERMINE, &R_block_jacobi_subMat[rank_jacobi_block]));
         PetscCall(restoreHalfSubMatrixToR(R, R_block_jacobi_subMat, rank_jacobi_block));
 
-         PetscCall(comm_async_probe_and_receive_min(R, rcv_minimization_data_buffer, temp_minimization_data_buffer, R_local_values_count, rcv_minimization_data_flag, message_source, rank_jacobi_block, idx_non_current_block, n_mesh_points, rstart, rend, lda, s));
+        PetscCall(comm_async_probe_and_receive_min(R, rcv_minimization_data_buffer, temp_minimization_data_buffer, R_local_values_count, rcv_minimization_data_flag, message_source, rank_jacobi_block, idx_non_current_block, n_mesh_points, rstart, rend, lda, s));
 
         PetscCall(comm_async_test_and_send_min(R, send_minimization_data_buffer, temp_minimization_data_buffer, send_minimization_data_request, R_local_values_count, message_destination, rank_jacobi_block));
 

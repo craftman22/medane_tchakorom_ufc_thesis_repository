@@ -514,7 +514,7 @@ int main(int argc, char **argv)
     {
 
         n_vectors_inserted = 0;
-        PetscCall(VecCopy(x_block_jacobi[rank_jacobi_block], x_part_minimized_prev_iteration));
+        // PetscCall(VecCopy(x_block_jacobi[rank_jacobi_block], x_part_minimized_prev_iteration));
 
         message_received = 0;
         while (n_vectors_inserted < s)
@@ -537,6 +537,7 @@ int main(int argc, char **argv)
         }
 
         PetscCall(MatAssemblyBegin(S, MAT_FINAL_ASSEMBLY));
+        PetscCall(VecCopy(x_block_jacobi[rank_jacobi_block], x_part_minimized_prev_iteration));
         PetscCall(MatAssemblyEnd(S, MAT_FINAL_ASSEMBLY));
 
         PetscCall(MatMatMult(A_block_jacobi_subMat[rank_jacobi_block], S, MAT_REUSE_MATRIX, PETSC_DETERMINE, &R));

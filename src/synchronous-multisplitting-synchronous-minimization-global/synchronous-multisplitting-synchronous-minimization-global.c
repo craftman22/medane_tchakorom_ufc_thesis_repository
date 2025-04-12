@@ -187,7 +187,7 @@ int main(int argc, char **argv)
   {
 
     n_vectors_inserted = 0;
-    PetscCall(VecCopy(x_minimized, x_minimized_prev_iteration));
+    //PetscCall(VecCopy(x_minimized, x_minimized_prev_iteration));
 
     while (n_vectors_inserted < s)
     {
@@ -220,7 +220,9 @@ int main(int argc, char **argv)
       n_vectors_inserted++;
     }
 
+
     PetscCall(MatAssemblyBegin(S, MAT_FINAL_ASSEMBLY));
+    PetscCall(VecCopy(x, x_minimized_prev_iteration));
     PetscCall(MatAssemblyEnd(S, MAT_FINAL_ASSEMBLY));
 
     PetscCall(getHalfSubMatrixFromR(R, R_block_jacobi_subMat, n_mesh_lines, n_mesh_columns, rank_jacobi_block));
