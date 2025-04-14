@@ -298,6 +298,8 @@ int main(int argc, char **argv)
         number_of_iterations = number_of_iterations + 1;
 
     } while (broadcast_message != TERMINATE_SIGNAL);
+
+    
     PetscCall(PetscPrintf(comm_jacobi_block, "Rank %d: PROGRAMME TERMINE\n", rank_jacobi_block));
 
     PetscCallMPI(MPI_Barrier(MPI_COMM_WORLD));

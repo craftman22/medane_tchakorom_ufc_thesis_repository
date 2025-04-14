@@ -402,6 +402,9 @@ int main(int argc, char **argv)
   do
   {
 
+    message_received = 0;
+    inner_solver_iterations = 0;
+
     PetscCall(comm_async_probe_and_receive(x_block_jacobi, rcv_buffer, vec_local_size, rcv_data_flag, message_source, idx_non_current_block, &message_received));
 
     PetscCall(updateLocalRHS(local_right_side_vector, A_block_jacobi_subMat, x_block_jacobi, b_block_jacobi, mat_mult_vec_result, rank_jacobi_block));
@@ -411,26 +414,14 @@ int main(int argc, char **argv)
 
     PetscCall(comm_async_probe_and_receive(x_block_jacobi, rcv_buffer, vec_local_size, rcv_data_flag, message_source, idx_non_current_block, &message_received));
 
-    if (message_received && inner_solver_iterations > 0)
-    {
-      message_received = 0;
-      last_message_received_iter_number = number_of_iterations;
-    }
-
     PetscCall(VecWAXPY(approximation_residual, -1.0, x_block_jacobi_previous_iteration, x_block_jacobi[rank_jacobi_block]));
     PetscCall(VecNorm(approximation_residual, NORM_INFINITY, &approximation_residual_infinity_norm));
     PetscCall(VecCopy(x_block_jacobi[rank_jacobi_block], x_block_jacobi_previous_iteration));
 
-    if (number_of_iterations == 0)
-    {
-      approximation_residual_infinity_norm_iter_zero = approximation_residual_infinity_norm;
-    }
-
     PetscCall(printResidualNorm(comm_jacobi_block, rank_jacobi_block, approximation_residual_infinity_norm, number_of_iterations));
 
-    if (message_received) // TODO: this too was added to make the convergence detection more robust
+    if (message_received || inner_solver_iterations)
     {
-      // if (PetscApproximateLTE(approximation_residual_infinity_norm, (relative_tolerance * approximation_residual_infinity_norm_iter_zero)))
       if (PetscApproximateLTE(approximation_residual_infinity_norm, relative_tolerance))
         convergence_count++;
       else
@@ -439,16 +430,11 @@ int main(int argc, char **argv)
       PetscCall(PetscPrintf(comm_jacobi_block, "Rank %d: CONVERGENCE COUNT %d \n", rank_jacobi_block, convergence_count));
     }
 
-    // if (convergence_count >= MIN_CONVERGENCE_COUNT && (number_of_iterations - last_message_received_iter_number) > MIN_CONVERGENCE_COUNT)
-    //   convergence_count = ZERO;
-
     PetscCall(comm_async_convergence_detection(&broadcast_message, convergence_count, MIN_CONVERGENCE_COUNT, &send_signal, &send_signal_request, &rcv_signal, message_dest, message_source, rank_jacobi_block, idx_non_current_block, proc_local_rank));
 
     PetscCallMPI(MPI_Bcast(&broadcast_message, ONE, MPIU_INT, proc_local_rank, comm_jacobi_block));
 
     number_of_iterations = number_of_iterations + 1;
-
-
 
   } while (broadcast_message != TERMINATE_SIGNAL);
 
