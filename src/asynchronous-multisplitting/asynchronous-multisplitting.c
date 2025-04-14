@@ -420,7 +420,7 @@ int main(int argc, char **argv)
 
     PetscCall(printResidualNorm(comm_jacobi_block, rank_jacobi_block, approximation_residual_infinity_norm, number_of_iterations));
 
-    if (message_received || inner_solver_iterations)
+    if (message_received )
     {
       if (PetscApproximateLTE(approximation_residual_infinity_norm, relative_tolerance))
         convergence_count++;
