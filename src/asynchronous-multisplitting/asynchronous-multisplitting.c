@@ -402,7 +402,7 @@ int main(int argc, char **argv)
   do
   {
 
-    // message_received = 0;
+    message_received = 0;
     inner_solver_iterations = 0;
 
     PetscCall(comm_async_probe_and_receive(x_block_jacobi, rcv_buffer, vec_local_size, rcv_data_flag, message_source, idx_non_current_block, &message_received));
@@ -414,17 +414,13 @@ int main(int argc, char **argv)
 
     PetscCall(comm_async_probe_and_receive(x_block_jacobi, rcv_buffer, vec_local_size, rcv_data_flag, message_source, idx_non_current_block, &message_received));
 
-    if (inner_solver_iterations > 0)
-    {
-      message_received = 0;
-    }
     PetscCall(VecWAXPY(approximation_residual, -1.0, x_block_jacobi_previous_iteration, x_block_jacobi[rank_jacobi_block]));
     PetscCall(VecNorm(approximation_residual, NORM_INFINITY, &approximation_residual_infinity_norm));
     PetscCall(VecCopy(x_block_jacobi[rank_jacobi_block], x_block_jacobi_previous_iteration));
 
     PetscCall(printResidualNorm(comm_jacobi_block, rank_jacobi_block, approximation_residual_infinity_norm, number_of_iterations));
 
-    if (message_received)
+    if (message_received && inner_solver_iterations > 0)
     {
       if (PetscApproximateLTE(approximation_residual_infinity_norm, relative_tolerance))
         convergence_count++;
