@@ -410,12 +410,12 @@ int main(int argc, char **argv)
     PetscCall(updateLocalRHS(local_right_side_vector, A_block_jacobi_subMat, x_block_jacobi, b_block_jacobi, mat_mult_vec_result, rank_jacobi_block));
     PetscCall(inner_solver(comm_jacobi_block, inner_ksp, A_block_jacobi_subMat, x_block_jacobi, b_block_jacobi, local_right_side_vector, rank_jacobi_block, &inner_solver_iterations, number_of_iterations));
 
-    if (inner_solver_iteration > 0)
+    if (inner_solver_iterations > 0)
     {
       PetscCall(comm_async_test_and_send(x_block_jacobi, send_buffer, temp_buffer, &send_data_request, vec_local_size, send_data_flag, message_dest, rank_jacobi_block));
     }
 
-    
+
     PetscCall(comm_async_probe_and_receive(x_block_jacobi, rcv_buffer, vec_local_size, rcv_data_flag, message_source, idx_non_current_block, &message_received));
 
     PetscCall(VecWAXPY(approximation_residual, -1.0, x_block_jacobi_previous_iteration, x_block_jacobi[rank_jacobi_block]));
