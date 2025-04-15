@@ -23,7 +23,7 @@ PetscErrorCode comm_async_probe_and_receive(Vec *x_block_jacobi, PetscScalar *rc
             PetscCallMPI(MPI_Recv(rcv_buffer, vec_local_size, MPIU_SCALAR, message_source, (TAG_MULTISPLITTING_DATA + idx_non_current_block), MPI_COMM_WORLD, MPI_STATUS_IGNORE));
             printf("=============Block rank %d END multipsplitting RCV communication\n", rank_jacobi_block);
             loop_counter++;
-            if (loop_counter >= 4) // TODO: remember this, possibly make it an argument of the program
+            if (loop_counter >= 2) // TODO: remember this, possibly make it an argument of the program
             {
                 break;
             }
