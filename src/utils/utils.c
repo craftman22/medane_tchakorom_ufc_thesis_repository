@@ -3,6 +3,17 @@
 #include <petscts.h>
 #include <petscdmda.h>
 
+PetscErrorCode PetscArrayfill(PetscInt *x, PetscScalar val, PetscInt n)
+{
+  PetscFunctionBeginUser;
+  PetscInt i;
+  for (i = 0; i < n; i++)
+  {
+    x[i] = val;
+  }
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
+
 PetscErrorCode poisson3DMatrix(Mat *A_block_jacobi, PetscInt n_grid_lines, PetscInt n_grid_columns, PetscInt n_grid_depth, PetscInt rank_jacobi_block, PetscInt njacobi_blocks)
 {
   PetscFunctionBeginUser;
@@ -773,7 +784,6 @@ PetscErrorCode outer_solver(MPI_Comm comm_jacobi_block, KSP outer_ksp, Vec x_min
   // if(rank_jacobi_block == 0){
   //   PetscCall(VecView(alpha, PETSC_VIEWER_STDOUT_(comm_jacobi_block)));
   // }
-
 
   PetscFunctionReturn(PETSC_SUCCESS);
 }

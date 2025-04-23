@@ -4,6 +4,8 @@
 #include <petscts.h>
 
 
+PetscErrorCode PetscArrayfill(PetscInt *x, PetscScalar val, PetscInt n);
+
 PetscErrorCode create_matrix_dense(MPI_Comm comm, Mat *mat, PetscInt n, PetscInt m, MatType mat_type);
 PetscErrorCode create_matrix_sparse(MPI_Comm comm, Mat *mat, PetscInt n, PetscInt m, MatType mat_type, PetscInt d_nz, PetscInt o_nz);
 

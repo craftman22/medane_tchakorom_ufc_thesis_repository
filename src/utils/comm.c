@@ -19,9 +19,9 @@ PetscErrorCode comm_async_probe_and_receive(Vec *x_block_jacobi, PetscScalar *rc
         PetscCall(VecGetArray(x_block_jacobi[idx_non_current_block], &rcv_buffer));
         do
         {
-            printf("=============Block rank %d START multipsplitting RCV communication\n", rank_jacobi_block);
+            // printf("=============Block rank %d START multipsplitting RCV communication\n", rank_jacobi_block);
             PetscCallMPI(MPI_Recv(rcv_buffer, vec_local_size, MPIU_SCALAR, message_source, (TAG_MULTISPLITTING_DATA + idx_non_current_block), MPI_COMM_WORLD, MPI_STATUS_IGNORE));
-            printf("=============Block rank %d END multipsplitting RCV communication\n", rank_jacobi_block);
+            // printf("=============Block rank %d END multipsplitting RCV communication\n", rank_jacobi_block);
             loop_counter++;
             if (loop_counter >= 2) // TODO: remember this, possibly make it an argument of the program
             {
@@ -34,7 +34,7 @@ PetscErrorCode comm_async_probe_and_receive(Vec *x_block_jacobi, PetscScalar *rc
         if (message_received != NULL)
             (*message_received) = 1;
     }
-    printf("=============Block rank %d END RCV communication function\n", rank_jacobi_block);
+    // printf("=============Block rank %d END RCV communication function\n", rank_jacobi_block);
 
     PetscFunctionReturn(PETSC_SUCCESS);
 }
@@ -200,9 +200,9 @@ PetscErrorCode comm_async_probe_and_receive_min(Mat R, PetscScalar *rcv_minimiza
 
         do
         {
-            printf("=============Block rank %d START minimization RCV communication\n", rank_jacobi_block);
+            // printf("=============Block rank %d START minimization RCV communication\n", rank_jacobi_block);
             PetscCallMPI(MPI_Recv(rcv_minimization_data_buffer, R_local_values_count, MPIU_SCALAR, message_source, (TAG_MINIMIZATION_DATA + idx_non_current_block), MPI_COMM_WORLD, MPI_STATUS_IGNORE));
-            printf("=============Block rank %d END minimization RCV communication\n", rank_jacobi_block);
+            // printf("=============Block rank %d END minimization RCV communication\n", rank_jacobi_block);
             loop_counter++;
             if (loop_counter >= 2) // TODO: remember this, possibly make it an argument of the program
             {
@@ -234,7 +234,7 @@ PetscErrorCode comm_async_probe_and_receive_min(Mat R, PetscScalar *rcv_minimiza
         PetscCall(MatDenseRestoreArray(R, &temp_minimization_data_buffer));
     }
 
-    printf("=============Block rank %d END RCV minimization communication function\n", rank_jacobi_block);
+    // printf("=============Block rank %d END RCV minimization communication function\n", rank_jacobi_block);
 
     PetscFunctionReturn(PETSC_SUCCESS);
 }
@@ -255,3 +255,4 @@ PetscErrorCode comm_async_test_and_send_min(Mat R, PetscScalar *send_minimizatio
 
     PetscFunctionReturn(PETSC_SUCCESS);
 }
+

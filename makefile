@@ -104,8 +104,9 @@ print:
 # List the source directories you want to compile from
 
 #SRC_DIRS :=  src/synchronous-multisplitting  src/asynchronous-multisplitting  src/synchronous-multisplitting-synchronous-minimization-local src/synchronous-multisplitting-synchronous-minimization-semi-local src/synchronous-multisplitting-synchronous-minimization-global  src/asynchronous-multisplitting-asynchronous-minimization-global src/asynchronous-multisplitting-asynchronous-minimization-local src/asynchronous-multisplitting-asynchronous-minimization-semi-local 
-SRC_DIRS :=   src/synchronous-multisplitting  src/asynchronous-multisplitting src/synchronous-multisplitting-synchronous-minimization-local   src/asynchronous-multisplitting-asynchronous-minimization-local src/synchronous-multisplitting-synchronous-minimization-global src/asynchronous-multisplitting-asynchronous-minimization-global src/synchronous-multisplitting-synchronous-minimization-semi-local src/asynchronous-multisplitting-asynchronous-minimization-semi-local
+#SRC_DIRS :=   src/synchronous-multisplitting  src/asynchronous-multisplitting src/synchronous-multisplitting-synchronous-minimization-local   src/asynchronous-multisplitting-asynchronous-minimization-local src/synchronous-multisplitting-synchronous-minimization-global src/asynchronous-multisplitting-asynchronous-minimization-global src/synchronous-multisplitting-synchronous-minimization-semi-local src/asynchronous-multisplitting-asynchronous-minimization-semi-local
 #SRC_DIRS :=    src/synchronous-multisplitting-synchronous-minimization-global src/asynchronous-multisplitting-asynchronous-minimization-global 
+SRC_DIRS :=   src/asynchronous-multisplitting src/synchronous-multisplitting
 
 
 
@@ -133,10 +134,10 @@ build: all
 # Rule to compile each binary
 $(BIN_DIR)/%: src/%.c | $(BIN_DIR)
 	@if echo "$(@)" | grep -q "asynchronous"; then \
-		$(LINK.c) -DVERSION_1_0 src/utils/utils.c src/utils/comm.c  $^ $(LOADLIBES) $(LDLIBS) -I./include   -o $(BIN_DIR)/$(notdir $@)"-v1.0"; \
-		$(LINK.c) -DVERSION_1_1 src/utils/utils.c src/utils/comm.c  $^ $(LOADLIBES) $(LDLIBS) -I./include   -o $(BIN_DIR)/$(notdir $@)"-v1.1"; \
+		$(LINK.c) -DVERSION_1_0 src/utils/utils.c src/utils/comm.c src/utils/conv_detection.c  $^ $(LOADLIBES) $(LDLIBS) -I./include   -o $(BIN_DIR)/$(notdir $@)"-v1.0"; \
+		$(LINK.c) -DVERSION_1_1 src/utils/utils.c src/utils/comm.c src/utils/conv_detection.c  $^ $(LOADLIBES) $(LDLIBS) -I./include   -o $(BIN_DIR)/$(notdir $@)"-v1.1"; \
 	else \
-		$(LINK.c) -DVERSION_1_0 src/utils/utils.c src/utils/comm.c  $^ $(LOADLIBES) $(LDLIBS) -I./include   -o $(BIN_DIR)/$(notdir $@)"-v1.0"; \
+		$(LINK.c) -DVERSION_1_0 src/utils/utils.c src/utils/comm.c src/utils/conv_detection.c $^ $(LOADLIBES) $(LDLIBS) -I./include   -o $(BIN_DIR)/$(notdir $@)"-v1.0"; \
 	fi
 
 
