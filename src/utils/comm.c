@@ -256,3 +256,36 @@ PetscErrorCode comm_async_test_and_send_min(Mat R, PetscScalar *send_minimizatio
     PetscFunctionReturn(PETSC_SUCCESS);
 }
 
+PetscErrorCode comm_sync_measure_latency_between_two_nodes(PetscMPIInt proc_rank_node_1, PetscMPIInt proc_rank_node_2, PetscMPIInt actual_rank)
+{
+
+    PetscFunctionBeginUser;
+    PetscInt MSG_SIZE = 1;
+    PetscInt NUM_ITER = 10000;
+    char msg[MSG_SIZE];
+    MPI_Status status;
+
+    if (actual_rank == proc_rank_node_1)
+    {
+        double start = MPI_Wtime();
+        for (int i = 0; i < NUM_ITER; i++)
+        {
+            MPI_Send(msg, MSG_SIZE, MPI_CHAR, proc_rank_node_2, 0, MPI_COMM_WORLD);
+            MPI_Recv(msg, MSG_SIZE, MPI_CHAR, proc_rank_node_2, 0, MPI_COMM_WORLD, &status);
+        }
+        double end = MPI_Wtime();
+        double rtt = (end - start) / NUM_ITER;
+        printf("Average round-trip time: %.6f ms\n", rtt * 1000);
+        printf("Estimated one-way latency: %.6f ms\n", (rtt * 1000) / 2);
+    }
+    else if (actual_rank == proc_rank_node_2)
+    {
+        for (int i = 0; i < NUM_ITER; i++)
+        {
+            MPI_Recv(msg, MSG_SIZE, MPI_CHAR, proc_rank_node_1, 0, MPI_COMM_WORLD, &status);
+            MPI_Send(msg, MSG_SIZE, MPI_CHAR, proc_rank_node_1, 0, MPI_COMM_WORLD);
+        }
+    }
+
+    PetscFunctionReturn(PETSC_SUCCESS);
+}

@@ -631,7 +631,17 @@ int main(int argc, char **argv)
   MPI_Request sendSPartialRequest;
   PetscLogDouble time_period_with_globalCV __attribute__((unused)) = 0.0;
   PetscLogDouble globalCV_timer = 0.0;
-  PetscLogDouble MAX_TRAVERSAL_TIME __attribute__((unused)) = 0.1;
+  PetscLogDouble MAX_TRAVERSAL_TIME __attribute__((unused)) = 0.0;
+
+  PetscCallMPI(MPI_Barrier(MPI_COMM_WORLD));
+
+  PetscMPIInt proc_rank_node_1 = 0;
+  PetscMPIInt proc_rank_node_2 = 1;
+  PetscCall(comm_sync_measure_latency_between_two_nodes(proc_rank_node_1, proc_rank_node_2, proc_global_rank));
+
+  PetscCallMPI(MPI_Barrier(MPI_COMM_WORLD));
+  PetscCall(PetscFinalize());
+  return 0;
 
   PetscCall(PetscTime(&globalCV_timer));
 
@@ -735,13 +745,6 @@ int main(int argc, char **argv)
     PetscCall(VecNorm(approximation_residual, NORM_INFINITY, &approximation_residual_infinity_norm));
     PetscCall(VecCopy(x_block_jacobi[rank_jacobi_block], x_block_jacobi_previous_iteration));
 
-    // if (number_of_iterations > 40)
-    // {
-    //   approximation_residual_infinity_norm = 4e-4;
-    //   inner_solver_iterations = 12;
-    // }
-
-
     PetscCall(printResidualNorm(comm_jacobi_block, rank_jacobi_block, approximation_residual_infinity_norm, number_of_iterations));
 
     if (PetscApproximateLTE(approximation_residual_infinity_norm, relative_tolerance) && inner_solver_iterations > 0)
@@ -765,20 +768,20 @@ int main(int argc, char **argv)
 
     PetscCall(comm_async_recvGlobalCV(rank_jacobi_block, &globalCV));
 
-    // if (globalCV == PETSC_FALSE)
-    // {
-    //   PetscCall(PetscTime(&globalCV_timer));
-    // }
-    // else
-    // {
-    //   time_period_with_globalCV = globalCV_timer;
-    //   PetscCall(PetscTimeSubtract(&time_period_with_globalCV));
-    //   time_period_with_globalCV = PetscAbs(time_period_with_globalCV);
-    // }
+    if (globalCV == PETSC_FALSE)
+    {
+      PetscCall(PetscTime(&globalCV_timer));
+    }
+    else
+    {
+      time_period_with_globalCV = globalCV_timer;
+      PetscCall(PetscTimeSubtract(&time_period_with_globalCV));
+      time_period_with_globalCV = PetscAbs(time_period_with_globalCV);
+    }
 
     number_of_iterations = number_of_iterations + 1;
-    // } while (time_period_with_globalCV <= MAX_TRAVERSAL_TIME);
-  } while (globalCV == PETSC_FALSE);
+  } while (time_period_with_globalCV <= MAX_TRAVERSAL_TIME);
+  // } while (globalCV == PETSC_FALSE);
 
   PetscMPIInt buff;
   MPI_Request requests[nbNeighbors];

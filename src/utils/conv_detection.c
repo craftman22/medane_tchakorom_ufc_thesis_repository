@@ -44,7 +44,7 @@ PetscErrorCode comm_async_convDetection(PetscMPIInt rank_jacobi_block, PetscInt 
         }
         else
         {
-            printf("ARRET ICI  presque arrive rank block  %d  iteration %d  nbNeigNotLCV %d\n", rank_jacobi_block, (*sendSPartialBuffer),(*nbNeigNotLCV));
+            printf("ARRET ICI  presque arrive rank block  %d  iteration %d  nbNeigNotLCV %d\n", rank_jacobi_block, (*sendSPartialBuffer), (*nbNeigNotLCV));
             if ((*nbNeigNotLCV) == 0)
             {
                 (*globalCV) = PETSC_TRUE;
@@ -61,7 +61,7 @@ PetscErrorCode comm_async_convDetection(PetscMPIInt rank_jacobi_block, PetscInt 
                     // {
                     //     if (prevIterNumS[neighbors[i]] < prevIterNumC[neighbors[i]])
                     //     {
-                    (*dest_node) = neighbors[0];
+                    (*dest_node) = neighbors[0]; //TODO: revoir cette partie
                     //     }
                     // }
 
@@ -88,18 +88,17 @@ PetscErrorCode comm_async_recvSPartialCV(PetscMPIInt rank_jacobi_block, PetscInt
     {
 
         PetscCallMPI(MPI_Recv(&buff, 1, MPIU_INT, MPI_ANY_SOURCE, TAG_SEND_CV, MPI_COMM_WORLD, &status));
-        
+
         PetscInt srcNode = status.MPI_SOURCE;
         PetscInt currentIterNum = buff;
-        
+
         if ((prevIterNumS[srcNode] < prevIterNumC[srcNode]) && (prevIterNumC[srcNode] < currentIterNum))
         {
             (*nbNeigNotLCV) = (*nbNeigNotLCV) - 1;
             if ((*nbNeigNotLCV) < 0)
-            (*nbNeigNotLCV) = 0;
-            
+                (*nbNeigNotLCV) = 0;
         }
-        
+
         if (prevIterNumS[srcNode] < currentIterNum)
         {
             prevIterNumS[srcNode] = currentIterNum;
@@ -123,24 +122,23 @@ PetscErrorCode comm_async_recvCancelSPartialCV(PetscMPIInt rank_jacobi_block, Pe
     if (flag)
     {
         PetscCallMPI(MPI_Recv(&buff, 1, MPIU_INT, MPI_ANY_SOURCE, TAG_CANCEL_CV, MPI_COMM_WORLD, &status));
-        
+
         PetscInt srcNode = status.MPI_SOURCE;
         PetscInt currentIterNum = buff;
-        
+
         if ((prevIterNumC[srcNode] < prevIterNumS[srcNode]) && (prevIterNumS[srcNode] < currentIterNum))
         {
             (*nbNeigNotLCV) = (*nbNeigNotLCV) + 1;
             if ((*nbNeigNotLCV) > 1)
-            (*nbNeigNotLCV) = 1;
+                (*nbNeigNotLCV) = 1;
             (*globalCV) = PETSC_FALSE;
-            
         }
-        
+
         if (prevIterNumC[srcNode] < currentIterNum)
         {
             prevIterNumC[srcNode] = currentIterNum;
         }
-        
+
         printf("ARRET ICI  rank block %d reception cancel sPartialcv , source node %d  \n", rank_jacobi_block, srcNode);
         // PetscCall(MPI_Iprobe(MPI_ANY_SOURCE, TAG_CANCEL_CV, MPI_COMM_WORLD, &flag, MPI_STATUS_IGNORE));
     }
