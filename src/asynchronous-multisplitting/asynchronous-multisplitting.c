@@ -633,13 +633,13 @@ int main(int argc, char **argv)
   PetscLogDouble globalCV_timer = 0.0;
   PetscLogDouble MAX_TRAVERSAL_TIME __attribute__((unused)) = 13.21; // ms
 
-  // PetscCallMPI(MPI_Barrier(MPI_COMM_WORLD));
-  // PetscCall(PetscPrintf( PETSC_COMM_WORLD ,"Starting latency checking .... \n"));
-  // PetscMPIInt proc_rank_node_1 = 0;
-  // PetscMPIInt proc_rank_node_2 = 1;
-  // PetscCall(comm_sync_measure_latency_between_two_nodes(proc_rank_node_1, proc_rank_node_2, proc_global_rank));
+  PetscCallMPI(MPI_Barrier(MPI_COMM_WORLD));
+  PetscCall(PetscPrintf( PETSC_COMM_WORLD ,"Starting latency checking .... \n"));
+  PetscMPIInt proc_rank_node_1 = 0;
+  PetscMPIInt proc_rank_node_2 = 1;
+  PetscCall(comm_sync_measure_latency_between_two_nodes(proc_rank_node_1, proc_rank_node_2, proc_global_rank));
 
-  // PetscCallMPI(MPI_Barrier(MPI_COMM_WORLD));
+  PetscCallMPI(MPI_Barrier(MPI_COMM_WORLD));
   // PetscCall(PetscFinalize());
   // return 0;
 
