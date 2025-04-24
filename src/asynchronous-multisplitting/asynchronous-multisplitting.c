@@ -780,7 +780,7 @@ int main(int argc, char **argv)
     }
 
     number_of_iterations = number_of_iterations + 1;
-  } while ((time_period_with_globalCV/1000.0) <= MAX_TRAVERSAL_TIME);
+  } while ((time_period_with_globalCV * 1000.0) <= MAX_TRAVERSAL_TIME);
   // } while (globalCV == PETSC_FALSE);
 
   PetscMPIInt buff;
