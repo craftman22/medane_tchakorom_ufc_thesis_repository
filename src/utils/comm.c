@@ -270,8 +270,8 @@ PetscErrorCode comm_sync_measure_latency_between_two_nodes(PetscMPIInt proc_rank
         double start = MPI_Wtime();
         for (int i = 0; i < NUM_ITER; i++)
         {
-            MPI_Send(msg, MSG_SIZE, MPI_CHAR, proc_rank_node_2, 0, MPI_COMM_WORLD);
-            MPI_Recv(msg, MSG_SIZE, MPI_CHAR, proc_rank_node_2, 0, MPI_COMM_WORLD, &status);
+            PetscCallMPI(MPI_Send(msg, MSG_SIZE, MPI_CHAR, proc_rank_node_2, 0, MPI_COMM_WORLD));
+            PetscCallMPI(MPI_Recv(msg, MSG_SIZE, MPI_CHAR, proc_rank_node_2, 0, MPI_COMM_WORLD, &status));
         }
         double end = MPI_Wtime();
         double rtt = (end - start) / NUM_ITER;
@@ -282,8 +282,8 @@ PetscErrorCode comm_sync_measure_latency_between_two_nodes(PetscMPIInt proc_rank
     {
         for (int i = 0; i < NUM_ITER; i++)
         {
-            MPI_Recv(msg, MSG_SIZE, MPI_CHAR, proc_rank_node_1, 0, MPI_COMM_WORLD, &status);
-            MPI_Send(msg, MSG_SIZE, MPI_CHAR, proc_rank_node_1, 0, MPI_COMM_WORLD);
+            PetscCallMPI(MPI_Recv(msg, MSG_SIZE, MPI_CHAR, proc_rank_node_1, 0, MPI_COMM_WORLD, &status));
+            PetscCallMPI(MPI_Send(msg, MSG_SIZE, MPI_CHAR, proc_rank_node_1, 0, MPI_COMM_WORLD));
         }
     }
 
