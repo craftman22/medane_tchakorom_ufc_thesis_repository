@@ -261,7 +261,7 @@ PetscErrorCode comm_sync_measure_latency_between_two_nodes(PetscMPIInt proc_rank
 
     PetscFunctionBeginUser;
     PetscInt MSG_SIZE = 1;
-    PetscInt NUM_ITER = 2;
+    PetscInt NUM_ITER = 100;
     char msg[MSG_SIZE];
     MPI_Status status;
 
