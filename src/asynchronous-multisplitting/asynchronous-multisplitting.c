@@ -634,7 +634,7 @@ int main(int argc, char **argv)
   PetscLogDouble MAX_TRAVERSAL_TIME __attribute__((unused)) = 0.0;
 
   PetscCallMPI(MPI_Barrier(MPI_COMM_WORLD));
-
+  PetscCall(PetscPrintf( PETSC_COMM_WORLD ,"Starting latency checking .... \n"));
   PetscMPIInt proc_rank_node_1 = 0;
   PetscMPIInt proc_rank_node_2 = 1;
   PetscCall(comm_sync_measure_latency_between_two_nodes(proc_rank_node_1, proc_rank_node_2, proc_global_rank));
