@@ -6,7 +6,7 @@ PetscErrorCode comm_async_probe_and_receive(Vec *x_block_jacobi, PetscScalar *rc
 {
     PetscFunctionBeginUser;
 
-    PetscMPIInt loop_counter = 0;
+    // PetscMPIInt loop_counter = 0;
     PetscMPIInt rank_jacobi_block __attribute__((unused));
     if (idx_non_current_block == 1)
         rank_jacobi_block = 0;
