@@ -634,7 +634,7 @@ int main(int argc, char **argv)
   PetscLogDouble MAX_TRAVERSAL_TIME __attribute__((unused)) = 13.21; // ms
 
   PetscCallMPI(MPI_Barrier(MPI_COMM_WORLD));
-  PetscCall(PetscPrintf( PETSC_COMM_WORLD ,"Starting latency checking .... \n"));
+  PetscCall(PetscPrintf(PETSC_COMM_WORLD, "Starting latency checking .... \n"));
   PetscMPIInt proc_rank_node_1 = 0;
   PetscMPIInt proc_rank_node_2 = 1;
   PetscCall(comm_sync_measure_latency_between_two_nodes(proc_rank_node_1, proc_rank_node_2, proc_global_rank));
@@ -739,7 +739,7 @@ int main(int argc, char **argv)
 
     PetscCall(comm_async_test_and_send(x_block_jacobi, send_buffer, temp_buffer, &send_data_request, vec_local_size, send_data_flag, message_dest, rank_jacobi_block));
 
-    PetscCall(comm_async_probe_and_receive(x_block_jacobi, rcv_buffer, vec_local_size, rcv_data_flag, message_source, idx_non_current_block, &message_received));
+    // PetscCall(comm_async_probe_and_receive(x_block_jacobi, rcv_buffer, vec_local_size, rcv_data_flag, message_source, idx_non_current_block, &message_received));
 
     PetscCall(VecWAXPY(approximation_residual, -1.0, x_block_jacobi_previous_iteration, x_block_jacobi[rank_jacobi_block]));
     PetscCall(VecNorm(approximation_residual, NORM_INFINITY, &approximation_residual_infinity_norm));
