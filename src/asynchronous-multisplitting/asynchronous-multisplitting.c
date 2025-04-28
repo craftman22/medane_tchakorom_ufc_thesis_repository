@@ -1094,8 +1094,8 @@ int main(int argc, char **argv)
     PetscScalar *rcv_buffer = NULL;
     PetscScalar *temp_buffer = NULL;
     MPI_Request send_data_request = MPI_REQUEST_NULL;
-    MPI_Request send_signal_request = MPI_REQUEST_NULL;
-    MPI_Status status;
+    // MPI_Request send_signal_request = MPI_REQUEST_NULL;
+    // MPI_Status status;
     // PetscMPIInt broadcast_message = NO_MESSAGE;
     PetscMPIInt send_data_flag = ZERO;
     PetscMPIInt rcv_data_flag = ZERO;
@@ -1215,6 +1215,7 @@ int main(int argc, char **argv)
     char *send_pack_buffer = NULL;
     char *rcv_pack_buffer = NULL;
     PetscMPIInt other_block_current_iteration = -1;
+    PetscMPIInt current_number_of_iterations = -1;
     PetscCallMPI(MPI_Barrier(MPI_COMM_WORLD));
     double start_time, end_time;
     start_time = MPI_Wtime();
@@ -1230,7 +1231,8 @@ int main(int argc, char **argv)
         PetscCall(updateLocalRHS(local_right_side_vector, A_block_jacobi_subMat, x_block_jacobi, b_block_jacobi, mat_mult_vec_result, rank_jacobi_block));
         PetscCall(inner_solver(comm_jacobi_block, inner_ksp, A_block_jacobi_subMat, x_block_jacobi, b_block_jacobi, local_right_side_vector, rank_jacobi_block, &inner_solver_iterations, number_of_iterations));
 
-        PetscCall(comm_async_test_and_send(x_block_jacobi, send_buffer, temp_buffer, &send_data_request, vec_local_size, send_data_flag, message_dest, rank_jacobi_block, number_of_iterations, &send_pack_buffer));
+        current_number_of_iterations = number_of_iterations;
+        PetscCall(comm_async_test_and_send(x_block_jacobi, send_buffer, temp_buffer, &send_data_request, vec_local_size, send_data_flag, message_dest, rank_jacobi_block, &current_number_of_iterations, &send_pack_buffer));
 
         // PetscCall(comm_async_probe_and_receive(x_block_jacobi, rcv_buffer, vec_local_size, rcv_data_flag, message_source, idx_non_current_block, &message_received));
 
@@ -1273,6 +1275,7 @@ int main(int argc, char **argv)
         }
 
         number_of_iterations = number_of_iterations + 1;
+
     } while ((time_period_with_globalCV * 1000.0) <= MAX_TRAVERSAL_TIME);
     // } while (globalCV == PETSC_FALSE);
 
@@ -1325,40 +1328,40 @@ int main(int argc, char **argv)
     PetscCall(KSPDestroy(&inner_ksp));
 
     // Discard any pending message
-    PetscInt count;
-    PetscInt message = NO_MESSAGE;
+    // PetscInt count;
+    // PetscInt message = NO_MESSAGE;
 
-    do
-    {
-        MPI_Datatype data_type = MPIU_INT;
-        PetscCallMPI(MPI_Iprobe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &message, &status));
-        if (message)
-        {
-            if (status.MPI_TAG == (TAG_MULTISPLITTING_DATA + idx_non_current_block))
-            {
-                data_type = MPIU_SCALAR;
-                PetscCall(MPI_Get_count(&status, data_type, &count));
-                PetscScalar *buffer;
-                PetscCall(PetscMalloc1(count, &buffer));
-                PetscCallMPI(MPI_Recv(buffer, count, data_type, status.MPI_SOURCE, status.MPI_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE));
-                PetscCall(PetscFree(buffer));
-            }
-            else
-            {
-                data_type = MPIU_INT;
-                PetscCall(MPI_Get_count(&status, data_type, &count));
-                PetscInt *buffer;
-                PetscCall(PetscMalloc1(count, &buffer));
-                PetscCallMPI(MPI_Recv(buffer, count, data_type, status.MPI_SOURCE, status.MPI_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE));
-                PetscCall(PetscFree(buffer));
-            }
-        }
-    } while (message);
+    // do
+    // {
+    //     MPI_Datatype data_type = MPIU_INT;
+    //     PetscCallMPI(MPI_Iprobe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &message, &status));
+    //     if (message)
+    //     {
+    //         if (status.MPI_TAG == (TAG_MULTISPLITTING_DATA + idx_non_current_block))
+    //         {
+    //             data_type = MPIU_SCALAR;
+    //             PetscCall(MPI_Get_count(&status, data_type, &count));
+    //             PetscScalar *buffer;
+    //             PetscCall(PetscMalloc1(count, &buffer));
+    //             PetscCallMPI(MPI_Recv(buffer, count, data_type, status.MPI_SOURCE, status.MPI_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE));
+    //             PetscCall(PetscFree(buffer));
+    //         }
+    //         else
+    //         {
+    //             data_type = MPIU_INT;
+    //             PetscCall(MPI_Get_count(&status, data_type, &count));
+    //             PetscInt *buffer;
+    //             PetscCall(PetscMalloc1(count, &buffer));
+    //             PetscCallMPI(MPI_Recv(buffer, count, data_type, status.MPI_SOURCE, status.MPI_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE));
+    //             PetscCall(PetscFree(buffer));
+    //         }
+    //     }
+    // } while (message);
 
-    PetscCallMPI(MPI_Wait(&send_data_request, MPI_STATUS_IGNORE));
-    PetscCallMPI(MPI_Wait(&send_signal_request, MPI_STATUS_IGNORE));
-    PetscCall(PetscFree(send_buffer));
-    PetscCall(PetscFree(rcv_buffer));
+    // PetscCallMPI(MPI_Wait(&send_data_request, MPI_STATUS_IGNORE));
+    // PetscCallMPI(MPI_Wait(&send_signal_request, MPI_STATUS_IGNORE));
+    // PetscCall(PetscFree(send_buffer));
+    // PetscCall(PetscFree(rcv_buffer));
 
     PetscCall(PetscSubcommDestroy(&sub_comm_context));
     PetscCall(PetscCommDestroy(&dcomm));

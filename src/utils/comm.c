@@ -6,49 +6,55 @@ PetscErrorCode comm_async_probe_and_receive(Vec *x_block_jacobi, PetscScalar *rc
 {
     PetscFunctionBeginUser;
     MPI_Status status;
-    PetscMPIInt rcv_buffer_size = 0;
+    PetscMPIInt pack_buffer_size = 0;
 
     PetscCallMPI(MPI_Iprobe(message_source, (TAG_MULTISPLITTING_DATA + idx_non_current_block), MPI_COMM_WORLD, &rcv_data_flag, &status));
     if (rcv_data_flag)
     {
-        PetscCallMPI(MPI_Get_count(&status, MPI_PACKED, &rcv_buffer_size));
+        PetscCallMPI(MPI_Get_count(&status, MPI_PACKED, &pack_buffer_size));
         if ((*pack_buffer) == NULL)
         {
-            PetscCall(PetscMalloc1(rcv_buffer_size, pack_buffer));
+            PetscCall(PetscMalloc1(pack_buffer_size, pack_buffer));
         }
 
         PetscCall(VecGetArray(x_block_jacobi[idx_non_current_block], &rcv_buffer));
         do
         {
             // PetscCallMPI(MPI_Recv(rcv_buffer, vec_local_size, MPIU_SCALAR, message_source, (TAG_MULTISPLITTING_DATA + idx_non_current_block), MPI_COMM_WORLD, &status));
-            PetscCallMPI(MPI_Recv((*pack_buffer), rcv_buffer_size, MPI_PACKED, message_source, (TAG_MULTISPLITTING_DATA + idx_non_current_block), MPI_COMM_WORLD, MPI_STATUS_IGNORE));
+            PetscCallMPI(MPI_Recv((*pack_buffer), pack_buffer_size, MPI_PACKED, message_source, (TAG_MULTISPLITTING_DATA + idx_non_current_block), MPI_COMM_WORLD, MPI_STATUS_IGNORE));
             PetscCallMPI(MPI_Iprobe(message_source, (TAG_MULTISPLITTING_DATA + idx_non_current_block), MPI_COMM_WORLD, &rcv_data_flag, MPI_STATUS_IGNORE));
         } while (rcv_data_flag);
 
-        PetscCall(mpi_unpack_multisplitting_data(rcv_buffer, vec_local_size, other_block_current_iteration, pack_buffer, rcv_buffer_size));
+        PetscCall(mpi_unpack_multisplitting_data(rcv_buffer, vec_local_size, other_block_current_iteration, pack_buffer, pack_buffer_size));
         PetscCall(VecRestoreArray(x_block_jacobi[idx_non_current_block], &rcv_buffer));
 
         if (message_received != NULL)
             (*message_received) = 1;
+
+        printf(" PROC INCONNU J'AI RECU L'ITERATION %d \n", (*other_block_current_iteration));
+        // PetscCall(PetscSleep(10000));
     }
 
     PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode comm_async_test_and_send(Vec *x_block_jacobi, PetscScalar *send_buffer, PetscScalar *temp_buffer, MPI_Request *send_data_request, PetscMPIInt vec_local_size, PetscMPIInt send_data_flag, PetscMPIInt message_dest, PetscMPIInt rank_jacobi_block, PetscMPIInt number_of_iterations, char **pack_buffer)
+PetscErrorCode comm_async_test_and_send(Vec *x_block_jacobi, PetscScalar *send_buffer, PetscScalar *temp_buffer, MPI_Request *send_data_request, PetscMPIInt vec_local_size, PetscMPIInt send_data_flag, PetscMPIInt message_dest, PetscMPIInt rank_jacobi_block, PetscMPIInt *current_number_of_iterations, char **pack_buffer)
 {
     PetscFunctionBeginUser;
 
-    PetscMPIInt position;
+    PetscMPIInt position = 0;
     MPI_Test(send_data_request, &send_data_flag, MPI_STATUS_IGNORE);
     if (send_data_flag)
     {
         PetscCall(VecGetArray(x_block_jacobi[rank_jacobi_block], &temp_buffer));
         PetscCall(PetscArraycpy(send_buffer, temp_buffer, vec_local_size));
         PetscCall(VecRestoreArray(x_block_jacobi[rank_jacobi_block], &temp_buffer));
-        PetscCall(mpi_pack_multisplitting_data(send_buffer, vec_local_size, number_of_iterations, pack_buffer, &position));
-        PetscCallMPI(MPI_Isend((*pack_buffer), position, MPI_PACKED, 1, TAG_MULTISPLITTING_DATA + rank_jacobi_block, MPI_COMM_WORLD, send_data_request));
+        PetscCall(mpi_pack_multisplitting_data(send_buffer, vec_local_size, current_number_of_iterations, pack_buffer, &position));
+        PetscCallMPI(MPI_Isend((*pack_buffer), position, MPI_PACKED, message_dest, TAG_MULTISPLITTING_DATA + rank_jacobi_block, MPI_COMM_WORLD, send_data_request));
         // PetscCallMPI(MPI_Isend(send_buffer, vec_local_size, MPIU_SCALAR, message_dest, TAG_MULTISPLITTING_DATA + rank_jacobi_block, MPI_COMM_WORLD, send_data_request));
+
+        printf(" PROC %d J'AI ENVOYE L'ITERATION %d \n", rank_jacobi_block, (*current_number_of_iterations));
+        // PetscCall(PetscSleep(10000));
     }
 
     PetscFunctionReturn(PETSC_SUCCESS);
@@ -289,7 +295,7 @@ PetscErrorCode comm_sync_measure_latency_between_two_nodes(PetscMPIInt proc_rank
     PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode mpi_pack_multisplitting_data(PetscScalar *send_buffer, PetscMPIInt data_size, PetscInt version, char **pack_buffer, PetscMPIInt *position)
+PetscErrorCode mpi_pack_multisplitting_data(PetscScalar *send_buffer, PetscMPIInt data_size, PetscInt *version, char **pack_buffer, PetscMPIInt *position)
 {
 
     PetscFunctionBeginUser;
@@ -308,7 +314,7 @@ PetscErrorCode mpi_pack_multisplitting_data(PetscScalar *send_buffer, PetscMPIIn
         PetscCall(PetscMalloc1(total_pack_size, pack_buffer));
     }
 
-    PetscCallMPI(MPI_Pack(&version, 1, MPIU_INT, (*pack_buffer), total_pack_size, position, MPI_COMM_WORLD));
+    PetscCallMPI(MPI_Pack(version, 1, MPIU_INT, (*pack_buffer), total_pack_size, position, MPI_COMM_WORLD));
 
     PetscCallMPI(MPI_Pack(send_buffer, data_size, MPIU_SCALAR, (*pack_buffer), total_pack_size, position, MPI_COMM_WORLD));
 
