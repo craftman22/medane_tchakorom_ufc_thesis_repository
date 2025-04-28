@@ -2,54 +2,53 @@
 #include "utils.h"
 #include "comm.h"
 
-PetscErrorCode comm_async_probe_and_receive(Vec *x_block_jacobi, PetscScalar *rcv_buffer, PetscMPIInt vec_local_size, PetscMPIInt rcv_data_flag, PetscMPIInt message_source, PetscMPIInt idx_non_current_block, PetscInt *message_received)
+PetscErrorCode comm_async_probe_and_receive(Vec *x_block_jacobi, PetscScalar *rcv_buffer, PetscMPIInt vec_local_size, PetscMPIInt rcv_data_flag, PetscMPIInt message_source, PetscMPIInt idx_non_current_block, PetscInt *message_received, PetscMPIInt *other_block_current_iteration, char **pack_buffer)
 {
     PetscFunctionBeginUser;
+    MPI_Status status;
+    PetscMPIInt rcv_buffer_size = 0;
 
-    // PetscMPIInt loop_counter = 0;
-    PetscMPIInt rank_jacobi_block __attribute__((unused));
-    if (idx_non_current_block == 1)
-        rank_jacobi_block = 0;
-    if (idx_non_current_block == 0)
-        rank_jacobi_block = 1;
-
-    PetscCallMPI(MPI_Iprobe(message_source, (TAG_MULTISPLITTING_DATA + idx_non_current_block), MPI_COMM_WORLD, &rcv_data_flag, MPI_STATUS_IGNORE));
+    PetscCallMPI(MPI_Iprobe(message_source, (TAG_MULTISPLITTING_DATA + idx_non_current_block), MPI_COMM_WORLD, &rcv_data_flag, &status));
     if (rcv_data_flag)
     {
+        PetscCallMPI(MPI_Get_count(&status, MPI_PACKED, &rcv_buffer_size));
+        if ((*pack_buffer) == NULL)
+        {
+            PetscCall(PetscMalloc1(rcv_buffer_size, pack_buffer));
+        }
+
         PetscCall(VecGetArray(x_block_jacobi[idx_non_current_block], &rcv_buffer));
         do
         {
-            // printf("=============Block rank %d START multipsplitting RCV communication\n", rank_jacobi_block);
-            PetscCallMPI(MPI_Recv(rcv_buffer, vec_local_size, MPIU_SCALAR, message_source, (TAG_MULTISPLITTING_DATA + idx_non_current_block), MPI_COMM_WORLD, MPI_STATUS_IGNORE));
-            // printf("=============Block rank %d END multipsplitting RCV communication\n", rank_jacobi_block);
-            // loop_counter++;
-            // if (loop_counter >= 4) // TODO: remember this, possibly make it an argument of the program
-            // {
-            //     break;
-            // }
+            // PetscCallMPI(MPI_Recv(rcv_buffer, vec_local_size, MPIU_SCALAR, message_source, (TAG_MULTISPLITTING_DATA + idx_non_current_block), MPI_COMM_WORLD, &status));
+            PetscCallMPI(MPI_Recv((*pack_buffer), rcv_buffer_size, MPI_PACKED, message_source, (TAG_MULTISPLITTING_DATA + idx_non_current_block), MPI_COMM_WORLD, MPI_STATUS_IGNORE));
             PetscCallMPI(MPI_Iprobe(message_source, (TAG_MULTISPLITTING_DATA + idx_non_current_block), MPI_COMM_WORLD, &rcv_data_flag, MPI_STATUS_IGNORE));
         } while (rcv_data_flag);
+
+        PetscCall(mpi_unpack_multisplitting_data(rcv_buffer, vec_local_size, other_block_current_iteration, pack_buffer, rcv_buffer_size));
         PetscCall(VecRestoreArray(x_block_jacobi[idx_non_current_block], &rcv_buffer));
 
         if (message_received != NULL)
             (*message_received) = 1;
     }
-    // printf("=============Block rank %d END RCV communication function\n", rank_jacobi_block);
 
     PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode comm_async_test_and_send(Vec *x_block_jacobi, PetscScalar *send_buffer, PetscScalar *temp_buffer, MPI_Request *send_data_request, PetscMPIInt vec_local_size, PetscMPIInt send_data_flag, PetscMPIInt message_dest, PetscMPIInt rank_jacobi_block)
+PetscErrorCode comm_async_test_and_send(Vec *x_block_jacobi, PetscScalar *send_buffer, PetscScalar *temp_buffer, MPI_Request *send_data_request, PetscMPIInt vec_local_size, PetscMPIInt send_data_flag, PetscMPIInt message_dest, PetscMPIInt rank_jacobi_block, PetscMPIInt number_of_iterations, char **pack_buffer)
 {
     PetscFunctionBeginUser;
 
+    PetscMPIInt position;
     MPI_Test(send_data_request, &send_data_flag, MPI_STATUS_IGNORE);
     if (send_data_flag)
     {
         PetscCall(VecGetArray(x_block_jacobi[rank_jacobi_block], &temp_buffer));
         PetscCall(PetscArraycpy(send_buffer, temp_buffer, vec_local_size));
         PetscCall(VecRestoreArray(x_block_jacobi[rank_jacobi_block], &temp_buffer));
-        PetscCallMPI(MPI_Isend(send_buffer, vec_local_size, MPIU_SCALAR, message_dest, TAG_MULTISPLITTING_DATA + rank_jacobi_block, MPI_COMM_WORLD, send_data_request));
+        PetscCall(mpi_pack_multisplitting_data(send_buffer, vec_local_size, number_of_iterations, pack_buffer, &position));
+        PetscCallMPI(MPI_Isend((*pack_buffer), position, MPI_PACKED, 1, TAG_MULTISPLITTING_DATA + rank_jacobi_block, MPI_COMM_WORLD, send_data_request));
+        // PetscCallMPI(MPI_Isend(send_buffer, vec_local_size, MPIU_SCALAR, message_dest, TAG_MULTISPLITTING_DATA + rank_jacobi_block, MPI_COMM_WORLD, send_data_request));
     }
 
     PetscFunctionReturn(PETSC_SUCCESS);
@@ -286,6 +285,43 @@ PetscErrorCode comm_sync_measure_latency_between_two_nodes(PetscMPIInt proc_rank
             PetscCallMPI(MPI_Send(msg, MSG_SIZE, MPI_CHAR, proc_rank_node_1, 0, MPI_COMM_WORLD));
         }
     }
+
+    PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+PetscErrorCode mpi_pack_multisplitting_data(PetscScalar *send_buffer, PetscMPIInt data_size, PetscInt version, char **pack_buffer, PetscMPIInt *position)
+{
+
+    PetscFunctionBeginUser;
+    PetscMPIInt pack_size_version;
+    PetscMPIInt pack_size_data;
+    (*position) = 0;
+
+    PetscCallMPI(MPI_Pack_size(1, MPIU_INT, MPI_COMM_WORLD, &pack_size_version));
+    PetscCallMPI(MPI_Pack_size(data_size, MPIU_SCALAR, MPI_COMM_WORLD, &pack_size_data));
+
+    PetscMPIInt total_pack_size;
+    total_pack_size = pack_size_version + pack_size_data;
+
+    if ((*pack_buffer) == NULL)
+    {
+        PetscCall(PetscMalloc1(total_pack_size, pack_buffer));
+    }
+
+    PetscCallMPI(MPI_Pack(&version, 1, MPIU_INT, (*pack_buffer), total_pack_size, position, MPI_COMM_WORLD));
+
+    PetscCallMPI(MPI_Pack(send_buffer, data_size, MPIU_SCALAR, (*pack_buffer), total_pack_size, position, MPI_COMM_WORLD));
+
+    PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+PetscErrorCode mpi_unpack_multisplitting_data(PetscScalar *rcv_buffer, PetscMPIInt data_size, PetscInt *version, char **pack_buffer, PetscMPIInt pack_size)
+{
+
+    PetscFunctionBeginUser;
+    PetscMPIInt position = 0;
+    PetscCallMPI(MPI_Unpack((*pack_buffer), pack_size, &position, version, 1, MPIU_INT, MPI_COMM_WORLD));
+    PetscCallMPI(MPI_Unpack((*pack_buffer), pack_size, &position, rcv_buffer, data_size, MPIU_SCALAR, MPI_COMM_WORLD));
 
     PetscFunctionReturn(PETSC_SUCCESS);
 }
