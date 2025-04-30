@@ -1120,7 +1120,7 @@ int main(int argc, char **argv)
     MPI_Request sendSPartialRequest;
     PetscLogDouble time_period_with_globalCV __attribute__((unused)) = 0.0;
     PetscLogDouble globalCV_timer = 0.0;
-    PetscLogDouble MAX_TRAVERSAL_TIME __attribute__((unused)) = 13.21; // ms
+    PetscLogDouble MAX_TRAVERSAL_TIME __attribute__((unused)) = 0.000820; // ms
 
     PetscCallMPI(MPI_Barrier(MPI_COMM_WORLD));
     PetscCall(PetscPrintf(PETSC_COMM_WORLD, "Starting latency checking .... \n"));
@@ -1286,7 +1286,7 @@ int main(int argc, char **argv)
 
     PetscCall(PetscPrintf(comm_jacobi_block, "Rank %d: PROGRAMME TERMINE\n", rank_jacobi_block));
     PetscCallMPI(MPI_Barrier(MPI_COMM_WORLD));
-    PetscCall(PetscSleep(5));
+    // PetscCall(PetscSleep(5));
     end_time = MPI_Wtime();
     PetscCall(printElapsedTime(start_time, end_time));
     PetscCall(printTotalNumberOfIterations(comm_jacobi_block, rank_jacobi_block, number_of_iterations));
