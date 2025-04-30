@@ -801,7 +801,7 @@ int main(int argc, char **argv)
     MPI_Request sendSPartialRequest;
     PetscLogDouble time_period_with_globalCV __attribute__((unused)) = 0.0;
     PetscLogDouble globalCV_timer = 0.0;
-    PetscLogDouble MAX_TRAVERSAL_TIME __attribute__((unused)) = 0.000820; // ms
+    PetscLogDouble MAX_TRAVERSAL_TIME __attribute__((unused)) = 13.21; // ms
     char *send_pack_buffer = NULL;
     char *rcv_pack_buffer = NULL;
     PetscMPIInt other_block_current_iteration = -1;
