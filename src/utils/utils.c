@@ -770,7 +770,7 @@ PetscErrorCode outer_solver(MPI_Comm comm_jacobi_block, KSP outer_ksp, Vec x_min
 
   PetscCall(KSPSetOperators(outer_ksp, R_transpose_R, R_transpose_R));
 
-  // PetscCall(KSPSetInitialGuessNonzero(*outer_ksp, PETSC_TRUE));
+   PetscCall(KSPSetInitialGuessNonzero(outer_ksp, PETSC_FALSE));
 
   PetscCall(KSPSolve(outer_ksp, vec_R_transpose_b_block_jacobi, alpha));
 
