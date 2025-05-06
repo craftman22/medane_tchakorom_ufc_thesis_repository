@@ -187,7 +187,7 @@ int main(int argc, char **argv)
   {
 
     n_vectors_inserted = 0;
-    //PetscCall(VecCopy(x_minimized, x_minimized_prev_iteration));
+    PetscCall(VecCopy(x_minimized, x_minimized_prev_iteration));
 
     while (n_vectors_inserted < s)
     {
@@ -209,20 +209,18 @@ int main(int argc, char **argv)
       PetscCall(VecGetValues(x, x_local_size, vec_local_idx, vector_to_insert_into_S));
       PetscCall(MatSetValuesLocal(S, x_local_size, vec_local_idx, ONE, &n_vectors_inserted, vector_to_insert_into_S, INSERT_VALUES));
 
-      Vec app_res;
-      PetscCall(VecDuplicate(x, &app_res));
-      PetscScalar app_res_norm_inf;
-      PetscCall(VecWAXPY(app_res, -1.0, x_prev, x));
-      PetscCall(VecNorm(app_res, NORM_INFINITY, &app_res_norm_inf));
-
-      PetscCall(printResidualNorm1(comm_jacobi_block, rank_jacobi_block, app_res_norm_inf, number_of_iterations));
+      // Vec app_res;
+      // PetscCall(VecDuplicate(x, &app_res));
+      // PetscScalar app_res_norm_inf;
+      // PetscCall(VecWAXPY(app_res, -1.0, x_prev, x));
+      // PetscCall(VecNorm(app_res, NORM_INFINITY, &app_res_norm_inf));
+      // PetscCall(printResidualNorm1(comm_jacobi_block, rank_jacobi_block, app_res_norm_inf, number_of_iterations));
 
       n_vectors_inserted++;
     }
 
 
     PetscCall(MatAssemblyBegin(S, MAT_FINAL_ASSEMBLY));
-    PetscCall(VecCopy(x, x_minimized_prev_iteration));
     PetscCall(MatAssemblyEnd(S, MAT_FINAL_ASSEMBLY));
 
     PetscCall(getHalfSubMatrixFromR(R, R_block_jacobi_subMat, n_mesh_lines, n_mesh_columns, rank_jacobi_block));

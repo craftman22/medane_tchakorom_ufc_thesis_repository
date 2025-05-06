@@ -8,7 +8,7 @@
 #include "comm.h"
 
 
-#ifdef VERSION_1_0
+// #ifdef VERSION_1_0
 
 
 int main(int argc, char **argv)
@@ -190,7 +190,7 @@ int main(int argc, char **argv)
 }
 
 
-#endif
+// #endif
 
 
 
