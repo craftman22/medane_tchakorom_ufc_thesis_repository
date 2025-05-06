@@ -25,7 +25,7 @@ PetscErrorCode comm_async_convDetection(PetscMPIInt rank_jacobi_block, PetscInt 
     else
     {
 
-        printf("ARRET ICI  rank block %d sPartialCV  iteration %d \n", rank_jacobi_block, (*cancelSPartialBuffer));
+        // printf("ARRET ICI  rank block %d sPartialCV  iteration %d \n", rank_jacobi_block, (*cancelSPartialBuffer));
         if ((*preLocalCV) == PETSC_FALSE)
         {
             (*sLocalCV) = PETSC_FALSE;
@@ -39,16 +39,16 @@ PetscErrorCode comm_async_convDetection(PetscMPIInt rank_jacobi_block, PetscInt 
             {
                 (*cancelSPartialBuffer) = current_iteration;
                 PetscCallMPI(MPI_Isend(cancelSPartialBuffer, 1, MPIU_INT, (*dest_node), TAG_CANCEL_CV, MPI_COMM_WORLD, cancelSPartialRequest));
-                printf("ARRET ICI envoi cancel rank block %d destination %d , iteration %d \n", rank_jacobi_block, (*dest_node), (*cancelSPartialBuffer));
+                // printf("ARRET ICI envoi cancel rank block %d destination %d , iteration %d \n", rank_jacobi_block, (*dest_node), (*cancelSPartialBuffer));
             }
         }
         else
         {
-            printf("ARRET ICI  presque arrive rank block  %d  iteration %d  nbNeigNotLCV %d\n", rank_jacobi_block, (*sendSPartialBuffer), (*nbNeigNotLCV));
+            // printf("ARRET ICI  presque arrive rank block  %d  iteration %d  nbNeigNotLCV %d\n", rank_jacobi_block, (*sendSPartialBuffer), (*nbNeigNotLCV));
             if ((*nbNeigNotLCV) == 0)
             {
                 (*globalCV) = PETSC_TRUE;
-                printf("ARRET ICI  rank block %d GLOBAL CV  iteration %d \n", rank_jacobi_block, (*sendSPartialBuffer));
+                // printf("ARRET ICI  rank block %d GLOBAL CV  iteration %d \n", rank_jacobi_block, (*sendSPartialBuffer));
             }
             else
             {
@@ -66,7 +66,7 @@ PetscErrorCode comm_async_convDetection(PetscMPIInt rank_jacobi_block, PetscInt 
                     // }
 
                     PetscCallMPI(MPI_Isend(sendSPartialBuffer, 1, MPIU_INT, (*dest_node), TAG_SEND_CV, MPI_COMM_WORLD, sendSPartialRequest));
-                    printf("ARRET ICI envoi rank block %d destination %d , iteration %d \n", rank_jacobi_block, (*dest_node), (*sendSPartialBuffer));
+                    // printf("ARRET ICI envoi rank block %d destination %d , iteration %d \n", rank_jacobi_block, (*dest_node), (*sendSPartialBuffer));
                 }
             }
         }
@@ -103,7 +103,7 @@ PetscErrorCode comm_async_recvSPartialCV(PetscMPIInt rank_jacobi_block, PetscInt
         {
             prevIterNumS[srcNode] = currentIterNum;
         }
-        printf("ARRET ICI reception rank block %d nbNeigNotLCV  %d\n", rank_jacobi_block, (*nbNeigNotLCV));
+        // printf("ARRET ICI reception rank block %d nbNeigNotLCV  %d\n", rank_jacobi_block, (*nbNeigNotLCV));
 
         // PetscCall(MPI_Iprobe(MPI_ANY_SOURCE, TAG_SEND_CV, MPI_COMM_WORLD, &flag, MPI_STATUS_IGNORE));
     }
@@ -139,7 +139,7 @@ PetscErrorCode comm_async_recvCancelSPartialCV(PetscMPIInt rank_jacobi_block, Pe
             prevIterNumC[srcNode] = currentIterNum;
         }
 
-        printf("ARRET ICI  rank block %d reception cancel sPartialcv , source node %d  \n", rank_jacobi_block, srcNode);
+        // printf("ARRET ICI  rank block %d reception cancel sPartialcv , source node %d  \n", rank_jacobi_block, srcNode);
         // PetscCall(MPI_Iprobe(MPI_ANY_SOURCE, TAG_CANCEL_CV, MPI_COMM_WORLD, &flag, MPI_STATUS_IGNORE));
     }
 
