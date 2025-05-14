@@ -715,8 +715,8 @@ int main(int argc, char **argv)
 
     MPI_Request send_multisplitting_data_request = MPI_REQUEST_NULL;
 
-    PetscMPIInt send_multisplitting_data_flag = 0;
-    PetscMPIInt rcv_multisplitting_data_flag = 0;
+    PetscMPIInt send_multisplitting_data_flag __attribute__((unused))= 0;
+    PetscMPIInt rcv_multisplitting_data_flag __attribute__((unused)) = 0;
 
     PetscInt *vec_local_idx = NULL;
     PetscMPIInt x_local_size;
@@ -802,10 +802,10 @@ int main(int argc, char **argv)
     PetscLogDouble time_period_with_globalCV __attribute__((unused)) = 0.0;
     PetscLogDouble globalCV_timer = 0.0;
     PetscLogDouble MAX_TRAVERSAL_TIME __attribute__((unused)) = 13.21; // ms
-    char *send_pack_buffer = NULL;
-    char *rcv_pack_buffer = NULL;
-    PetscMPIInt other_block_current_iteration = -1;
-    PetscMPIInt current_number_of_iterations = -1;
+    char *send_pack_buffer __attribute__((unused)) = NULL;
+    char *rcv_pack_buffer __attribute__((unused)) = NULL;
+    PetscMPIInt other_block_current_iteration __attribute__((unused)) = -1;
+    PetscMPIInt current_number_of_iterations __attribute__((unused)) = -1;
 
     PetscCallMPI(MPI_Barrier(MPI_COMM_WORLD));
     PetscCall(PetscPrintf(PETSC_COMM_WORLD, "Starting latency checking .... \n"));
@@ -921,7 +921,7 @@ int main(int argc, char **argv)
         while (n_vectors_inserted < s)
         {
             message_received = 0;
-            PetscCall(comm_async_probe_and_receive(x_block_jacobi, rcv_multisplitting_data_buffer, vec_local_size, rcv_multisplitting_data_flag, message_source, idx_non_current_block, &message_received, &other_block_current_iteration, &rcv_pack_buffer));
+            //PetscCall(comm_async_probe_and_receive(x_block_jacobi, rcv_multisplitting_data_buffer, vec_local_size, rcv_multisplitting_data_flag, message_source, idx_non_current_block, &message_received, &other_block_current_iteration, &rcv_pack_buffer));
 
             PetscCall(updateLocalRHS(local_right_side_vector, A_block_jacobi_subMat, x_block_jacobi, b_block_jacobi, mat_mult_vec_result, rank_jacobi_block));
             PetscCall(inner_solver(comm_jacobi_block, inner_ksp, A_block_jacobi_subMat, x_block_jacobi, b_block_jacobi, local_right_side_vector, rank_jacobi_block, &inner_solver_iterations, number_of_iterations));

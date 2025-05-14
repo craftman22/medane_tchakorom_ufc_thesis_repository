@@ -7,11 +7,11 @@ PetscErrorCode comm_async_probe_and_receive(Vec *x_block_jacobi, PetscScalar *rc
     PetscFunctionBeginUser;
     MPI_Status status;
     PetscMPIInt pack_buffer_size = 0;
-    PetscInt rank_jacobi_block = 0;
-    if (idx_non_current_block == 0)
-    {
-        rank_jacobi_block = 1;
-    }
+    // PetscInt rank_jacobi_block = 0;
+    // if (idx_non_current_block == 0)
+    // {
+    //     rank_jacobi_block = 1;
+    // }
 
     PetscInt loop_count = 0;
 

@@ -749,7 +749,7 @@ PetscErrorCode inner_solver(MPI_Comm comm_jacobi_block, KSP ksp, Mat *A_block_ja
   PetscInt n_iterations = 0;
   PetscCall(KSPGetIterationNumber(ksp, &n_iterations));
 
-  //PetscCall(printInnerSolverIterations(comm_jacobi_block, rank_jacobi_block, n_iterations, outer_iteration_number));
+  PetscCall(printInnerSolverIterations(comm_jacobi_block, rank_jacobi_block, n_iterations, outer_iteration_number));
 
   if (inner_solver_iterations != NULL)
   {
