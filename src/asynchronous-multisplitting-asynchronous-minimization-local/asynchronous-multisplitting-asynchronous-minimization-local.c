@@ -909,7 +909,8 @@ int main(int argc, char **argv)
     PetscLogEvent USER_EVENT __attribute__((unused));
     PetscClassId classid __attribute__((unused));
     PetscLogDouble user_event_flops __attribute__((unused)) = 0.0;
-
+    PetscCall(PetscClassIdRegister("class_name", &classid));
+    PetscCall(PetscLogEventRegister("ev1", classid, &USER_EVENT));
 
     PetscCallMPI(MPI_Barrier(MPI_COMM_WORLD));
 
@@ -943,12 +944,10 @@ int main(int argc, char **argv)
 
             // PetscCall(comm_async_probe_and_receive(x_block_jacobi, rcv_multisplitting_data_buffer, vec_local_size, rcv_multisplitting_data_flag, message_source, idx_non_current_block, &message_received, &other_block_current_iteration, &rcv_pack_buffer));
 
-            PetscCall(PetscClassIdRegister("class_name", &classid));
-            PetscCall(PetscLogEventRegister("ev1", classid, &USER_EVENT));
             PetscCall(PetscLogEventBegin(USER_EVENT, 0, 0, 0, 0));
 
             PetscCall(VecGetValues(x_block_jacobi[rank_jacobi_block], x_part_local_size, vec_local_idx, vector_to_insert_into_S));
-           
+
             // TODO: ici
             PetscCall(MatSetValues(S, x_part_local_size, vec_local_idx, ONE, &n_vectors_inserted, vector_to_insert_into_S, INSERT_VALUES));
 
