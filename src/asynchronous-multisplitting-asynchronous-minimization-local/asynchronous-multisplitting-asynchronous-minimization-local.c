@@ -801,7 +801,7 @@ int main(int argc, char **argv)
     MPI_Request sendSPartialRequest;
     PetscLogDouble time_period_with_globalCV __attribute__((unused)) = 0.0;
     PetscLogDouble globalCV_timer = 0.0;
-    PetscLogDouble MAX_TRAVERSAL_TIME __attribute__((unused)) = 0.001480; // ms
+    PetscLogDouble MAX_TRAVERSAL_TIME __attribute__((unused)) = 13.21; // ms
     char *send_pack_buffer __attribute__((unused)) = NULL;
     char *rcv_pack_buffer __attribute__((unused)) = NULL;
     PetscMPIInt other_block_current_iteration __attribute__((unused)) = -1;
@@ -944,13 +944,13 @@ int main(int argc, char **argv)
             // PetscCall(comm_async_probe_and_receive(x_block_jacobi, rcv_multisplitting_data_buffer, vec_local_size, rcv_multisplitting_data_flag, message_source, idx_non_current_block, &message_received, &other_block_current_iteration, &rcv_pack_buffer));
 
             PetscCall(PetscClassIdRegister("class_name", &classid));
-            PetscCall(PetscLogEventRegister("event1", classid, &USER_EVENT));
+            PetscCall(PetscLogEventRegister("ev1", classid, &USER_EVENT));
             PetscCall(PetscLogEventBegin(USER_EVENT, 0, 0, 0, 0));
 
             PetscCall(VecGetValues(x_block_jacobi[rank_jacobi_block], x_part_local_size, vec_local_idx, vector_to_insert_into_S));
            
             // TODO: ici
-            PetscCall(MatSetValuesLocal(S, x_part_local_size, vec_local_idx, ONE, &n_vectors_inserted, vector_to_insert_into_S, INSERT_VALUES));
+            PetscCall(MatSetValues(S, x_part_local_size, vec_local_idx, ONE, &n_vectors_inserted, vector_to_insert_into_S, INSERT_VALUES));
 
             n_vectors_inserted++;
 
