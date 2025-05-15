@@ -715,7 +715,7 @@ int main(int argc, char **argv)
 
     MPI_Request send_multisplitting_data_request = MPI_REQUEST_NULL;
 
-    PetscMPIInt send_multisplitting_data_flag __attribute__((unused))= 0;
+    PetscMPIInt send_multisplitting_data_flag __attribute__((unused)) = 0;
     PetscMPIInt rcv_multisplitting_data_flag __attribute__((unused)) = 0;
 
     PetscInt *vec_local_idx = NULL;
@@ -795,13 +795,13 @@ int main(int argc, char **argv)
     PetscInt *prevIterNumS = NULL;
     PetscInt *prevIterNumC = NULL;
     PetscMPIInt dest_node = -1;
-    PetscInt cancelSPartialBuffer;
+    PetscMPIInt cancelSPartialBuffer;
     MPI_Request cancelSPartialRequest;
-    PetscInt sendSPartialBuffer;
+    PetscMPIInt sendSPartialBuffer;
     MPI_Request sendSPartialRequest;
     PetscLogDouble time_period_with_globalCV __attribute__((unused)) = 0.0;
     PetscLogDouble globalCV_timer = 0.0;
-    PetscLogDouble MAX_TRAVERSAL_TIME __attribute__((unused)) = 13.21; // ms
+    PetscLogDouble MAX_TRAVERSAL_TIME __attribute__((unused)) = 0.001480; // ms
     char *send_pack_buffer __attribute__((unused)) = NULL;
     char *rcv_pack_buffer __attribute__((unused)) = NULL;
     PetscMPIInt other_block_current_iteration __attribute__((unused)) = -1;
@@ -906,7 +906,13 @@ int main(int argc, char **argv)
 
     PetscInt message_received_on_last_iteration __attribute__((unused)) = 0;
     PetscInt inner_solver_iterations_count __attribute__((unused)) = 0;
+    PetscLogEvent USER_EVENT __attribute__((unused));
+    PetscClassId classid __attribute__((unused));
+    PetscLogDouble user_event_flops __attribute__((unused)) = 0.0;
+
+
     PetscCallMPI(MPI_Barrier(MPI_COMM_WORLD));
+
     double start_time, end_time;
     start_time = MPI_Wtime();
 
@@ -920,6 +926,7 @@ int main(int argc, char **argv)
 
         while (n_vectors_inserted < s)
         {
+
             message_received = 0;
             PetscCall(comm_async_probe_and_receive(x_block_jacobi, rcv_multisplitting_data_buffer, vec_local_size, rcv_multisplitting_data_flag, message_source, idx_non_current_block, &message_received, &other_block_current_iteration, &rcv_pack_buffer));
 
@@ -936,11 +943,19 @@ int main(int argc, char **argv)
 
             // PetscCall(comm_async_probe_and_receive(x_block_jacobi, rcv_multisplitting_data_buffer, vec_local_size, rcv_multisplitting_data_flag, message_source, idx_non_current_block, &message_received, &other_block_current_iteration, &rcv_pack_buffer));
 
-            PetscCall(VecGetValues(x_block_jacobi[rank_jacobi_block], x_part_local_size, vec_local_idx, vector_to_insert_into_S));
+            PetscCall(PetscClassIdRegister("class_name", &classid));
+            PetscCall(PetscLogEventRegister("event1", classid, &USER_EVENT));
+            PetscCall(PetscLogEventBegin(USER_EVENT, 0, 0, 0, 0));
 
+            PetscCall(VecGetValues(x_block_jacobi[rank_jacobi_block], x_part_local_size, vec_local_idx, vector_to_insert_into_S));
+           
+            // TODO: ici
             PetscCall(MatSetValuesLocal(S, x_part_local_size, vec_local_idx, ONE, &n_vectors_inserted, vector_to_insert_into_S, INSERT_VALUES));
 
             n_vectors_inserted++;
+
+            PetscCall(PetscLogFlops(user_event_flops));
+            PetscCall(PetscLogEventEnd(USER_EVENT, 0, 0, 0, 0));
         }
 
         PetscCall(MatAssemblyBegin(S, MAT_FINAL_ASSEMBLY));
@@ -998,6 +1013,7 @@ int main(int argc, char **argv)
     PetscCall(PetscPrintf(comm_jacobi_block, "Rank %d: PROGRAMME TERMINE\n", rank_jacobi_block));
 
     PetscCallMPI(MPI_Barrier(MPI_COMM_WORLD));
+
     end_time = MPI_Wtime();
     PetscCall(printElapsedTime(start_time, end_time));
     PetscCall(printTotalNumberOfIterations_2(comm_jacobi_block, rank_jacobi_block, number_of_iterations, s));
@@ -1045,40 +1061,38 @@ int main(int argc, char **argv)
     PetscCall(VecDestroy(&alpha));
 
     // // Maybe delete the rest of this code, not necessary
-    // PetscInt message = ZERO;
-    // PetscInt count;
-
-    // do
-    // {
-    //     MPI_Datatype data_type = MPIU_INT;
-    //     PetscCallMPI(MPI_Iprobe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &message, &status));
-    //     if (message)
-    //     {
-    //         if (status.MPI_TAG == (TAG_MULTISPLITTING_DATA + idx_non_current_block))
-    //         {
-    //             data_type = MPIU_SCALAR;
-    //             PetscCall(MPI_Get_count(&status, data_type, &count));
-    //             PetscScalar *buffer;
-    //             PetscCall(PetscMalloc1(count, &buffer));
-    //             PetscCallMPI(MPI_Recv(buffer, count, data_type, status.MPI_SOURCE, status.MPI_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE));
-    //             PetscCall(PetscFree(buffer));
-    //         }
-    //         else
-    //         {
-    //             data_type = MPIU_INT;
-    //             PetscCall(MPI_Get_count(&status, data_type, &count));
-    //             PetscInt *buffer;
-    //             PetscCall(PetscMalloc1(count, &buffer));
-    //             PetscCallMPI(MPI_Recv(buffer, count, data_type, status.MPI_SOURCE, status.MPI_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE));
-    //             PetscCall(PetscFree(buffer));
-    //         }
-    //     }
-    // } while (message);
-
     // PetscCallMPI(MPI_Wait(&send_multisplitting_data_request, MPI_STATUS_IGNORE));
-    // PetscCallMPI(MPI_Wait(&send_signal_request, MPI_STATUS_IGNORE));
-    // PetscCall(PetscFree(send_multisplitting_data_buffer));
-    // PetscCall(PetscFree(rcv_multisplitting_data_buffer));
+    // PetscCallMPI(MPI_Wait(&cancelSPartialRequest, MPI_STATUS_IGNORE));
+    // PetscCallMPI(MPI_Wait(&sendSPartialRequest, MPI_STATUS_IGNORE));
+
+    MPI_Status status;
+
+    int flag = 1;
+
+    while (flag)
+    {
+        MPI_Iprobe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &flag, &status);
+        if (flag)
+        {
+            int count;
+            MPI_Get_count(&status, MPI_CHAR, &count); // or use the correct type
+
+            char *buffer = malloc(count);
+            MPI_Recv(buffer, count, MPI_CHAR, status.MPI_SOURCE, status.MPI_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+            // Process or discard the message
+            printf("Message from %d with tag %d received and discarded\n", status.MPI_SOURCE, status.MPI_TAG);
+
+            free(buffer);
+        }
+    }
+
+    PetscCallMPI(MPI_Barrier(MPI_COMM_WORLD));
+    PetscCall(PetscFree(send_multisplitting_data_buffer));
+    PetscCall(PetscFree(rcv_multisplitting_data_buffer));
+    PetscCall(PetscFree(neighbors));
+    PetscCall(PetscFree(prevIterNumS));
+    PetscCall(PetscFree(prevIterNumC));
 
     PetscCall(PetscSubcommDestroy(&sub_comm_context));
     PetscCall(PetscCommDestroy(&dcomm));

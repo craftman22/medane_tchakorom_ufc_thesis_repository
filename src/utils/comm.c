@@ -6,7 +6,7 @@ PetscErrorCode comm_async_probe_and_receive(Vec *x_block_jacobi, PetscScalar *rc
 {
     PetscFunctionBeginUser;
     MPI_Status status;
-    PetscMPIInt pack_buffer_size = 0;
+    // PetscMPIInt pack_buffer_size = 0;
     // PetscInt rank_jacobi_block = 0;
     // if (idx_non_current_block == 0)
     // {
@@ -18,11 +18,11 @@ PetscErrorCode comm_async_probe_and_receive(Vec *x_block_jacobi, PetscScalar *rc
     PetscCallMPI(MPI_Iprobe(message_source, (TAG_MULTISPLITTING_DATA ), MPI_COMM_WORLD, &rcv_data_flag, &status));
     if (rcv_data_flag)
     {
-        PetscCallMPI(MPI_Get_count(&status, MPI_PACKED, &pack_buffer_size));
-        if ((*pack_buffer) == NULL)
-        {
-            PetscCall(PetscMalloc1(pack_buffer_size, pack_buffer));
-        }
+        // PetscCallMPI(MPI_Get_count(&status, MPI_PACKED, &pack_buffer_size));
+        // if ((*pack_buffer) == NULL)
+        // {
+        //     PetscCall(PetscMalloc1(pack_buffer_size, pack_buffer));
+        // }
 
         PetscCall(VecGetArray(x_block_jacobi[idx_non_current_block], &rcv_buffer));
         do
