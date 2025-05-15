@@ -1071,14 +1071,14 @@ int main(int argc, char **argv)
 
     while (flag)
     {
-        MPI_Iprobe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &flag, &status);
+        PetscCallMPI(MPI_Iprobe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &flag, &status));
         if (flag)
         {
             int count;
-            MPI_Get_count(&status, MPI_CHAR, &count); // or use the correct type
+            PetscCallMPI(MPI_Get_count(&status, MPI_CHAR, &count)); // or use the correct type
 
             char *buffer = malloc(count);
-            MPI_Recv(buffer, count, MPI_CHAR, status.MPI_SOURCE, status.MPI_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            PetscCallMPI(MPI_Recv(buffer, count, MPI_CHAR, status.MPI_SOURCE, status.MPI_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE));
 
             // Process or discard the message
             printf("Message from %d with tag %d received and discarded\n", status.MPI_SOURCE, status.MPI_TAG);
