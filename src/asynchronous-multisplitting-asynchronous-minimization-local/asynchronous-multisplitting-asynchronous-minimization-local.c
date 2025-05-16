@@ -907,10 +907,10 @@ int main(int argc, char **argv)
     PetscInt message_received_on_last_iteration __attribute__((unused)) = 0;
     PetscInt inner_solver_iterations_count __attribute__((unused)) = 0;
     PetscLogEvent USER_EVENT __attribute__((unused));
-    PetscClassId classid __attribute__((unused));
-    PetscLogDouble user_event_flops __attribute__((unused)) = 0.0;
-    PetscCall(PetscClassIdRegister("class_name", &classid));
-    PetscCall(PetscLogEventRegister("ev1", classid, &USER_EVENT));
+    // PetscClassId classid __attribute__((unused));
+    // PetscLogDouble user_event_flops __attribute__((unused)) = 0.0;
+    // PetscCall(PetscClassIdRegister("class_name", &classid));
+    PetscCall(PetscLogEventRegister("myEvent", PETSC_VIEWER_CLASSID, &USER_EVENT));
 
     PetscCallMPI(MPI_Barrier(MPI_COMM_WORLD));
 
@@ -930,31 +930,26 @@ int main(int argc, char **argv)
 
             message_received = 0;
             PetscCall(comm_async_probe_and_receive(x_block_jacobi, rcv_multisplitting_data_buffer, vec_local_size, rcv_multisplitting_data_flag, message_source, idx_non_current_block, &message_received, &other_block_current_iteration, &rcv_pack_buffer));
-
             PetscCall(updateLocalRHS(local_right_side_vector, A_block_jacobi_subMat, x_block_jacobi, b_block_jacobi, mat_mult_vec_result, rank_jacobi_block));
             PetscCall(inner_solver(comm_jacobi_block, inner_ksp, A_block_jacobi_subMat, x_block_jacobi, b_block_jacobi, local_right_side_vector, rank_jacobi_block, &inner_solver_iterations, number_of_iterations));
-
             if (inner_solver_iterations > 0)
             {
                 inner_solver_iterations_count = inner_solver_iterations_count + 1;
             }
-
             current_number_of_iterations = number_of_iterations; // TODO: revoir cette partie
             PetscCall(comm_async_test_and_send(x_block_jacobi, send_multisplitting_data_buffer, temp_multisplitting_data_buffer, &send_multisplitting_data_request, vec_local_size, send_multisplitting_data_flag, message_destination, rank_jacobi_block, &current_number_of_iterations, &send_pack_buffer));
-
             // PetscCall(comm_async_probe_and_receive(x_block_jacobi, rcv_multisplitting_data_buffer, vec_local_size, rcv_multisplitting_data_flag, message_source, idx_non_current_block, &message_received, &other_block_current_iteration, &rcv_pack_buffer));
 
-            PetscCall(PetscLogEventBegin(USER_EVENT, 0, 0, 0, 0));
+
+
+            PetscCall(PetscLogEventBegin(USER_EVENT, (PetscObject)S, 0, 0, 0));
 
             PetscCall(VecGetValues(x_block_jacobi[rank_jacobi_block], x_part_local_size, vec_local_idx, vector_to_insert_into_S));
-
-            // TODO: ici
-            PetscCall(MatSetValues(S, x_part_local_size, vec_local_idx, ONE, &n_vectors_inserted, vector_to_insert_into_S, INSERT_VALUES));
-
+            PetscCall(MatSetValues(S, x_part_local_size, vec_local_idx, ONE, &n_vectors_inserted, vector_to_insert_into_S, INSERT_VALUES)); // TODO: ici
             n_vectors_inserted++;
 
-            PetscCall(PetscLogFlops(user_event_flops));
-            PetscCall(PetscLogEventEnd(USER_EVENT, 0, 0, 0, 0));
+            // PetscCall(PetscLogFlops(user_event_flops));
+            PetscCall(PetscLogEventEnd(USER_EVENT, (PetscObject)S, 0, 0, 0));
         }
 
         PetscCall(MatAssemblyBegin(S, MAT_FINAL_ASSEMBLY));
