@@ -966,7 +966,7 @@ int main(int argc, char **argv)
         PetscCall(VecWAXPY(approximate_residual, -1.0, x_part_minimized_prev_iteration, x_block_jacobi[rank_jacobi_block]));
 
         PetscCall(VecNorm(approximate_residual, NORM_INFINITY, &approximation_residual_infinity_norm));
-        PetscCall(printResidualNorm(comm_jacobi_block, rank_jacobi_block, approximation_residual_infinity_norm, number_of_iterations));
+        // PetscCall(printResidualNorm(comm_jacobi_block, rank_jacobi_block, approximation_residual_infinity_norm, number_of_iterations));
 
         if (PetscApproximateLTE(approximation_residual_infinity_norm, relative_tolerance) && inner_solver_iterations > 0)
         {
