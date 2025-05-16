@@ -763,6 +763,11 @@ int main(int argc, char **argv)
     PetscCall(PetscSubcommSetType(sub_comm_context, PETSC_SUBCOMM_CONTIGUOUS));
     comm_jacobi_block = PetscSubcommChild(sub_comm_context);
 
+    if (rank_jacobi_block == 0)
+    {
+        s = s + 3;
+    }
+
     idx_non_current_block = (rank_jacobi_block == ZERO) ? ONE : ZERO;
     IS is_cols_block_jacobi[njacobi_blocks];
     Mat A_block_jacobi_subMat[njacobi_blocks];
@@ -911,11 +916,6 @@ int main(int argc, char **argv)
     // PetscLogDouble user_event_flops __attribute__((unused)) = 0.0;
     // PetscCall(PetscClassIdRegister("class_name", &classid));
     PetscCall(PetscLogEventRegister("myEvent", PETSC_VIEWER_CLASSID, &USER_EVENT));
-
-    if (rank_jacobi_block == 0)
-    {
-        s = s + 3;
-    }
 
     PetscCallMPI(MPI_Barrier(MPI_COMM_WORLD));
 
