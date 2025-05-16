@@ -912,6 +912,11 @@ int main(int argc, char **argv)
     // PetscCall(PetscClassIdRegister("class_name", &classid));
     PetscCall(PetscLogEventRegister("myEvent", PETSC_VIEWER_CLASSID, &USER_EVENT));
 
+    if (rank_jacobi_block == 0)
+    {
+        s = s + 3;
+    }
+
     PetscCallMPI(MPI_Barrier(MPI_COMM_WORLD));
 
     double start_time, end_time;
