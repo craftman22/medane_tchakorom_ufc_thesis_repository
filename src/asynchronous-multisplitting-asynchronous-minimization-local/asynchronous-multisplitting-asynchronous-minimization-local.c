@@ -763,10 +763,6 @@ int main(int argc, char **argv)
     PetscCall(PetscSubcommSetType(sub_comm_context, PETSC_SUBCOMM_CONTIGUOUS));
     comm_jacobi_block = PetscSubcommChild(sub_comm_context);
 
-    if (rank_jacobi_block == 0)
-    {
-        s = s + 3;
-    }
 
     idx_non_current_block = (rank_jacobi_block == ZERO) ? ONE : ZERO;
     IS is_cols_block_jacobi[njacobi_blocks];

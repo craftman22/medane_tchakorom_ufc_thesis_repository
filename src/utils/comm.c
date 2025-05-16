@@ -33,7 +33,7 @@ PetscErrorCode comm_async_probe_and_receive(Vec *x_block_jacobi, PetscScalar *rc
             // printf("=============Block rank %d START multipsplitting RCV communication\n", rank_jacobi_block);
 
             loop_count++;
-            if (loop_count >= 1)
+            if (loop_count >= 3)
                 break;
 
             PetscCallMPI(MPI_Iprobe(message_source, (TAG_MULTISPLITTING_DATA ), MPI_COMM_WORLD, &rcv_data_flag, MPI_STATUS_IGNORE));
