@@ -945,12 +945,13 @@ int main(int argc, char **argv)
                 n_vectors_inserted++;
                 // PetscCall(PetscLogFlops(user_event_flops));
                 PetscCall(PetscLogEventEnd(USER_EVENT, (PetscObject)S, 0, 0, 0));
-                if (n_vectors_inserted == (s - 1))
+                if (n_vectors_inserted == (s))
                     break;
             }
         }
 
-        if (n_vectors_inserted == (s - 1))
+        if (n_vectors_inserted == (s))
+        // if (PETSC_FALSE)
         {
 
             PetscCall(MatAssemblyBegin(S, MAT_FINAL_ASSEMBLY));
