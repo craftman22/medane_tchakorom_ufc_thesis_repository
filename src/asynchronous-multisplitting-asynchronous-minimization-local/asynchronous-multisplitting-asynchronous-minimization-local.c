@@ -921,7 +921,7 @@ int main(int argc, char **argv)
     do
     {
 
-        n_vectors_inserted = n_vectors_inserted % (s - 1);
+        n_vectors_inserted = n_vectors_inserted % (s);
         inner_solver_iterations_count = 0;
 
         for (PetscMPIInt loop = 0; loop < s; loop++)
