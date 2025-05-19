@@ -754,6 +754,10 @@ int main(int argc, char **argv)
     PetscCall(PetscOptionsGetReal(NULL, NULL, "-rtol", &relative_tolerance, NULL));
 
     PetscCall(computeDimensionRelatedVariables(nprocs, nprocs_per_jacobi_block, proc_global_rank, n_mesh_lines, n_mesh_columns, &njacobi_blocks, &rank_jacobi_block, &proc_local_rank, &n_mesh_points, &jacobi_block_size));
+    if (rank_jacobi_block == 0)
+    {
+        s = s + 4;
+    }
     PetscAssert((n_mesh_points % nprocs == 0), PETSC_COMM_WORLD, PETSC_ERR_ARG_SIZ, "Number of grid points should be divisible by the number of procs \n Programm exit ...\n");
     // Creating the sub communicator for each jacobi block
     sub_comm_context = NULL;
@@ -762,7 +766,6 @@ int main(int argc, char **argv)
     PetscCall(PetscSubcommSetNumber(sub_comm_context, njacobi_blocks));
     PetscCall(PetscSubcommSetType(sub_comm_context, PETSC_SUBCOMM_CONTIGUOUS));
     comm_jacobi_block = PetscSubcommChild(sub_comm_context);
-
 
     idx_non_current_block = (rank_jacobi_block == ZERO) ? ONE : ZERO;
     IS is_cols_block_jacobi[njacobi_blocks];
