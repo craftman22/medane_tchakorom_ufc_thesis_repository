@@ -219,6 +219,20 @@ int main(int argc, char **argv)
 
   PetscCall(printFinalResidualNorm(direct_residual_norm));
 
+  Vec check_solution = NULL;
+  Vec solution = NULL;
+  PetscCall(VecDuplicate(x, &check_solution));
+  PetscCall(VecDuplicate(x, &solution));
+  PetscCall(VecZeroEntries(check_solution));
+  PetscCall(VecSet(solution, 1.0));
+  PetscScalar check_solution_norm = 0.0;
+  PetscCall(VecWAXPY(check_solution, -1.0, solution, x));
+  PetscCall(VecNorm(check_solution, NORM_2, &check_solution_norm));
+  if (rank_jacobi_block == 0)
+  {
+    PetscCall(PetscPrintf(comm_jacobi_block, "Norm equal : %e \n", check_solution_norm));
+  }
+
   for (PetscInt i = 0; i < njacobi_blocks; i++)
   {
     PetscCall(ISDestroy(&is_cols_block_jacobi[i]));

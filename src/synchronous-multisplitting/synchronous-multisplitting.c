@@ -7,9 +7,7 @@
 #include "utils.h"
 #include "comm.h"
 
-
 // #ifdef VERSION_1_0
-
 
 int main(int argc, char **argv)
 {
@@ -36,7 +34,6 @@ int main(int argc, char **argv)
 
   Vec local_right_side_vector = NULL;
   Vec mat_mult_vec_result = NULL;
-
 
   PetscFunctionBeginUser;
   PetscCall(PetscInitialize(&argc, &argv, NULL, NULL));
@@ -80,7 +77,6 @@ int main(int argc, char **argv)
   PetscMPIInt vec_local_size = 0;
   Vec approximation_residual;
 
-
   PetscCall(create_vector(comm_jacobi_block, &x, n_mesh_points, VECMPI));
   PetscCall(VecDuplicate(x, &x_previous_iteration));
   PetscCall(VecDuplicate(x, &b));
@@ -112,11 +108,12 @@ int main(int argc, char **argv)
   PetscCall(PetscMalloc1(vec_local_size, &send_multisplitting_data_buffer));
   PetscCall(PetscMalloc1(vec_local_size, &rcv_multisplitting_data_buffer));
 
-
   PetscCall(VecDuplicate(x, &approximation_residual));
   PetscCall(VecDuplicate(b_block_jacobi[rank_jacobi_block], &local_right_side_vector));
   PetscCall(VecDuplicate(b_block_jacobi[rank_jacobi_block], &mat_mult_vec_result));
 
+  // PetscCall(PetscFinalize());
+  // return 0;
 
   PetscCallMPI(MPI_Barrier(PETSC_COMM_WORLD));
   double start_time, end_time;
@@ -126,7 +123,7 @@ int main(int argc, char **argv)
   {
     PetscCall(VecCopy(x, x_previous_iteration));
 
-    PetscCall(updateLocalRHS(local_right_side_vector, A_block_jacobi_subMat,x_block_jacobi, b_block_jacobi, mat_mult_vec_result, rank_jacobi_block));
+    PetscCall(updateLocalRHS(local_right_side_vector, A_block_jacobi_subMat, x_block_jacobi, b_block_jacobi, mat_mult_vec_result, rank_jacobi_block));
     PetscCall(inner_solver(comm_jacobi_block, inner_ksp, A_block_jacobi_subMat, x_block_jacobi, b_block_jacobi, local_right_side_vector, rank_jacobi_block, NULL, number_of_iterations));
 
     PetscCall(comm_sync_send_and_receive(x_block_jacobi, vec_local_size, message_dest, message_source, rank_jacobi_block, idx_non_current_block));
@@ -160,6 +157,21 @@ int main(int argc, char **argv)
 
   PetscCall(printFinalResidualNorm(direct_residual_norm));
 
+  Vec check_solution = NULL;
+  Vec solution = NULL;
+  PetscCall(VecDuplicate(x, &check_solution));
+  PetscCall(VecDuplicate(x, &solution));
+  PetscCall(VecZeroEntries(check_solution));
+  PetscCall(VecSet(solution, 1.0));
+  PetscScalar check_solution_norm = 0.0;
+  PetscCall(VecWAXPY(check_solution, -1.0, solution, x));
+  PetscCall(VecNorm(check_solution, NORM_2, &check_solution_norm));
+  if (rank_jacobi_block == 0)
+  {
+    PetscCall(PetscPrintf(comm_jacobi_block, "Norm equal : %e \n", check_solution_norm));
+  }
+  // PetscCall(VecView(x, PETSC_VIEWER_STDOUT_SELF));
+
   PetscCall(ISDestroy(&is_jacobi_vec_parts));
   for (PetscInt i = 0; i < njacobi_blocks; i++)
   {
@@ -175,8 +187,8 @@ int main(int argc, char **argv)
   PetscCall(VecDestroy(&x));
   PetscCall(VecDestroy(&b));
   PetscCall(VecDestroy(&x_initial_guess));
-  PetscCall(VecDestroy( &local_right_side_vector));
-  PetscCall(VecDestroy( &mat_mult_vec_result));
+  PetscCall(VecDestroy(&local_right_side_vector));
+  PetscCall(VecDestroy(&mat_mult_vec_result));
   PetscCall(VecDestroy(&x_previous_iteration));
   PetscCall(MatDestroy(&A_block_jacobi));
   PetscCall(PetscFree(send_multisplitting_data_buffer));
@@ -189,8 +201,4 @@ int main(int argc, char **argv)
   return 0;
 }
 
-
 // #endif
-
-
-

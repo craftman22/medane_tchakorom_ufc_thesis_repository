@@ -317,25 +317,30 @@ PetscErrorCode divideSubDomainIntoBlockMatrices(MPI_Comm comm_jacobi_block, Mat 
 PetscErrorCode initializeKSP(MPI_Comm comm_jacobi_block, KSP *ksp, Mat operator_matrix, PetscScalar rank_jacobi_block, PetscBool zero_initial_guess, const char *ksp_prefix, const char *pc_prefix)
 {
   PetscFunctionBeginUser;
-  PC pc = NULL;
+  // PC pc = NULL;
 
   PetscCall(KSPCreate(comm_jacobi_block, ksp));
   PetscCall(KSPSetOperators(*ksp, operator_matrix, operator_matrix));
   PetscCall(KSPSetOptionsPrefix(*ksp, ksp_prefix));
 
-  PetscCall(KSPGetPC(*ksp, &pc));
-  PetscCall(PCSetOptionsPrefix(pc, pc_prefix));
+  // PetscCall(KSPGetPC(*ksp, &pc));
+  // PetscCall(PCSetOptionsPrefix(pc, pc_prefix));
 
   // PetscCall(KSPSetNormType(*ksp,KSP_NORM_UNPRECONDITIONED));
   // PetscCall(KSPSetPCSide(*ksp, PC_RIGHT));
 
   PetscCall(KSPSetInitialGuessNonzero(*ksp, PetscNot(zero_initial_guess)));
 
-  PetscCall(PCSetFromOptions(pc));
+  // PetscCall(PCSetFromOptions(pc));
   PetscCall(KSPSetFromOptions(*ksp));
 
   // PetscCall(PCSetUp(pc));
   // PetscCall(KSPSetUp(*ksp));
+
+  if (rank_jacobi_block == 0)
+  {
+    PetscCall(KSPView(*ksp, PETSC_VIEWER_STDOUT_SELF));
+  }
 
   PetscFunctionReturn(PETSC_SUCCESS);
 }
@@ -770,7 +775,7 @@ PetscErrorCode outer_solver(MPI_Comm comm_jacobi_block, KSP outer_ksp, Vec x_min
 
   PetscCall(KSPSetOperators(outer_ksp, R_transpose_R, R_transpose_R));
 
-   PetscCall(KSPSetInitialGuessNonzero(outer_ksp, PETSC_FALSE));
+  PetscCall(KSPSetInitialGuessNonzero(outer_ksp, PETSC_FALSE));
 
   PetscCall(KSPSolve(outer_ksp, vec_R_transpose_b_block_jacobi, alpha));
 
