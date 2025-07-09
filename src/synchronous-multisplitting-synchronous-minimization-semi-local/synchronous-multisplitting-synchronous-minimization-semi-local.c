@@ -162,6 +162,24 @@ int main(int argc, char **argv)
   double start_time, end_time;
   start_time = MPI_Wtime();
 
+  // PetscBool boo = PETSC_FALSE;
+  // PetscCall(KSPGetReusePreconditioner(inner_ksp, &boo));
+
+  // if (rank_jacobi_block == 0)
+  // {
+
+  //   if (boo)
+  //   {
+  //     printf("reusable\n");
+  //   }
+  //   else
+  //   {
+  //     printf("not reusable\n");
+  //   }
+  // }
+  // PetscCall(PetscFinalize());
+  // return 0;
+
   do
   {
 
@@ -193,17 +211,13 @@ int main(int argc, char **argv)
 
     PetscCall(outer_solver(comm_jacobi_block, outer_ksp, x_minimized, R, S, R_transpose_R, vec_R_transpose_b_block_jacobi, alpha, b_block_jacobi[rank_jacobi_block], rank_jacobi_block, s, number_of_iterations));
 
-
-
     PetscCall(VecScatterBegin(scatter_jacobi_vec_part_to_merged_vec[rank_jacobi_block], x_minimized, x_block_jacobi[rank_jacobi_block], INSERT_VALUES, SCATTER_REVERSE));
     PetscCall(VecScatterEnd(scatter_jacobi_vec_part_to_merged_vec[rank_jacobi_block], x_minimized, x_block_jacobi[rank_jacobi_block], INSERT_VALUES, SCATTER_REVERSE));
 
     PetscCall(comm_sync_send_and_receive(x_block_jacobi, vec_local_size, message_dest, message_source, rank_jacobi_block, idx_non_current_block));
 
-    PetscCall(VecScatterBegin(scatter_jacobi_vec_part_to_merged_vec[idx_non_current_block],  x_block_jacobi[idx_non_current_block],x_minimized, INSERT_VALUES, SCATTER_FORWARD));
-    PetscCall(VecScatterEnd(scatter_jacobi_vec_part_to_merged_vec[idx_non_current_block], x_block_jacobi[idx_non_current_block],x_minimized,  INSERT_VALUES, SCATTER_FORWARD));
-
-
+    PetscCall(VecScatterBegin(scatter_jacobi_vec_part_to_merged_vec[idx_non_current_block], x_block_jacobi[idx_non_current_block], x_minimized, INSERT_VALUES, SCATTER_FORWARD));
+    PetscCall(VecScatterEnd(scatter_jacobi_vec_part_to_merged_vec[idx_non_current_block], x_block_jacobi[idx_non_current_block], x_minimized, INSERT_VALUES, SCATTER_FORWARD));
 
     PetscCall(VecWAXPY(approximate_residual, -1.0, x_minimized_prev_iteration, x_minimized));
 
@@ -285,6 +299,7 @@ int main(int argc, char **argv)
 
   PetscCall(PetscSubcommDestroy(&sub_comm_context));
   PetscCall(PetscCommDestroy(&dcomm));
+ 
   PetscCall(PetscFinalize());
   return 0;
 }
