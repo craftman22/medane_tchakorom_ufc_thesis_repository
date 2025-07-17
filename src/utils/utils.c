@@ -345,6 +345,23 @@ PetscErrorCode initializeKSP(MPI_Comm comm_jacobi_block, KSP *ksp, Mat operator_
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
+PetscErrorCode computeInitialResidualNorm(Mat A_block_jacobi, Vec x_initial_guess, Vec *b_block_jacobi, PetscInt rank_jacobi_block, PetscInt proc_local_rank, PetscScalar *global_residual_norm_inf)
+{
+  PetscFunctionBegin;
+  Vec local_residual = NULL;
+  PetscScalar local_residual_norm_inf = ZERO;
+  PetscCall(VecDuplicate(b_block_jacobi[rank_jacobi_block], &local_residual));
+  PetscCall(MatResidual(A_block_jacobi, b_block_jacobi[rank_jacobi_block], x_initial_guess, local_residual));
+  PetscCall(VecNorm(local_residual, NORM_INFINITY, &local_residual_norm_inf));
+
+  *global_residual_norm_inf = ZERO;
+  PetscCallMPI(MPI_Allreduce(&local_residual_norm_inf, global_residual_norm_inf, 1, MPIU_SCALAR, MPI_MAX, MPI_COMM_WORLD));
+
+  PetscCall(VecDestroy(&local_residual));
+  PetscCall(PetscPrintf(MPI_COMM_WORLD, " Initial residual norm ====  %e \n", (*global_residual_norm_inf)));
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
+
 PetscErrorCode computeFinalResidualNorm(Mat A_block_jacobi, Vec *x, Vec *b_block_jacobi, PetscInt rank_jacobi_block, PetscInt proc_local_rank, PetscScalar *direct_residual_norm)
 {
   PetscFunctionBegin;
@@ -465,21 +482,21 @@ PetscErrorCode printElapsedTime(double start_time, double end_time)
 PetscErrorCode printResidualNorm(MPI_Comm comm_jacobi_block, PetscInt rank_jacobi_block, PetscScalar approximation_residual_infinity_norm, PetscInt outer_iteration_number)
 {
   PetscFunctionBegin;
-  PetscCall(PetscPrintf(comm_jacobi_block, "[ Block rank %d ][ outer iter %d] --------------- Infinity norm of residual (Xk - Xk-1) = %e \n", rank_jacobi_block, outer_iteration_number, approximation_residual_infinity_norm));
+  PetscCall(PetscPrintf(comm_jacobi_block, "[ Block rank %d ][ outer iter %d] --------------- Iterates difference norm inf (Xk - Xk-1) = %e \n", rank_jacobi_block, outer_iteration_number, approximation_residual_infinity_norm));
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode printResidualNorm1(MPI_Comm comm_jacobi_block, PetscInt rank_jacobi_block, PetscScalar approximation_residual_infinity_norm, PetscInt outer_iteration_number)
 {
   PetscFunctionBegin;
-  PetscCall(PetscPrintf(comm_jacobi_block, "[ Block rank %d ][ inner iter %d] --------------- Infinity norm of residual (Xk - Xk-1) = %e \n", rank_jacobi_block, outer_iteration_number, approximation_residual_infinity_norm));
+  PetscCall(PetscPrintf(comm_jacobi_block, "[ Block rank %d ][ inner iter %d] --------------- Iterates difference norm inf (Xk - Xk-1) = %e \n", rank_jacobi_block, outer_iteration_number, approximation_residual_infinity_norm));
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode printResidualNorm_no_data(PetscScalar approximation_residual_infinity_norm)
 {
   PetscFunctionBegin;
-  PetscCall(PetscPrintf(MPI_COMM_WORLD, "Infinity norm of residual (Xk - Xk-1) [no new data]= %e \n", approximation_residual_infinity_norm));
+  PetscCall(PetscPrintf(MPI_COMM_WORLD, "Iterates difference norm inf (Xk - Xk-1) [no new data]= %e \n", approximation_residual_infinity_norm));
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
