@@ -115,6 +115,8 @@ int main(int argc, char **argv)
   PetscCall(VecDuplicate(b_block_jacobi[rank_jacobi_block], &local_right_side_vector));
   PetscCall(VecDuplicate(b_block_jacobi[rank_jacobi_block], &mat_mult_vec_result));
 
+  
+
   PetscCallMPI(MPI_Barrier(PETSC_COMM_WORLD));
   double start_time, end_time;
   start_time = MPI_Wtime();
@@ -133,18 +135,16 @@ int main(int argc, char **argv)
     PetscCall(VecScatterBegin(scatter_jacobi_vec_part_to_merged_vec[idx_non_current_block], x_block_jacobi[idx_non_current_block], x, INSERT_VALUES, SCATTER_FORWARD));
     PetscCall(VecScatterEnd(scatter_jacobi_vec_part_to_merged_vec[idx_non_current_block], x_block_jacobi[idx_non_current_block], x, INSERT_VALUES, SCATTER_FORWARD));
 
+    // Conv detection with successive iterates diffference (infinity norm)
     PetscCall(VecWAXPY(iterates_difference, -1.0, x_previous_iterate, x));
-    PetscCall(VecNormBegin(iterates_difference, NORM_INFINITY, &iterate_difference_norm_inf));
-    PetscCall(VecNormBegin(x, NORM_INFINITY, &current_iterate_norm_inf));
-    PetscCall(VecNormEnd(iterates_difference, NORM_INFINITY, &iterate_difference_norm_inf));
-    PetscCall(VecNormEnd(x, NORM_INFINITY, &current_iterate_norm_inf));
-
+    PetscCall(VecNorm(iterates_difference, NORM_INFINITY, &iterate_difference_norm_inf));
+    PetscCall(VecNorm(x, NORM_INFINITY, &current_iterate_norm_inf));
     PetscCall(printResidualNorm(comm_jacobi_block, rank_jacobi_block, iterate_difference_norm_inf, number_of_iterations));
-
     if (iterate_difference_norm_inf <= PetscMax(absolute_tolerance, relative_tolerance * current_iterate_norm_inf))
     {
       stop_condition = PETSC_TRUE;
     }
+
     number_of_iterations = number_of_iterations + 1;
 
   } while (stop_condition == PETSC_FALSE);
