@@ -1122,7 +1122,7 @@ int main(int argc, char **argv)
     MPI_Request sendSPartialRequest;
     PetscLogDouble time_period_with_globalCV __attribute__((unused)) = 0.0;
     PetscLogDouble globalCV_timer = 0.0;
-    PetscLogDouble MAX_TRAVERSAL_TIME __attribute__((unused)) = 0.000955; // 13.21 ms
+    PetscLogDouble MAX_TRAVERSAL_TIME __attribute__((unused)) = 13.21; // 13.21 ms
 
     PetscCallMPI(MPI_Barrier(MPI_COMM_WORLD));
     PetscCall(PetscPrintf(PETSC_COMM_WORLD, "Starting latency checking .... \n"));
