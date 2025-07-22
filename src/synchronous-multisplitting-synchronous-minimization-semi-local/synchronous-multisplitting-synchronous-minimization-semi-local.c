@@ -211,9 +211,9 @@ int main(int argc, char **argv)
 
     PetscCall(printResidualNorm(comm_jacobi_block, rank_jacobi_block, local_iterates_difference_norm_inf, number_of_iterations));
 
-    PetscScalar direct_residual_norm;
-    PetscCall(computeFinalResidualNorm(A_block_jacobi, x_minimized, b_block_jacobi, rank_jacobi_block, proc_global_rank, &direct_residual_norm));
-    PetscCall(printFinalResidualNorm(direct_residual_norm));
+    // PetscScalar direct_residual_norm;
+    // PetscCall(computeFinalResidualNorm(A_block_jacobi, x_minimized, b_block_jacobi, rank_jacobi_block, proc_global_rank, &direct_residual_norm));
+    // PetscCall(printFinalResidualNorm(direct_residual_norm));
 
     if (local_iterates_difference_norm_inf <= PetscMax(absolute_tolerance, relative_tolerance * current_iterate_norm_inf))
       send_signal = CONVERGENCE_SIGNAL;
