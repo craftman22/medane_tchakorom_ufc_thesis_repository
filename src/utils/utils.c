@@ -362,13 +362,13 @@ PetscErrorCode computeInitialResidualNorm(Mat A_block_jacobi, Vec x_initial_gues
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode computeFinalResidualNorm(Mat A_block_jacobi, Vec *x, Vec *b_block_jacobi, PetscInt rank_jacobi_block, PetscInt proc_local_rank, PetscScalar *direct_residual_norm)
+PetscErrorCode computeFinalResidualNorm(Mat A_block_jacobi, Vec x, Vec *b_block_jacobi, PetscInt rank_jacobi_block, PetscInt proc_local_rank, PetscScalar *direct_residual_norm)
 {
   PetscFunctionBegin;
   Vec direct_local_residual = NULL;
   PetscScalar direct_local_residual_norm2 = PETSC_MAX_REAL;
   PetscCall(VecDuplicate(b_block_jacobi[rank_jacobi_block], &direct_local_residual));
-  PetscCall(MatResidual(A_block_jacobi, b_block_jacobi[rank_jacobi_block], *x, direct_local_residual));
+  PetscCall(MatResidual(A_block_jacobi, b_block_jacobi[rank_jacobi_block], x, direct_local_residual));
   PetscCall(VecNorm(direct_local_residual, NORM_2, &direct_local_residual_norm2));
   direct_local_residual_norm2 = direct_local_residual_norm2 * direct_local_residual_norm2;
   if (proc_local_rank != 0)
