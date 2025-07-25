@@ -335,7 +335,7 @@ PetscErrorCode initializeKSP(MPI_Comm comm_jacobi_block, KSP *ksp, Mat operator_
   PetscCall(KSPSetFromOptions(*ksp));
 
   // PetscCall(PCSetUp(pc));
-  // PetscCall(KSPSetUp(*ksp));
+  PetscCall(KSPSetUp(*ksp));
 
   if (rank_jacobi_block == 0)
   {
@@ -787,14 +787,15 @@ PetscErrorCode outer_solver(MPI_Comm comm_jacobi_block, KSP outer_ksp, Vec x_min
   PetscFunctionBegin;
 
   PetscCall(MatTransposeMatMult(R, R, MAT_REUSE_MATRIX, PETSC_DETERMINE, &R_transpose_R));
-
   PetscCall(MatMultTranspose(R, b, vec_R_transpose_b_block_jacobi));
-
   PetscCall(KSPSetOperators(outer_ksp, R_transpose_R, R_transpose_R));
-
   PetscCall(KSPSetInitialGuessNonzero(outer_ksp, PETSC_FALSE));
-
   PetscCall(KSPSolve(outer_ksp, vec_R_transpose_b_block_jacobi, alpha));
+
+
+  // PetscCall(KSPSetOperators(outer_ksp, R, R));
+  // PetscCall(KSPSetInitialGuessNonzero(outer_ksp, PETSC_FALSE));
+  // PetscCall(KSPSolve(outer_ksp, b, alpha));
 
   PetscInt n_iterations = 0;
   PetscCall(KSPGetIterationNumber(outer_ksp, &n_iterations));

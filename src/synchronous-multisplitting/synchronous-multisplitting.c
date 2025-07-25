@@ -171,7 +171,7 @@ int main(int argc, char **argv)
   PetscCall(VecNorm(check_solution, NORM_2, &check_solution_norm));
   if (rank_jacobi_block == 0)
   {
-    PetscCall(PetscPrintf(comm_jacobi_block, "Norm equal : %e \n", check_solution_norm));
+    PetscCall(PetscPrintf(comm_jacobi_block, "Erreur : %e \n", check_solution_norm));
   }
   // PetscCall(VecView(x, PETSC_VIEWER_STDOUT_SELF));
 

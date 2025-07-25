@@ -156,7 +156,7 @@ int main(int argc, char **argv)
   PetscCall(computeTheRightHandSideWithInitialGuess(comm_jacobi_block, scatter_jacobi_vec_part_to_merged_vec, A_block_jacobi, &b, b_block_jacobi, x_initial_guess, rank_jacobi_block, jacobi_block_size, nprocs_per_jacobi_block, proc_local_rank));
 
   PetscCall(initializeKSP(comm_jacobi_block, &inner_ksp, A_block_jacobi_subMat[rank_jacobi_block], rank_jacobi_block, PETSC_FALSE, INNER_KSP_PREFIX, INNER_PC_PREFIX));
-  PetscCall(initializeKSP(comm_jacobi_block, &outer_ksp, NULL, rank_jacobi_block, PETSC_TRUE, OUTER_KSP_PREFIX, OUTER_PC_PREFIX));
+  PetscCall(initializeKSP(comm_jacobi_block, &outer_ksp, R_transpose_R, rank_jacobi_block, PETSC_TRUE, OUTER_KSP_PREFIX, OUTER_PC_PREFIX));
 
   PetscCall(VecGetLocalSize(x_block_jacobi[rank_jacobi_block], &vec_local_size));
   PetscCall(PetscMalloc1(vec_local_size, &send_multisplitting_data_buffer));
@@ -185,6 +185,10 @@ int main(int argc, char **argv)
   double start_time, end_time;
   start_time = MPI_Wtime();
 
+  PetscScalar val;
+  PetscCall(VecNorm(b, NORM_2, &val));
+  printf("Norm de b %e \n", val);
+
   do
   {
 
@@ -194,6 +198,12 @@ int main(int argc, char **argv)
     while (n_vectors_inserted < s)
     {
       PetscCall(updateLocalRHS(local_right_side_vector, A_block_jacobi_subMat, x_block_jacobi, b_block_jacobi, mat_mult_vec_result, rank_jacobi_block));
+      if (rank_jacobi_block == 0)
+      {
+        PetscScalar val;
+        PetscCall(VecNorm(local_right_side_vector, NORM_2, &val));
+        printf("Local relative tolerance : %e \n", val * 1e-5);
+      }
       PetscCall(inner_solver(comm_jacobi_block, inner_ksp, A_block_jacobi_subMat, x_block_jacobi, b_block_jacobi, local_right_side_vector, rank_jacobi_block, NULL, number_of_iterations));
 
       PetscCall(comm_sync_send_and_receive(x_block_jacobi, vec_local_size, message_dest, message_source, rank_jacobi_block, idx_non_current_block));

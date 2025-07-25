@@ -907,12 +907,10 @@ int main(int argc, char **argv)
     }
     PetscCall(PetscMalloc1(x_part_local_size, &vector_to_insert_into_S));
 
-
     PetscCallMPI(MPI_Barrier(MPI_COMM_WORLD));
 
     double start_time, end_time;
     start_time = MPI_Wtime();
-
 
     do
     {
@@ -944,7 +942,6 @@ int main(int argc, char **argv)
 
         PetscCall(VecWAXPY(local_iterates_difference, -1.0, x_part_minimized_prev_iterate, x_block_jacobi[rank_jacobi_block]));
 
-        
         PetscCall(VecNorm(local_iterates_difference, NORM_INFINITY, &local_iterates_difference_norm_inf));
         PetscCall(VecNorm(x_block_jacobi[rank_jacobi_block], NORM_INFINITY, &current_iterate_norm_inf));
 
@@ -1006,6 +1003,20 @@ int main(int argc, char **argv)
     PetscCall(computeFinalResidualNorm(A_block_jacobi, x, b_block_jacobi, rank_jacobi_block, proc_global_rank, &direct_residual_norm));
 
     PetscCall(printFinalResidualNorm(direct_residual_norm));
+
+    Vec check_solution = NULL;
+    Vec solution = NULL;
+    PetscCall(VecDuplicate(x, &check_solution));
+    PetscCall(VecDuplicate(x, &solution));
+    PetscCall(VecZeroEntries(check_solution));
+    PetscCall(VecSet(solution, 1.0));
+    PetscScalar check_solution_norm = 0.0;
+    PetscCall(VecWAXPY(check_solution, -1.0, solution, x));
+    PetscCall(VecNorm(check_solution, NORM_2, &check_solution_norm));
+    if (rank_jacobi_block == 0)
+    {
+        PetscCall(PetscPrintf(comm_jacobi_block, "Norm equal : %e \n", check_solution_norm));
+    }
 
     for (PetscInt i = 0; i < njacobi_blocks; i++)
     {
