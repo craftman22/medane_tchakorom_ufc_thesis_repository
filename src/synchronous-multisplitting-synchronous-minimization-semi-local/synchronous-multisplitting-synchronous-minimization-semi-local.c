@@ -196,6 +196,8 @@ int main(int argc, char **argv)
     PetscCall(MatAssemblyBegin(S, MAT_FINAL_ASSEMBLY));
     PetscCall(MatAssemblyEnd(S, MAT_FINAL_ASSEMBLY));
 
+
+
     // if (rank_jacobi_block == 0 && number_of_iterations == 2)
     // if ( number_of_iterations == 4)
     // {
@@ -224,9 +226,9 @@ int main(int argc, char **argv)
     if (local_iterates_difference_norm_inf <= PetscMax(absolute_tolerance, relative_tolerance * current_iterate_norm_inf))
       send_signal = CONVERGENCE_SIGNAL;
 
-    // PetscScalar direct_residual_norm;
-    // PetscCall(computeFinalResidualNorm(A_block_jacobi, x_minimized, b_block_jacobi, rank_jacobi_block, proc_global_rank, &direct_residual_norm));
-    // PetscCall(printFinalResidualNorm(direct_residual_norm));
+    PetscScalar direct_residual_norm;
+    PetscCall(computeFinalResidualNorm(A_block_jacobi, x_minimized, b_block_jacobi, rank_jacobi_block, proc_global_rank, &direct_residual_norm));
+    PetscCall(printFinalResidualNorm(direct_residual_norm));
     // if (direct_residual_norm <= PetscMax(absolute_tolerance, relative_tolerance * initial_global_residual_norm))
     //   send_signal = CONVERGENCE_SIGNAL;
 
@@ -253,6 +255,8 @@ int main(int argc, char **argv)
   PetscScalar direct_residual_norm;
   PetscCall(computeFinalResidualNorm(A_block_jacobi, x, b_block_jacobi, rank_jacobi_block, proc_global_rank, &direct_residual_norm));
   PetscCall(printFinalResidualNorm(direct_residual_norm));
+
+
 
   Vec check_solution = NULL;
   Vec solution = NULL;
