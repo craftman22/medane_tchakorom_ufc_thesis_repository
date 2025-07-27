@@ -120,7 +120,7 @@ int main(int argc, char **argv)
 
   PetscCall(create_vector(comm_jacobi_block, &vec_R_transpose_b_block_jacobi, s, VECMPI));
   PetscCall(create_vector(comm_jacobi_block, &alpha, s, VECMPI));
-  PetscCall(VecSet(alpha, 0.0));
+  // PetscCall(VecSet(alpha, 0.0));
   PetscCall(create_vector(comm_jacobi_block, &x, n_mesh_points, VECMPI));
 
   PetscCall(VecDuplicate(x, &b));
@@ -140,7 +140,7 @@ int main(int argc, char **argv)
   PetscCall(computeTheRightHandSideWithInitialGuess(comm_jacobi_block, scatter_jacobi_vec_part_to_merged_vec, A_block_jacobi, &b, b_block_jacobi, x_initial_guess, rank_jacobi_block, jacobi_block_size, nprocs_per_jacobi_block, proc_local_rank));
 
   PetscCall(initializeKSP(comm_jacobi_block, &inner_ksp, A_block_jacobi_subMat[rank_jacobi_block], rank_jacobi_block, PETSC_FALSE, INNER_KSP_PREFIX, INNER_PC_PREFIX));
-  PetscCall(initializeKSP(comm_jacobi_block, &outer_ksp, R, rank_jacobi_block, PETSC_TRUE, OUTER_KSP_PREFIX, OUTER_PC_PREFIX));
+  PetscCall(initializeKSP(comm_jacobi_block, &outer_ksp, R_transpose_R, rank_jacobi_block, PETSC_TRUE, OUTER_KSP_PREFIX, OUTER_PC_PREFIX));
 
   PetscCall(VecGetLocalSize(x_block_jacobi[rank_jacobi_block], &vec_local_size));
 
@@ -195,6 +195,14 @@ int main(int argc, char **argv)
 
     PetscCall(MatAssemblyBegin(S, MAT_FINAL_ASSEMBLY));
     PetscCall(MatAssemblyEnd(S, MAT_FINAL_ASSEMBLY));
+
+    // if (rank_jacobi_block == 0 && number_of_iterations == 2)
+    if ( number_of_iterations == 4)
+    {
+      // PetscCall(MatView(S, PETSC_VIEWER_STDOUT_SELF));
+      PetscCall(PetscFinalize());
+      return 0;
+    }
 
     PetscCall(MatMatMult(A_block_jacobi, S, MAT_REUSE_MATRIX, PETSC_DETERMINE, &R));
 
