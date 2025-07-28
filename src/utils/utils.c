@@ -337,9 +337,9 @@ PetscErrorCode initializeKSP(MPI_Comm comm_jacobi_block, KSP *ksp, Mat operator_
   // PetscCall(PCSetUp(pc));
   // PetscCall(KSPSetUp(*ksp));
 
-  // if (rank_jacobi_block == 0)
+  // if (rank_jacobi_block == 1)
   // {
-  //   PetscCall(KSPView(*ksp, PETSC_VIEWER_STDOUT_SELF));
+    PetscCall(KSPView(*ksp, PETSC_VIEWER_STDOUT_SELF));
   // }
 
   PetscFunctionReturn(PETSC_SUCCESS);
@@ -804,9 +804,9 @@ PetscErrorCode outer_solver(MPI_Comm comm_jacobi_block, KSP outer_ksp, Vec x_min
 
   PetscCall(MatMult(S, alpha, x_minimized));
 
-  if(rank_jacobi_block == 0){
-    PetscCall(VecView(alpha, PETSC_VIEWER_STDOUT_(comm_jacobi_block)));
-  }
+  // if(rank_jacobi_block == 0){
+  //   PetscCall(VecView(alpha, PETSC_VIEWER_STDOUT_(comm_jacobi_block)));
+  // }
 
   PetscFunctionReturn(PETSC_SUCCESS);
 }

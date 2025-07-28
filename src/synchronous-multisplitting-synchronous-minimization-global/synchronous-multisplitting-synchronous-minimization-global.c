@@ -198,12 +198,12 @@ int main(int argc, char **argv)
     while (n_vectors_inserted < s)
     {
       PetscCall(updateLocalRHS(local_right_side_vector, A_block_jacobi_subMat, x_block_jacobi, b_block_jacobi, mat_mult_vec_result, rank_jacobi_block));
-      if (rank_jacobi_block == 0)
-      {
-        PetscScalar val;
-        PetscCall(VecNorm(local_right_side_vector, NORM_2, &val));
-        printf("Local relative tolerance : %e \n", val * 1e-5);
-      }
+      // if (rank_jacobi_block == 0)
+      // {
+      //   PetscScalar val;
+      //   PetscCall(VecNorm(local_right_side_vector, NORM_2, &val));
+      //   printf("Local relative tolerance : %e \n", val * 1e-5);
+      // }
       PetscCall(inner_solver(comm_jacobi_block, inner_ksp, A_block_jacobi_subMat, x_block_jacobi, b_block_jacobi, local_right_side_vector, rank_jacobi_block, NULL, number_of_iterations));
 
       PetscCall(comm_sync_send_and_receive(x_block_jacobi, vec_local_size, message_dest, message_source, rank_jacobi_block, idx_non_current_block));
@@ -278,7 +278,7 @@ int main(int argc, char **argv)
   PetscCall(VecNorm(check_solution, NORM_2, &check_solution_norm));
   if (rank_jacobi_block == 0)
   {
-    PetscCall(PetscPrintf(comm_jacobi_block, "Norm equal : %e \n", check_solution_norm));
+    PetscCall(PetscPrintf(comm_jacobi_block, "Final error : %e \n", check_solution_norm));
   }
 
   // Start free of memory
