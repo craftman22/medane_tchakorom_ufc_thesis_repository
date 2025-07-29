@@ -197,16 +197,6 @@ int main(int argc, char **argv)
     PetscCall(MatAssemblyBegin(S, MAT_FINAL_ASSEMBLY));
     PetscCall(MatAssemblyEnd(S, MAT_FINAL_ASSEMBLY));
 
-
-
-    // if (rank_jacobi_block == 0 && number_of_iterations == 2)
-    // if ( number_of_iterations == 4)
-    // {
-    //   // PetscCall(MatView(S, PETSC_VIEWER_STDOUT_SELF));
-    //   PetscCall(PetscFinalize());
-    //   return 0;
-    // }
-
     PetscCall(MatMatMult(A_block_jacobi, S, MAT_REUSE_MATRIX, PETSC_DETERMINE, &R));
 
     PetscCall(outer_solver(comm_jacobi_block, outer_ksp, x_minimized, R, S, R_transpose_R, vec_R_transpose_b_block_jacobi, alpha, b_block_jacobi[rank_jacobi_block], rank_jacobi_block, s, number_of_iterations));
