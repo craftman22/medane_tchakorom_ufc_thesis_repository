@@ -414,6 +414,8 @@ bin/**
 
 scripts/ideas.txt
 
+
+tmp/*
 tmp/SM*
 tmp/logs/**
 tmp/logs*

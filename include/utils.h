@@ -13,6 +13,8 @@ PetscErrorCode create_vector(MPI_Comm comm, Vec *vec, PetscInt n, VecType vec_ty
 
 PetscErrorCode poisson2DMatrix(Mat *A_block_jacobi, PetscInt n_grid_lines, PetscInt n_grid_columns, PetscInt rank_jacobi_block, PetscInt njacobi_blocks);
 
+PetscErrorCode poisson2DMatrix_complete(Mat A, PetscInt n_mesh_lines, PetscInt n_mesh_columns);
+
 PetscErrorCode poisson2DMatrix_old(Mat *A_block_jacobi, PetscInt n_grid_lines, PetscInt n_grid_columns, PetscInt rank_jacobi_block, PetscInt njacobi_blocks) __attribute__((deprecated("Use new_function instead")));
 
 PetscErrorCode poisson3DMatrix(Mat *A_block_jacobi, PetscInt n_grid_lines, PetscInt n_grid_columns, PetscInt n_grid_depth, PetscInt rank_jacobi_block, PetscInt njacobi_blocks);
@@ -76,6 +78,6 @@ PetscErrorCode inner_solver(MPI_Comm comm_jacobi_block,KSP ksp, Mat *A_block_jac
 PetscErrorCode outer_solver(MPI_Comm comm_jacobi_block, KSP outer_ksp, Vec x_minimized, Mat R, Mat S, Mat R_transpose_R, Vec vec_R_transpose_b_block_jacobi, Vec alpha, Vec b, PetscInt rank_jacobi_block, PetscInt s, PetscInt outer_iteration_number);
 
 
-// PetscErrorCode outer_solver_lsqr(MPI_Comm comm_jacobi_block, KSP outer_ksp, Vec x_minimized, Mat R, Mat S, Mat R_transpose_R, Vec vec_R_transpose_b_block_jacobi, Vec alpha, Vec b, PetscInt rank_jacobi_block, PetscInt s, PetscInt outer_iteration_number);
+PetscErrorCode outer_solver_lsqr(MPI_Comm comm_jacobi_block, KSP outer_ksp, Vec x_minimized, Mat R, Mat S, Mat R_transpose_R, Vec vec_R_transpose_b_block_jacobi, Vec alpha, Vec b, PetscInt rank_jacobi_block, PetscInt s, PetscInt outer_iteration_number);
 
 #endif // SHARED_FUNCTIONS_H
