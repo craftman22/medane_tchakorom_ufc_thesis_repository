@@ -955,7 +955,7 @@ PetscErrorCode outer_solver_norm_equation(MPI_Comm comm_jacobi_block, KSP outer_
   PetscFunctionBegin;
   PetscCall(KSPConvergedDefaultSetUIRNorm(outer_ksp));
   PetscCall(KSPSetOperators(outer_ksp, R, R)); // R = A * S
-  PetscCall(KSPSetInitialGuessNonzero(outer_ksp, PETSC_TRUE));
+  PetscCall(KSPSetInitialGuessNonzero(outer_ksp, PETSC_FALSE));
   PetscCall(KSPSolve(outer_ksp, b, intermediate_solution_alpha));
 
   PetscInt n_iterations = 0;

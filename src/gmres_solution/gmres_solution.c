@@ -29,7 +29,7 @@ int main(int argc, char **argv)
 
     KSP ksp_context = NULL;
     PetscScalar relative_tolerance = 1e-5;
-    PetscScalar absolute_tolerance = 1e-50;
+    PetscScalar absolute_tolerance = 1e-100;
 
     PetscFunctionBeginUser;
     PetscCall(PetscInitialize(&argc, &argv, NULL, NULL));

@@ -511,16 +511,16 @@ set -x  # Enable command tracing
 
 timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION bash \
 petscmpiexec -n 2 ./bin/synchronous-multisplitting-synchronous-minimization-global-v1.0  -npb 1 \
--m 512 -n 512  -s 4 -rtol 1e-6  \
+-m 512 -n 512  -s 10 -rtol 1e-6  \
 -inner1_ksp_type gmres -inner1_ksp_gmres_preallocate -inner1_ksp_gmres_restart 30 -inner1_ksp_atol 1e-100 -inner1_ksp_rtol 1e-3 -inner1_ksp_max_it 20 -inner1_pc_type none -inner1_ksp_norm_type UNPRECONDITIONED  -inner1_ksp_monitor_true_residual ascii:./tmp/SMSM_GLOBAL/save_5_second/inner1_ksp.yml \
 -inner2_ksp_type gmres -inner2_ksp_gmres_preallocate -inner2_ksp_gmres_restart 30 -inner2_ksp_atol 1e-100 -inner2_ksp_rtol 1e-3 -inner2_ksp_max_it 20 -inner2_pc_type none -inner2_ksp_norm_type UNPRECONDITIONED  -inner2_ksp_monitor_true_residual ascii:./tmp/SMSM_GLOBAL/save_5_second/inner2_ksp.yml \
--outer1_ksp_type lsqr  -outer1_ksp_atol 1e-100 -outer1_ksp_rtol 1e-20 -outer1_ksp_max_it 100 -outer1_pc_type none -outer1_ksp_norm_type UNPRECONDITIONED    -outer1_ksp_converged_reason -outer1_ksp_monitor_true_residual ascii:./tmp/SMSM_GLOBAL/save_5_second/outer1_ksp.yml -outer1_ksp_lsqr_monitor ascii:./tmp/SMSM_GLOBAL/save_5_second/outer1_lsqr.yml   \
--outer2_ksp_type lsqr  -outer2_ksp_atol 1e-100 -outer2_ksp_rtol 1e-20 -outer2_ksp_max_it 100 -outer2_pc_type none -outer2_ksp_norm_type UNPRECONDITIONED    -outer2_ksp_converged_reason -outer2_ksp_monitor_true_residual ascii:./tmp/SMSM_GLOBAL/save_5_second/outer2_ksp.yml  -outer2_ksp_lsqr_monitor ascii:./tmp/SMSM_GLOBAL/save_5_second/outer2_lsqr.yml  \
+-outer1_ksp_type lsqr  -outer1_ksp_lsqr_exact_mat_norm -outer1_ksp_atol 1e-100 -outer1_ksp_rtol 1e-20 -outer1_ksp_max_it 70 -outer1_pc_type none -outer1_ksp_norm_type UNPRECONDITIONED    -outer1_ksp_converged_reason -outer1_ksp_monitor_true_residual ascii:./tmp/SMSM_GLOBAL/save_5_second/outer1_ksp.yml -outer1_ksp_lsqr_monitor ascii:./tmp/SMSM_GLOBAL/save_5_second/outer1_lsqr.yml   \
+-outer2_ksp_type lsqr  -outer1_ksp_lsqr_exact_mat_norm -outer2_ksp_atol 1e-100 -outer2_ksp_rtol 1e-20 -outer2_ksp_max_it 70 -outer2_pc_type none -outer2_ksp_norm_type UNPRECONDITIONED    -outer2_ksp_converged_reason -outer2_ksp_monitor_true_residual ascii:./tmp/SMSM_GLOBAL/save_5_second/outer2_ksp.yml  -outer2_ksp_lsqr_monitor ascii:./tmp/SMSM_GLOBAL/save_5_second/outer2_lsqr.yml  \
 -options_view -options_left -log_view  > ./tmp/SMSM_GLOBAL/save_5_second/tmp_supp_6.yml 2>&1 
 
 
 
-
+# -outer1_ksp_convergence_test skip
 
 # timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION bash \
 # petscmpiexec -n 2 ./bin/synchronous-multisplitting-synchronous-minimization-global-v1.0  -npb 1 \
