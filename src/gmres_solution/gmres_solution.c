@@ -15,7 +15,7 @@ int main(int argc, char **argv)
     Mat A = NULL; // Operator matrix
     Vec x = NULL; // approximation solution at iteration (k)
     Vec b = NULL; // right hand side vector
-    Vec x_preset_solution = NULL;
+    Vec u = NULL;
 
     PetscMPIInt nprocs;
     PetscMPIInt proc_global_rank;
@@ -48,11 +48,11 @@ int main(int argc, char **argv)
     PetscCall(create_matrix_sparse(PETSC_COMM_WORLD, &A, n_mesh_points, n_mesh_points, MATMPIAIJ, 10, 10));
     PetscCall(poisson2DMatrix_complete(A, n_mesh_lines, n_mesh_columns));
     PetscCall(create_vector(PETSC_COMM_WORLD, &x, n_mesh_points, VECMPI));
-    PetscCall(VecDuplicate(x, &x_preset_solution));
+    PetscCall(VecDuplicate(x, &u));
     PetscCall(VecDuplicate(x, &b));
-    PetscCall(VecSet(x_preset_solution, ONE));
+    PetscCall(VecSet(u, ONE));
     PetscCall(VecSet(x, ZERO));
-    PetscCall(MatMult(A, x_preset_solution, b));
+    PetscCall(MatMult(A, u, b));
 
     PetscCall(initializeKSP(PETSC_COMM_WORLD, &ksp_context, A, 0, PETSC_TRUE, NULL, NULL));
 
@@ -81,25 +81,16 @@ int main(int argc, char **argv)
 
     PetscCall(PetscPrintf(PETSC_COMM_WORLD, "======================== \n"));
 
-    Vec check_solution = NULL;
-    Vec solution = NULL;
-    PetscCall(VecDuplicate(x, &check_solution));
-    PetscCall(VecDuplicate(x, &solution));
-    PetscCall(VecZeroEntries(check_solution));
-    PetscCall(VecSet(solution, 1.0));
-    PetscScalar check_solution_norm = 0.0;
-    PetscCall(VecWAXPY(check_solution, -1.0, solution, x));
-    PetscCall(VecNorm(check_solution, NORM_2, &check_solution_norm));
-    PetscCall(PetscPrintf(PETSC_COMM_WORLD, "Erreur : %e \n", check_solution_norm));
+    PetscScalar error;
+    PetscCall(computeError(x, u, &error));
+    PetscCall(PetscPrintf(PETSC_COMM_WORLD, "Erreur : %e \n", error));
 
     PetscCall(PetscPrintf(PETSC_COMM_WORLD, "\n\n"));
-    // PetscCall(PetscSleep(1000));
-    // PetscCall(MatView(A, PETSC_VIEWER_STDOUT_WORLD));
 
     PetscCall(MatDestroy(&A));
     PetscCall(VecDestroy(&x));
     PetscCall(VecDestroy(&b));
-    PetscCall(VecDestroy(&x_preset_solution));
+    PetscCall(VecDestroy(&u));
     PetscCall(KSPDestroy(&ksp_context));
 
     PetscCall(PetscFinalize());

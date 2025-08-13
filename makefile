@@ -103,11 +103,17 @@ print:
 
 # List the source directories you want to compile from
 
-# SRC_DIRS :=  src/synchronous-multisplitting  src/asynchronous-multisplitting  src/synchronous-multisplitting-synchronous-minimization-local src/synchronous-multisplitting-synchronous-minimization-semi-local src/synchronous-multisplitting-synchronous-minimization-global  src/asynchronous-multisplitting-asynchronous-minimization-global src/asynchronous-multisplitting-asynchronous-minimization-local src/asynchronous-multisplitting-asynchronous-minimization-semi-local src/gmres_solution
-#SRC_DIRS :=  src/synchronous-multisplitting  src/asynchronous-multisplitting  src/synchronous-multisplitting-synchronous-minimization-local src/synchronous-multisplitting-synchronous-minimization-semi-local src/synchronous-multisplitting-synchronous-minimization-global   src/asynchronous-multisplitting-asynchronous-minimization-local src/asynchronous-multisplitting-asynchronous-minimization-semi-local 
-#SRC_DIRS :=   src/synchronous-multisplitting  src/asynchronous-multisplitting src/synchronous-multisplitting-synchronous-minimization-local   src/asynchronous-multisplitting-asynchronous-minimization-local src/synchronous-multisplitting-synchronous-minimization-global src/asynchronous-multisplitting-asynchronous-minimization-global src/synchronous-multisplitting-synchronous-minimization-semi-local src/asynchronous-multisplitting-asynchronous-minimization-semi-local
-#SRC_DIRS :=    src/synchronous-multisplitting-synchronous-minimization-global src/asynchronous-multisplitting-asynchronous-minimization-global 
-SRC_DIRS :=   src/gmres_solution 
+# All
+# SRC_DIRS :=  src/synchronous-multisplitting  src/asynchronous-multisplitting  src/synchronous-multisplitting-synchronous-minimization-local src/synchronous-multisplitting-synchronous-minimization-semi-local src/synchronous-multisplitting-synchronous-minimization-global  src/asynchronous-multisplitting-asynchronous-minimization-global src/asynchronous-multisplitting-asynchronous-minimization-local src/asynchronous-multisplitting-asynchronous-minimization-semi-local src/gmres_solution src/experimenting
+
+# Asynchronous
+SRC_DIRS :=  src/synchronous-multisplitting   src/synchronous-multisplitting-synchronous-minimization-local src/synchronous-multisplitting-synchronous-minimization-semi-local src/synchronous-multisplitting-synchronous-minimization-global   
+
+# Synchronous
+#SRC_DIRS :=   src/asynchronous-multisplitting-asynchronous-minimization-global src/asynchronous-multisplitting-asynchronous-minimization-local src/asynchronous-multisplitting-asynchronous-minimization-semi-local
+
+#experimenting
+# SRC_DIRS :=   src/experimenting
 
 
 
