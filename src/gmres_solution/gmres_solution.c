@@ -87,6 +87,21 @@ int main(int argc, char **argv)
 
     PetscCall(PetscPrintf(PETSC_COMM_WORLD, "\n\n"));
 
+    ///////
+
+    // PetscViewer viewer;
+
+    // PetscViewerCreate(PETSC_COMM_WORLD, &viewer);
+    // PetscViewerFileSetMode(viewer, FILE_MODE_WRITE);
+    // PetscViewerSetType(viewer, PETSCVIEWERASCII);
+    // PetscViewerPushFormat(viewer, PETSC_VIEWER_ASCII_MATLAB);
+    // PetscViewerFileSetName(viewer, "mesh_256_gmres_solution_2.m");
+    // // PetscViewerFileSetName(viewer, "mesh_256_gmres_solution_4.m");
+    // VecView(x, viewer);
+    // PetscViewerDestroy(&viewer);
+
+    //////
+
     PetscCall(MatDestroy(&A));
     PetscCall(VecDestroy(&x));
     PetscCall(VecDestroy(&b));

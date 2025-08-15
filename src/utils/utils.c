@@ -450,7 +450,7 @@ PetscErrorCode computeFinalResidualNorm(Mat A_block_jacobi, Vec x, Vec *b_block_
   PetscCall(MatResidual(A_block_jacobi, b_block_jacobi[rank_jacobi_block], x, direct_local_residual));
   PetscCall(VecNorm(direct_local_residual, NORM_2, &direct_local_residual_norm2));
 
-  PetscCall(PetscPrintf(MPI_COMM_SELF, "Final residual norm 2 block rank %d = %e \n", rank_jacobi_block, direct_local_residual_norm2));
+  // PetscCall(PetscPrintf(MPI_COMM_SELF, "Final residual norm 2 block rank %d = %e \n", rank_jacobi_block, direct_local_residual_norm2));
 
   direct_local_residual_norm2 = direct_local_residual_norm2 * direct_local_residual_norm2;
   if (proc_local_rank != 0)

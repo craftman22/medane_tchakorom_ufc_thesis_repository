@@ -198,3 +198,36 @@ int main(int argc, char **argv)
     // PetscCall(VecNorm(tmp_diff, NORM_INFINITY, &tmp_diff_norm));
     // PetscCall(PetscPrintf(PETSC_COMM_SELF, "Inf norm local : %e \n", tmp_diff_norm));
     //
+
+
+
+
+
+
+    //     PetscViewer viewer;
+    // if (rank_jacobi_block == 0)
+    // {
+
+    //   PetscViewerCreate(comm_jacobi_block, &viewer);
+    //   PetscViewerFileSetMode(viewer, FILE_MODE_WRITE);
+    //   PetscViewerSetType(viewer, PETSCVIEWERASCII);
+    //   PetscViewerPushFormat(viewer, PETSC_VIEWER_ASCII_MATLAB);
+    //   PetscViewerFileSetName(viewer, "matrix_S_2_0.m");
+    //   MatView(S, viewer);
+    //   PetscViewerDestroy(&viewer);
+    // }
+
+    // if (rank_jacobi_block == 1)
+    // {
+
+    //   PetscViewerCreate(comm_jacobi_block, &viewer);
+    //   PetscViewerFileSetMode(viewer, FILE_MODE_WRITE);
+    //   PetscViewerSetType(viewer, PETSCVIEWERASCII);
+    //   PetscViewerPushFormat(viewer, PETSC_VIEWER_ASCII_MATLAB);
+    //   PetscViewerFileSetName(viewer, "matrix_S_2_1.m");
+    //   MatView(S, viewer);
+    //   PetscViewerDestroy(&viewer);
+    // }
+
+    // PetscCall(PetscFinalize());
+    // return 0;

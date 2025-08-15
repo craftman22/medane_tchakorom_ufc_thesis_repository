@@ -221,16 +221,16 @@ int main(int argc, char **argv)
     while (n_vectors_inserted < s)
     {
       PetscCall(updateLocalRHS(local_right_side_vector, A_block_jacobi_subMat, x_block_jacobi, b_block_jacobi, mat_mult_vec_result, rank_jacobi_block));
-      ////
-      PetscScalar val1, local_norm_0;
-      Vec res;
-      PetscCall(VecNorm(local_right_side_vector, NORM_2, &val1));
-      PetscCall(PetscPrintf(comm_jacobi_block, "norm of b %e \n", val1));
-      PetscCall(VecDuplicate(x_block_jacobi[rank_jacobi_block], &res));
-      PetscCall(MatResidual(A_block_jacobi_subMat[rank_jacobi_block], local_right_side_vector, x_block_jacobi[rank_jacobi_block], res));
-      PetscCall(VecNorm(res, NORM_2, &local_norm_0));
-      PetscCall(PetscPrintf(comm_jacobi_block, "Block %d local norm 0 %e ====== inner_rtol * norm_0 %e \n",rank_jacobi_block, local_norm_0 , (1.e-3) * local_norm_0));
-      ///
+      // ////
+      // PetscScalar val1, local_norm_0;
+      // Vec res;
+      // PetscCall(VecNorm(local_right_side_vector, NORM_2, &val1));
+      // PetscCall(PetscPrintf(comm_jacobi_block, "norm of b %e \n", val1));
+      // PetscCall(VecDuplicate(x_block_jacobi[rank_jacobi_block], &res));
+      // PetscCall(MatResidual(A_block_jacobi_subMat[rank_jacobi_block], local_right_side_vector, x_block_jacobi[rank_jacobi_block], res));
+      // PetscCall(VecNorm(res, NORM_2, &local_norm_0));
+      // PetscCall(PetscPrintf(comm_jacobi_block, "Block %d local norm 0 %e ====== inner_rtol * norm_0 %e \n",rank_jacobi_block, local_norm_0 , (1.e-3) * local_norm_0));
+      // ///
       PetscCall(inner_solver(comm_jacobi_block, inner_ksp, A_block_jacobi_subMat, x_block_jacobi, b_block_jacobi, local_right_side_vector, rank_jacobi_block, NULL, number_of_iterations));
 
       PetscCall(comm_sync_send_and_receive(x_block_jacobi, vec_local_size, message_dest, message_source, rank_jacobi_block, idx_non_current_block));
@@ -249,6 +249,7 @@ int main(int argc, char **argv)
     PetscCall(MatAssemblyBegin(S, MAT_FINAL_ASSEMBLY));
     PetscCall(MatAssemblyEnd(S, MAT_FINAL_ASSEMBLY));
 
+
     PetscCall(getHalfSubMatrixFromR(R, R_block_jacobi_subMat, n_mesh_lines, n_mesh_columns, rank_jacobi_block));
     PetscCall(MatMatMult(A_block_jacobi_resdistributed, S, MAT_REUSE_MATRIX, PETSC_DETERMINE, &R_block_jacobi_subMat[rank_jacobi_block]));
     PetscCall(restoreHalfSubMatrixToR(R, R_block_jacobi_subMat, rank_jacobi_block));
@@ -265,6 +266,7 @@ int main(int argc, char **argv)
     // {
     //   send_signal = CONVERGENCE_SIGNAL;
     // }
+
 
     PetscScalar direct_residual_norm;
     PetscCall(computeFinalResidualNorm(A_block_jacobi, x_minimized, b_block_jacobi, rank_jacobi_block, proc_local_rank, &direct_residual_norm));
