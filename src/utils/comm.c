@@ -139,6 +139,31 @@ PetscErrorCode comm_sync_send_and_receive(Vec *x_block_jacobi, PetscMPIInt vec_l
     PetscFunctionReturn(PETSC_SUCCESS);
 }
 
+PetscErrorCode comm_sync_send_and_receive_alpha(Vec alpha,  PetscMPIInt message_dest, PetscMPIInt message_source, PetscMPIInt rank_jacobi_block, PetscMPIInt idx_non_current_block)
+{
+    PetscFunctionBeginUser;
+    PetscScalar *send_alpha_buffer = NULL;
+    PetscScalar *rcv_alpha_buffer = NULL;
+    PetscInt vec_local_size;
+    Vec alpha_other_block;
+    PetscCall(VecDuplicate(alpha, &alpha_other_block));
+    PetscCall(VecGetLocalSize(alpha,&vec_local_size));
+
+    PetscCall(VecGetArray(alpha, &send_alpha_buffer));
+    PetscCall(VecGetArray(alpha_other_block, &rcv_alpha_buffer));
+
+    PetscCallMPI(MPI_Sendrecv(send_alpha_buffer, vec_local_size, MPIU_SCALAR, message_dest, (TAG_MINIMIZATION_DATA + rank_jacobi_block), rcv_alpha_buffer, vec_local_size, MPIU_SCALAR, message_source, (TAG_MINIMIZATION_DATA + idx_non_current_block), MPI_COMM_WORLD, MPI_STATUS_IGNORE));
+
+    PetscCall(VecRestoreArray(alpha, &send_alpha_buffer));
+    PetscCall(VecRestoreArray(alpha_other_block, &rcv_alpha_buffer));
+
+    PetscCall(VecAXPBY(alpha, 0.5, 0.5, alpha_other_block));
+
+    // PetscCall(VecView(alpha, PETSC_VIEWER_STDOUT_(MPI_COMM_SELF)));
+
+    PetscFunctionReturn(PETSC_SUCCESS);
+}
+
 PetscErrorCode comm_sync_send_and_receive_final(Vec *x_block_jacobi, PetscMPIInt vec_local_size, PetscMPIInt message_dest, PetscMPIInt message_source, PetscMPIInt rank_jacobi_block, PetscMPIInt idx_non_current_block)
 {
     PetscFunctionBeginUser;

@@ -32,4 +32,7 @@ PetscErrorCode mpi_pack_multisplitting_data(PetscScalar *send_buffer, PetscMPIIn
 
 PetscErrorCode mpi_unpack_multisplitting_data(PetscScalar *rcv_buffer, PetscMPIInt data_size, PetscInt *version, char **pack_buffer, PetscMPIInt pack_size);
 
+
+PetscErrorCode comm_sync_send_and_receive_alpha(Vec alpha,  PetscMPIInt message_dest, PetscMPIInt message_source, PetscMPIInt rank_jacobi_block, PetscMPIInt idx_non_current_block);
+
 #endif // SHARED_COMM_FUNCTIONS_H

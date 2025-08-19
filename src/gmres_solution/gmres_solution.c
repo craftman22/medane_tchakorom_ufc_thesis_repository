@@ -55,8 +55,24 @@ int main(int argc, char **argv)
     PetscCall(MatMult(A, u, b));
 
     PetscCall(initializeKSP(PETSC_COMM_WORLD, &ksp_context, A, 0, PETSC_TRUE, NULL, NULL));
-
     PetscCall(VecNorm(b, NORM_2, &b_norm));
+
+    ///////
+
+    PetscViewer viewer;
+    Mat A_dense;
+    MatConvert(A, MATMPIDENSE, MAT_INITIAL_MATRIX, &A_dense);
+    PetscViewerCreate(PETSC_COMM_WORLD, &viewer);
+    PetscViewerFileSetMode(viewer, FILE_MODE_WRITE);
+    PetscViewerSetType(viewer, PETSCVIEWERASCII);
+    PetscViewerPushFormat(viewer, PETSC_VIEWER_ASCII_MATLAB);
+    PetscViewerFileSetName(viewer, "matrix_A_512.m");
+    MatView(A_dense, viewer);
+    PetscViewerDestroy(&viewer);
+    PetscCall(PetscFinalize());
+    return 0;
+
+    //////
 
     PetscCall(PetscPrintf(PETSC_COMM_WORLD, "Start solving...\n"));
     PetscCallMPI(MPI_Barrier(PETSC_COMM_WORLD));
@@ -86,21 +102,6 @@ int main(int argc, char **argv)
     PetscCall(PetscPrintf(PETSC_COMM_WORLD, "Erreur : %e \n", error));
 
     PetscCall(PetscPrintf(PETSC_COMM_WORLD, "\n\n"));
-
-    ///////
-
-    // PetscViewer viewer;
-
-    // PetscViewerCreate(PETSC_COMM_WORLD, &viewer);
-    // PetscViewerFileSetMode(viewer, FILE_MODE_WRITE);
-    // PetscViewerSetType(viewer, PETSCVIEWERASCII);
-    // PetscViewerPushFormat(viewer, PETSC_VIEWER_ASCII_MATLAB);
-    // PetscViewerFileSetName(viewer, "mesh_256_gmres_solution_2.m");
-    // // PetscViewerFileSetName(viewer, "mesh_256_gmres_solution_4.m");
-    // VecView(x, viewer);
-    // PetscViewerDestroy(&viewer);
-
-    //////
 
     PetscCall(MatDestroy(&A));
     PetscCall(VecDestroy(&x));
