@@ -45,7 +45,7 @@ int main(int argc, char **argv)
     n_mesh_points = n_mesh_lines * n_mesh_columns;
     PetscAssert((n_mesh_points % nprocs == 0), PETSC_COMM_WORLD, PETSC_ERR_ARG_SIZ, "Number of grid points should be divisible by the number of procs \n Programm exit ...\n");
 
-    PetscCall(create_matrix_sparse(PETSC_COMM_WORLD, &A, n_mesh_points, n_mesh_points, MATMPIAIJ, 10, 10));
+    PetscCall(create_matrix_sparse(PETSC_COMM_WORLD, &A, n_mesh_points, n_mesh_points, MATMPIAIJ, 5, 5));
     PetscCall(poisson2DMatrix_complete(A, n_mesh_lines, n_mesh_columns));
     PetscCall(create_vector(PETSC_COMM_WORLD, &x, n_mesh_points, VECMPI));
     PetscCall(VecDuplicate(x, &u));
@@ -59,18 +59,18 @@ int main(int argc, char **argv)
 
     ///////
 
-    PetscViewer viewer;
-    Mat A_dense;
-    MatConvert(A, MATMPIDENSE, MAT_INITIAL_MATRIX, &A_dense);
-    PetscViewerCreate(PETSC_COMM_WORLD, &viewer);
-    PetscViewerFileSetMode(viewer, FILE_MODE_WRITE);
-    PetscViewerSetType(viewer, PETSCVIEWERASCII);
-    PetscViewerPushFormat(viewer, PETSC_VIEWER_ASCII_MATLAB);
-    PetscViewerFileSetName(viewer, "matrix_A_512.m");
-    MatView(A_dense, viewer);
-    PetscViewerDestroy(&viewer);
-    PetscCall(PetscFinalize());
-    return 0;
+    // PetscViewer viewer;
+    // Mat A_dense;
+    // MatConvert(A, MATMPIDENSE, MAT_INITIAL_MATRIX, &A_dense);
+    // PetscViewerCreate(PETSC_COMM_WORLD, &viewer);
+    // PetscViewerFileSetMode(viewer, FILE_MODE_WRITE);
+    // PetscViewerSetType(viewer, PETSCVIEWERASCII);
+    // PetscViewerPushFormat(viewer, PETSC_VIEWER_ASCII_MATLAB);
+    // PetscViewerFileSetName(viewer, "matrix_A_512.m");
+    // MatView(A_dense, viewer);
+    // PetscViewerDestroy(&viewer);
+    // PetscCall(PetscFinalize());
+    // return 0;
 
     //////
 
