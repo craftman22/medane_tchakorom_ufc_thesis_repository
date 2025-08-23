@@ -47,9 +47,10 @@ int main(int argc, char **argv)
 
     PetscCall(create_matrix_sparse(PETSC_COMM_WORLD, &A, n_mesh_points, n_mesh_points, MATMPIAIJ, 5, 5));
     PetscCall(poisson2DMatrix_complete(A, n_mesh_lines, n_mesh_columns));
-    PetscCall(create_vector(PETSC_COMM_WORLD, &x, n_mesh_points, VECMPI));
+    PetscCall(MatCreateVecs(A, &x, &b));
+    // PetscCall(create_vector(PETSC_COMM_WORLD, &x, n_mesh_points, VECMPI));
+    // PetscCall(VecDuplicate(x, &b));
     PetscCall(VecDuplicate(x, &u));
-    PetscCall(VecDuplicate(x, &b));
     PetscCall(VecSet(u, ONE));
     PetscCall(VecSet(x, ZERO));
     PetscCall(MatMult(A, u, b));
@@ -78,7 +79,6 @@ int main(int argc, char **argv)
     PetscCallMPI(MPI_Barrier(PETSC_COMM_WORLD));
     double start_time, end_time;
     start_time = MPI_Wtime();
-
 
     PetscLogStage solving_stage;
     PetscLogStageRegister("Solving stage", &solving_stage);
