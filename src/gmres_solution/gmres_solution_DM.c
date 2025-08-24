@@ -70,7 +70,11 @@ int main(int argc, char **argv)
     double start_time, end_time;
     start_time = MPI_Wtime();
 
+    PetscLogStage solving_stage;
+    PetscLogStageRegister("Solving stage", &solving_stage);
+    PetscLogStagePush(solving_stage);
     PetscCall(KSPSolve(ksp_context, b, x));
+    PetscLogStagePop();
 
     PetscCallMPI(MPI_Barrier(PETSC_COMM_WORLD));
     end_time = MPI_Wtime();
