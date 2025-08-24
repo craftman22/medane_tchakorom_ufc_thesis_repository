@@ -14,6 +14,8 @@ PetscErrorCode poisson2DMatrix(Mat *A_block_jacobi, PetscInt n_grid_lines, Petsc
 
 PetscErrorCode poisson2DMatrix_complete(Mat A, PetscInt n_mesh_lines, PetscInt n_mesh_columns);
 
+PetscErrorCode poisson2DMatrix_complete_usingDMDA(DM dm, Mat A);
+
 PetscErrorCode poisson2DMatrix_old(Mat *A_block_jacobi, PetscInt n_grid_lines, PetscInt n_grid_columns, PetscInt rank_jacobi_block, PetscInt njacobi_blocks) __attribute__((deprecated("Use new_function instead")));
 
 PetscErrorCode poisson3DMatrix(Mat *A_block_jacobi, PetscInt n_grid_lines, PetscInt n_grid_columns, PetscInt n_grid_depth, PetscInt rank_jacobi_block, PetscInt njacobi_blocks);
@@ -78,9 +80,8 @@ PetscErrorCode computeError(Vec x, Vec u, PetscScalar *error);
 
 PetscErrorCode computelocalResidualNorm(Mat A_block_jacobi, Vec x, Vec *b_block_jacobi, PetscInt rank_jacobi_block, PetscInt proc_local_rank, PetscScalar *direct_residual_norm);
 
-
 PetscErrorCode outer_solver_norm_equation(MPI_Comm comm_jacobi_block, KSP outer_ksp, Vec final_solution, Mat R, Mat S, Vec intermediate_solution_alpha, Vec b, PetscInt rank_jacobi_block, PetscInt outer_iteration_number);
 
-PetscErrorCode outer_solver_norm_equation_modify(MPI_Comm comm_jacobi_block, KSP outer_ksp, Vec final_solution, Mat R, Mat S, Vec intermediate_solution_alpha, Vec b, PetscInt rank_jacobi_block, PetscInt outer_iteration_number,PetscInt message_dest, PetscInt message_source);
+PetscErrorCode outer_solver_norm_equation_modify(MPI_Comm comm_jacobi_block, KSP outer_ksp, Vec final_solution, Mat R, Mat S, Vec intermediate_solution_alpha, Vec b, PetscInt rank_jacobi_block, PetscInt outer_iteration_number, PetscInt message_dest, PetscInt message_source);
 
 #endif // SHARED_FUNCTIONS_H

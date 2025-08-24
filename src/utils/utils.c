@@ -280,6 +280,65 @@ PetscErrorCode poisson2DMatrix(Mat *A_block_jacobi, PetscInt n_grid_lines, Petsc
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
+PetscErrorCode poisson2DMatrix_complete_usingDMDA( DM dm,Mat A)
+{
+
+  PetscFunctionBeginUser;
+  DMDALocalInfo info;
+  DMDAGetLocalInfo(dm, &info);
+
+  PetscInt i, j;
+  PetscScalar v[5];
+  MatStencil row, col[5];
+
+  // Loop over local part of the grid
+  for (j = info.ys; j < info.ys + info.ym; ++j)
+  {
+    for (i = info.xs; i < info.xs + info.xm; ++i)
+    {
+
+      // Global row index
+      row.i = i;
+      row.j = j;
+
+      // Handle boundary points (Dirichlet: zero solution → identity row)
+      if (i == 0 || j == 0 || i == info.mx - 1 || j == info.my - 1)
+      {
+        v[0] = 1.0;
+        col[0].i = i;
+        col[0].j = j;
+        PetscCall(MatSetValuesStencil(A, 1, &row, 1, col, v, INSERT_VALUES));
+        continue;
+      }
+
+      // Interior point: 5-point stencil
+      v[0] = -1.0;
+      col[0].i = i - 1;
+      col[0].j = j; // West
+      v[1] = -1.0;
+      col[1].i = i + 1;
+      col[1].j = j; // East
+      v[2] = -1.0;
+      col[2].i = i;
+      col[2].j = j - 1; // South
+      v[3] = -1.0;
+      col[3].i = i;
+      col[3].j = j + 1; // North
+      v[4] = 4.0;
+      col[4].i = i;
+      col[4].j = j; // Center
+
+      PetscCall(MatSetValuesStencil(A, 1, &row, 5, col, v, INSERT_VALUES));
+    }
+  }
+
+  // Assemble the matrix
+  PetscCall(MatAssemblyBegin(A, MAT_FINAL_ASSEMBLY));
+  PetscCall(MatAssemblyEnd(A, MAT_FINAL_ASSEMBLY));
+
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
+
 PetscErrorCode poisson2DMatrix_complete(Mat A, PetscInt n_mesh_lines, PetscInt n_mesh_columns)
 {
   PetscFunctionBeginUser;
@@ -960,7 +1019,6 @@ PetscErrorCode outer_solver_norm_equation(MPI_Comm comm_jacobi_block, KSP outer_
   PetscCall(KSPGetIterationNumber(outer_ksp, &n_iterations));
 
   // PetscCall(printOuterSolverIterations(comm_jacobi_block, rank_jacobi_block, n_iterations, outer_iteration_number));
-
 
   PetscCall(MatMult(S, intermediate_solution_alpha, final_solution));
 
