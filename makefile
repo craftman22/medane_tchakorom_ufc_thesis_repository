@@ -113,7 +113,7 @@ print:
 #SRC_DIRS :=   src/asynchronous-multisplitting-asynchronous-minimization-global src/asynchronous-multisplitting-asynchronous-minimization-local src/asynchronous-multisplitting-asynchronous-minimization-semi-local
 
 #experimenting
-SRC_DIRS :=  src/gmres_solution
+SRC_DIRS :=  src/gmres_solution src/synchronous-multisplitting-synchronous-minimization-global 
 
 
 
