@@ -49,6 +49,7 @@ int main(int argc, char **argv)
 
     PetscCall(DMCreateMatrix(dm, &A));
     PetscCall(poisson2DMatrix_complete_usingDMDA(dm, A));
+
     PetscCall(DMCreateGlobalVector(dm, &x));
     PetscCall(VecSet(x, ZERO));
     PetscCall(DMCreateGlobalVector(dm, &u));

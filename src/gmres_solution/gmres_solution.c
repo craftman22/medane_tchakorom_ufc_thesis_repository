@@ -48,8 +48,6 @@ int main(int argc, char **argv)
     PetscCall(create_matrix_sparse(PETSC_COMM_WORLD, &A, n_mesh_points, n_mesh_points, MATMPIAIJ, 5, 5));
     PetscCall(poisson2DMatrix_complete(A, n_mesh_lines, n_mesh_columns));
     PetscCall(MatCreateVecs(A, &x, &b));
-    // PetscCall(create_vector(PETSC_COMM_WORLD, &x, n_mesh_points, VECMPI));
-    // PetscCall(VecDuplicate(x, &b));
     PetscCall(VecDuplicate(x, &u));
     PetscCall(VecSet(u, ONE));
     PetscCall(VecSet(x, ZERO));
@@ -58,23 +56,7 @@ int main(int argc, char **argv)
     PetscCall(initializeKSP(PETSC_COMM_WORLD, &ksp_context, A, 0, PETSC_TRUE, NULL, NULL));
     PetscCall(VecNorm(b, NORM_2, &b_norm));
 
-    ///////
-
-    // PetscViewer viewer;
-    // Mat A_dense;
-    // MatConvert(A, MATMPIDENSE, MAT_INITIAL_MATRIX, &A_dense);
-    // PetscViewerCreate(PETSC_COMM_WORLD, &viewer);
-    // PetscViewerFileSetMode(viewer, FILE_MODE_WRITE);
-    // PetscViewerSetType(viewer, PETSCVIEWERASCII);
-    // PetscViewerPushFormat(viewer, PETSC_VIEWER_ASCII_MATLAB);
-    // PetscViewerFileSetName(viewer, "matrix_A_512.m");
-    // MatView(A_dense, viewer);
-    // PetscViewerDestroy(&viewer);
-    // PetscCall(PetscFinalize());
-    // return 0;
-
-    //////
-
+    ////
     PetscCall(PetscPrintf(PETSC_COMM_WORLD, "Start solving...\n"));
     PetscCallMPI(MPI_Barrier(PETSC_COMM_WORLD));
     double start_time, end_time;
@@ -119,3 +101,20 @@ int main(int argc, char **argv)
 }
 
 // #endif
+
+///////
+
+// PetscViewer viewer;
+// Mat A_dense;
+// MatConvert(A, MATMPIDENSE, MAT_INITIAL_MATRIX, &A_dense);
+// PetscViewerCreate(PETSC_COMM_WORLD, &viewer);
+// PetscViewerFileSetMode(viewer, FILE_MODE_WRITE);
+// PetscViewerSetType(viewer, PETSCVIEWERASCII);
+// PetscViewerPushFormat(viewer, PETSC_VIEWER_ASCII_MATLAB);
+// PetscViewerFileSetName(viewer, "matrix_A_512.m");
+// MatView(A_dense, viewer);
+// PetscViewerDestroy(&viewer);
+// PetscCall(PetscFinalize());
+// return 0;
+
+//////
