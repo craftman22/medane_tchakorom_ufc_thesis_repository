@@ -76,6 +76,12 @@ int main(int argc, char **argv)
   PetscCall(PetscOptionsGetInt(NULL, NULL, "-npb", &nprocs_per_jacobi_block, NULL));
   PetscCall(PetscOptionsGetReal(NULL, NULL, "-rtol", &relative_tolerance, NULL));
 
+  // XXX: profiling
+  PetscLogStage loading_stage;
+  PetscLogStageRegister("Loading stage", &loading_stage);
+  PetscLogStagePush(loading_stage);
+  // XXX: profiling
+
   PetscCall(computeDimensionRelatedVariables(nprocs, nprocs_per_jacobi_block, proc_global_rank, n_mesh_lines, n_mesh_columns, &njacobi_blocks, &rank_jacobi_block, &proc_local_rank, &n_mesh_points, &jacobi_block_size));
   PetscAssert((n_mesh_points % nprocs == 0), PETSC_COMM_WORLD, PETSC_ERR_ARG_SIZ, "Number of grid points should be divisible by the number of procs \n Programm exit ...\n");
   sub_comm_context = NULL;
@@ -211,12 +217,27 @@ int main(int argc, char **argv)
   PetscLogEvent USER_EVENT;
   PetscLogEventRegister("outer_solve", 0, &USER_EVENT);
 
-  PetscCallMPI(MPI_Barrier(MPI_COMM_WORLD));
+  PetscLogStagePop(); // XXX: profiling
+
+  PetscCall(PetscBarrier(NULL));
   double start_time, end_time;
   start_time = MPI_Wtime();
 
+  // XXX: profiling
+  PetscLogStage inner_solver_stage;
+  PetscLogStage outer_solver_stage;
+  PetscLogStage last_stage;
+  PetscLogStageRegister("I_Solver stage", &inner_solver_stage);
+  PetscLogStageRegister("O_Solver stage", &outer_solver_stage);
+  PetscLogStageRegister("Last stage", &last_stage);
+
+  // XXX: profiling
   do
   {
+
+    // XXX: profiling
+    PetscLogStagePush(inner_solver_stage);
+    // XXX: profiling
 
     n_vectors_inserted = 0;
 
@@ -241,6 +262,11 @@ int main(int argc, char **argv)
 
     PetscCall(MatAssemblyBegin(S, MAT_FINAL_ASSEMBLY));
     PetscCall(MatAssemblyEnd(S, MAT_FINAL_ASSEMBLY));
+    PetscLogStagePop(); // XXX: profiling
+
+    // XXX: profiling
+    PetscLogStagePush(outer_solver_stage);
+    // XXX: profiling
 
     PetscCall(getHalfSubMatrixFromR(R, R_block_jacobi_subMat, n_mesh_lines, n_mesh_columns, rank_jacobi_block));
     PetscCall(MatMatMult(A_block_jacobi_resdistributed, S, MAT_REUSE_MATRIX, PETSC_DETERMINE, &R_block_jacobi_subMat[rank_jacobi_block]));
@@ -267,10 +293,20 @@ int main(int argc, char **argv)
 
     number_of_iterations = number_of_iterations + 1;
 
+    PetscLogStagePop(); // XXX: profiling
+
   } while (send_signal != CONVERGENCE_SIGNAL);
 
-  PetscCallMPI(MPI_Barrier(MPI_COMM_WORLD));
+
+
+  PetscCall(PetscBarrier(NULL));
   end_time = MPI_Wtime();
+
+  PetscCall(PetscBarrier(NULL));
+  // XXX: profiling
+  PetscLogStagePush(last_stage);
+  // XXX: profiling
+
   PetscCall(printElapsedTime(start_time, end_time));
   PetscCall(printTotalNumberOfIterations_2(comm_jacobi_block, rank_jacobi_block, number_of_iterations, s));
 
@@ -360,6 +396,8 @@ int main(int argc, char **argv)
 
   PetscCall(PetscSubcommDestroy(&sub_comm_context));
   PetscCall(PetscCommDestroy(&dcomm));
+
+  PetscLogStagePop(); // XXX: profiling
   PetscCall(PetscFinalize());
   return 0;
 }
