@@ -81,8 +81,8 @@ int main(int argc, char **argv)
 
   // XXX: profiling
   PetscLogStage loading_stage;
-  PetscLogStageRegister("Loading stage", &loading_stage);
-  PetscLogStagePush(loading_stage);
+  PetscCall(PetscLogStageRegister("Loading stage", &loading_stage));
+  PetscCall(PetscLogStagePush(loading_stage));
   // XXX: profiling
 
   PetscCall(computeDimensionRelatedVariables(nprocs, nprocs_per_jacobi_block, proc_global_rank, n_mesh_lines, n_mesh_columns, &njacobi_blocks, &rank_jacobi_block, &proc_local_rank, &n_mesh_points, &jacobi_block_size));
@@ -144,6 +144,9 @@ int main(int argc, char **argv)
   PetscCall(PetscMalloc1(R_local_values_count, &rcv_minimization_data_buffer));
 
   PetscCall(create_matrix_dense(comm_jacobi_block, &S, n_mesh_points, s, MATMPIDENSE));
+  PetscCall(MatZeroEntries(S));
+  PetscCall(MatAssemblyBegin(S, MAT_FINAL_ASSEMBLY));
+  PetscCall(MatAssemblyEnd(S, MAT_FINAL_ASSEMBLY));
 
   // PetscCall(create_matrix_dense(comm_jacobi_block, &R_transpose_R, s, s, MATMPIDENSE));
   // PetscCall(create_vector(comm_jacobi_block, &vec_R_transpose_b_block_jacobi, s, VECMPI));
@@ -215,11 +218,14 @@ int main(int argc, char **argv)
   PetscCall(MatGetOwnershipRange(R, &rstart_matrix_R, &rend_matrix_R));
   PetscCall(MatGetOwnershipRange(S, &rstart_matrix_S, &rend_matrix_S));
 
+  PetscInt *global_cols_idx;
+  PetscInt *global_rows_idx;
+  PetscInt *local_row_indices;
 
+  PetscCall(PetscMalloc1((rend_matrix_S - rstart_matrix_S), &global_rows_idx));
+  PetscCall(PetscMalloc1(s, &global_cols_idx));
+  PetscCall(PetscMalloc1(nlocal_rows_x, &local_row_indices));
 
-  PetscInt global_cols_idx[s];
-  PetscInt global_rows_idx[(rend_matrix_S - rstart_matrix_S)];
-  PetscInt local_row_indices[nlocal_rows_x];
   for (PetscInt i = 0; i < s; i++)
   {
     global_cols_idx[i] = i;
@@ -230,6 +236,10 @@ int main(int argc, char **argv)
     global_rows_idx[i] = row;
     local_row_indices[i] = i;
   }
+
+  
+  // PetscCall(PetscFinalize());
+  // return 0;
 
   PetscCall(ISLocalToGlobalMappingCreate(PETSC_COMM_SELF, 1, nlocal_rows_x, global_rows_idx, PETSC_COPY_VALUES, &rmapping));
   PetscCall(ISLocalToGlobalMappingCreate(PETSC_COMM_SELF, 1, s, global_cols_idx, PETSC_COPY_VALUES, &cmapping));
@@ -245,9 +255,9 @@ int main(int argc, char **argv)
   const PetscScalar *vals = NULL;
 
   PetscLogEvent USER_EVENT;
-  PetscLogEventRegister("outer_solve", 0, &USER_EVENT);
+  PetscCall(PetscLogEventRegister("outer_solve", 0, &USER_EVENT));
 
-  PetscLogStagePop(); // XXX: profiling
+  PetscCall(PetscLogStagePop()); // XXX: profiling
 
   PetscCall(PetscBarrier(NULL));
   double start_time, end_time;
@@ -257,16 +267,16 @@ int main(int argc, char **argv)
   PetscLogStage inner_solver_stage;
   PetscLogStage outer_solver_stage;
   PetscLogStage last_stage;
-  PetscLogStageRegister("I_Solver stage", &inner_solver_stage);
-  PetscLogStageRegister("O_Solver stage", &outer_solver_stage);
-  PetscLogStageRegister("Last stage", &last_stage);
+  PetscCall(PetscLogStageRegister("I_Solver stage", &inner_solver_stage));
+  PetscCall(PetscLogStageRegister("O_Solver stage", &outer_solver_stage));
+  PetscCall(PetscLogStageRegister("Last stage", &last_stage));
 
   // XXX: profiling
   do
   {
 
     // XXX: profiling
-    PetscLogStagePush(inner_solver_stage);
+    PetscCall(PetscLogStagePush(inner_solver_stage));
     // XXX: profiling
 
     basis_vector_i = 0;
@@ -296,7 +306,7 @@ int main(int argc, char **argv)
 
     PetscCall(MatAssemblyBegin(S, MAT_FINAL_ASSEMBLY));
     PetscCall(MatAssemblyEnd(S, MAT_FINAL_ASSEMBLY));
-    PetscLogStagePop(); // XXX: profiling
+    PetscCall(PetscLogStagePop()); // XXX: profiling
 
     // if (rank_jacobi_block == 0)
     //   PetscCall(MatView(S, PETSC_VIEWER_STDOUT_(comm_jacobi_block)));
@@ -305,7 +315,7 @@ int main(int argc, char **argv)
     // return 0;
 
     // XXX: profiling
-    PetscLogStagePush(outer_solver_stage);
+    PetscCall(PetscLogStagePush(outer_solver_stage));
     // XXX: profiling
 
     PetscCall(getHalfSubMatrixFromR(R, R_block_jacobi_subMat, n_mesh_lines, n_mesh_columns, rank_jacobi_block));
@@ -314,9 +324,9 @@ int main(int argc, char **argv)
 
     PetscCall(comm_sync_send_and_receive_minimization(R, send_minimization_data_buffer, rcv_minimization_data_buffer, R_local_values_count, message_dest, message_source, rank_jacobi_block, idx_non_current_block, n_mesh_points, rstart_matrix_R, rend_matrix_R, lda, s));
 
-    PetscLogEventBegin(USER_EVENT, 0, 0, 0, 0);
+    PetscCall(PetscLogEventBegin(USER_EVENT, 0, 0, 0, 0));
     PetscCall(outer_solver_norm_equation(comm_jacobi_block, outer_ksp, x_minimized, R, S, alpha, b, rank_jacobi_block, number_of_iterations));
-    PetscLogEventEnd(USER_EVENT, 0, 0, 0, 0);
+    PetscCall(PetscLogEventEnd(USER_EVENT, 0, 0, 0, 0));
 
     PetscScalar direct_residual_norm;
     PetscCall(computeFinalResidualNorm(A_block_jacobi, x_minimized, b_block_jacobi, rank_jacobi_block, proc_local_rank, &direct_residual_norm));
@@ -333,7 +343,7 @@ int main(int argc, char **argv)
 
     number_of_iterations = number_of_iterations + 1;
 
-    PetscLogStagePop(); // XXX: profiling
+    PetscCall(PetscLogStagePop()); // XXX: profiling
 
   } while (send_signal != CONVERGENCE_SIGNAL);
 
@@ -342,7 +352,7 @@ int main(int argc, char **argv)
 
   PetscCall(PetscBarrier(NULL));
   // XXX: profiling
-  PetscLogStagePush(last_stage);
+  PetscCall(PetscLogStagePush(last_stage));
   // XXX: profiling
 
   PetscCall(printElapsedTime(start_time, end_time));
@@ -435,7 +445,7 @@ int main(int argc, char **argv)
   PetscCall(PetscSubcommDestroy(&sub_comm_context));
   PetscCall(PetscCommDestroy(&dcomm));
 
-  PetscLogStagePop(); // XXX: profiling
+  PetscCall(PetscLogStagePop()); // XXX: profiling
   PetscCall(PetscFinalize());
   return 0;
 }
