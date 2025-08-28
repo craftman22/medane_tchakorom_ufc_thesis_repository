@@ -77,6 +77,18 @@ int main(int argc, char **argv)
   PetscCall(PetscOptionsGetInt(NULL, NULL, "-npb", &nprocs_per_jacobi_block, NULL));
   PetscCall(PetscOptionsGetReal(NULL, NULL, "-rtol", &relative_tolerance, NULL));
 
+  // XXX: profiling
+  PetscLogStage loading_stage;
+  PetscCall(PetscLogStageRegister("Loading stage", &loading_stage));
+  PetscLogStage inner_solver_stage;
+  PetscLogStage outer_solver_stage;
+  PetscLogStage last_stage;
+  PetscCall(PetscLogStageRegister("I_Solver stage", &inner_solver_stage));
+  PetscCall(PetscLogStageRegister("O_Solver stage", &outer_solver_stage));
+  PetscCall(PetscLogStageRegister("Last stage", &last_stage));
+  PetscCall(PetscLogStagePush(loading_stage)); // XXX: profiling
+  // XXX: profiling
+
   PetscCall(computeDimensionRelatedVariables(nprocs, nprocs_per_jacobi_block, proc_global_rank, n_mesh_lines, n_mesh_columns, &njacobi_blocks, &rank_jacobi_block, &proc_local_rank, &n_mesh_points, &jacobi_block_size));
   PetscAssert((n_mesh_points % nprocs == 0), PETSC_COMM_WORLD, PETSC_ERR_ARG_SIZ, "Number of grid points should be divisible by the number of procs \n Programm exit ...\n");
   sub_comm_context = NULL;
@@ -93,8 +105,8 @@ int main(int argc, char **argv)
   Vec x_block_jacobi[njacobi_blocks];
   VecScatter scatter_jacobi_vec_part_to_merged_vec[njacobi_blocks];
   IS is_merged_vec[njacobi_blocks];
-  Mat R_transpose_R = NULL;
-  Vec vec_R_transpose_b_block_jacobi = NULL;
+  // Mat R_transpose_R = NULL;
+  // Vec vec_R_transpose_b_block_jacobi = NULL;
   Vec alpha = NULL;
   PetscMPIInt broadcast_message = NO_MESSAGE;
   PetscMPIInt message_source = (idx_non_current_block * nprocs_per_jacobi_block) + proc_local_rank;
@@ -116,9 +128,9 @@ int main(int argc, char **argv)
 
   PetscCall(create_matrix_dense(comm_jacobi_block, &S, n_mesh_points, s, MATMPIDENSE));
 
-  PetscCall(create_matrix_dense(comm_jacobi_block, &R_transpose_R, s, s, MATMPIDENSE));
+  // PetscCall(create_matrix_dense(comm_jacobi_block, &R_transpose_R, s, s, MATMPIDENSE));
 
-  PetscCall(create_vector(comm_jacobi_block, &vec_R_transpose_b_block_jacobi, s, VECMPI));
+  // PetscCall(create_vector(comm_jacobi_block, &vec_R_transpose_b_block_jacobi, s, VECMPI));
   PetscCall(create_vector(comm_jacobi_block, &alpha, s, VECMPI));
   // PetscCall(VecSet(alpha, 0.0));
   PetscCall(create_vector(comm_jacobi_block, &x, n_mesh_points, VECMPI));
@@ -193,7 +205,6 @@ int main(int argc, char **argv)
   PetscCall(VecNorm(b, NORM_2, &b_norm));
   PetscPrintf(MPI_COMM_SELF, "rank block %d b norm %e \n", rank_jacobi_block, b_norm);
 
-  
   PetscScalar norm;
   PetscScalar global_norm_0 = 0.0;
   PetscCall(computeFinalResidualNorm(A_block_jacobi, x_minimized, b_block_jacobi, rank_jacobi_block, proc_local_rank, &global_norm_0));
@@ -201,12 +212,18 @@ int main(int argc, char **argv)
   PetscLogEvent USER_EVENT;
   PetscLogEventRegister("outer_solve", 0, &USER_EVENT);
 
-  PetscCallMPI(MPI_Barrier(MPI_COMM_WORLD));
+  PetscCall(PetscLogStagePop()); // XXX: profiling
+
+  PetscCall(PetscBarrier(NULL));
   double start_time, end_time;
   start_time = MPI_Wtime();
 
   do
   {
+
+    // XXX: profiling
+    PetscCall(PetscLogStagePush(inner_solver_stage));
+    // XXX: profiling
 
     n_vectors_inserted = 0;
 
@@ -232,13 +249,17 @@ int main(int argc, char **argv)
 
     PetscCall(MatAssemblyBegin(S, MAT_FINAL_ASSEMBLY));
     PetscCall(MatAssemblyEnd(S, MAT_FINAL_ASSEMBLY));
+    PetscCall(PetscLogStagePop()); // XXX: profiling
+
+    // XXX: profiling
+    PetscCall(PetscLogStagePush(outer_solver_stage));
+    // XXX: profiling
 
     PetscCall(MatMatMult(A_block_jacobi, S, MAT_REUSE_MATRIX, PETSC_DETERMINE, &R));
 
     PetscLogEventBegin(USER_EVENT, 0, 0, 0, 0);
     PetscCall(outer_solver_norm_equation_modify(comm_jacobi_block, outer_ksp, x_minimized, R, S, alpha, b_block_jacobi[rank_jacobi_block], rank_jacobi_block, number_of_iterations, message_dest, message_source));
     PetscLogEventEnd(USER_EVENT, 0, 0, 0, 0);
-
 
     PetscCall(computeFinalResidualNorm(A_block_jacobi, x_minimized, b_block_jacobi, rank_jacobi_block, proc_local_rank, &norm));
     PetscCall(printFinalResidualNorm(norm));
@@ -253,10 +274,19 @@ int main(int argc, char **argv)
 
     number_of_iterations = number_of_iterations + 1;
 
+    PetscCall(PetscLogStagePop()); // XXX: profiling
+
   } while (broadcast_message != TERMINATE_SIGNAL);
 
-  PetscCallMPI(MPI_Barrier(MPI_COMM_WORLD));
+  PetscCall(PetscBarrier(NULL));
   end_time = MPI_Wtime();
+
+  PetscCall(PetscBarrier(NULL));
+  // XXX: profiling
+  PetscCall(PetscLogStagePush(last_stage));
+  // XXX: profiling
+
+  PetscCall(PetscBarrier(NULL));
   PetscCall(printElapsedTime(start_time, end_time));
   PetscCall(printTotalNumberOfIterations_2(comm_jacobi_block, rank_jacobi_block, number_of_iterations, s));
 
@@ -293,15 +323,18 @@ int main(int argc, char **argv)
   PetscCall(MatDestroy(&S));
   PetscCall(MatDestroy(&R));
 
+
+
   PetscCall(KSPDestroy(&inner_ksp));
   PetscCall(KSPDestroy(&outer_ksp));
-  PetscCall(MatDestroy(&R_transpose_R));
-  PetscCall(VecDestroy(&vec_R_transpose_b_block_jacobi));
+  // PetscCall(MatDestroy(&R_transpose_R));
   PetscCall(VecDestroy(&alpha));
+  // PetscCall(VecDestroy(&vec_R_transpose_b_block_jacobi));
 
   PetscCall(PetscSubcommDestroy(&sub_comm_context));
   PetscCall(PetscCommDestroy(&dcomm));
 
+  PetscCall(PetscLogStagePop()); // XXX: profiling
   PetscCall(PetscFinalize());
   return 0;
 }

@@ -82,8 +82,15 @@ int main(int argc, char **argv)
   // XXX: profiling
   PetscLogStage loading_stage;
   PetscCall(PetscLogStageRegister("Loading stage", &loading_stage));
-  PetscCall(PetscLogStagePush(loading_stage));
+  PetscLogStage inner_solver_stage;
+  PetscLogStage outer_solver_stage;
+  PetscLogStage last_stage;
+  PetscCall(PetscLogStageRegister("I_Solver stage", &inner_solver_stage));
+  PetscCall(PetscLogStageRegister("O_Solver stage", &outer_solver_stage));
+  PetscCall(PetscLogStageRegister("Last stage", &last_stage));
+  PetscCall(PetscLogStagePush(loading_stage)); // XXX: profiling
   // XXX: profiling
+
 
   PetscCall(computeDimensionRelatedVariables(nprocs, nprocs_per_jacobi_block, proc_global_rank, n_mesh_lines, n_mesh_columns, &njacobi_blocks, &rank_jacobi_block, &proc_local_rank, &n_mesh_points, &jacobi_block_size));
   PetscAssert((n_mesh_points % nprocs == 0), PETSC_COMM_WORLD, PETSC_ERR_ARG_SIZ, "Number of grid points should be divisible by the number of procs \n Programm exit ...\n");
@@ -237,7 +244,6 @@ int main(int argc, char **argv)
     local_row_indices[i] = i;
   }
 
-  
   // PetscCall(PetscFinalize());
   // return 0;
 
@@ -263,15 +269,6 @@ int main(int argc, char **argv)
   double start_time, end_time;
   start_time = MPI_Wtime();
 
-  // XXX: profiling
-  PetscLogStage inner_solver_stage;
-  PetscLogStage outer_solver_stage;
-  PetscLogStage last_stage;
-  PetscCall(PetscLogStageRegister("I_Solver stage", &inner_solver_stage));
-  PetscCall(PetscLogStageRegister("O_Solver stage", &outer_solver_stage));
-  PetscCall(PetscLogStageRegister("Last stage", &last_stage));
-
-  // XXX: profiling
   do
   {
 
