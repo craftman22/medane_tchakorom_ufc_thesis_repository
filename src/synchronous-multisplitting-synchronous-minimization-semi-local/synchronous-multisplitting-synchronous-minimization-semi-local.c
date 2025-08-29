@@ -301,16 +301,20 @@ int main(int argc, char **argv)
     PetscCall(outer_solver_norm_equation_modify(comm_jacobi_block, outer_ksp, x_minimized, R, S, alpha, b_block_jacobi[rank_jacobi_block], rank_jacobi_block, number_of_iterations, message_dest, message_source));
     PetscLogEventEnd(USER_EVENT, 0, 0, 0, 0);
 
-    PetscCall(computeFinalResidualNorm(A_block_jacobi, x_minimized, b_block_jacobi, rank_jacobi_block, proc_local_rank, &norm));
-    PetscCall(printFinalResidualNorm(norm));
-    if (norm <= PetscMax(absolute_tolerance, relative_tolerance * global_norm_0))
+    if (number_of_iterations >= 23)
     {
-      send_signal = CONVERGENCE_SIGNAL;
+
+      PetscCall(computeFinalResidualNorm(A_block_jacobi, x_minimized, b_block_jacobi, rank_jacobi_block, proc_local_rank, &norm));
+      PetscCall(printFinalResidualNorm(norm));
+      if (norm <= PetscMax(absolute_tolerance, relative_tolerance * global_norm_0))
+      {
+        send_signal = CONVERGENCE_SIGNAL;
+      }
+
+      PetscCall(comm_sync_convergence_detection(&broadcast_message, send_signal, rcv_signal, message_dest, message_source, rank_jacobi_block, idx_non_current_block, proc_local_rank));
+
+      PetscCallMPI(MPI_Bcast(&broadcast_message, ONE, MPIU_INT, ROOT_NODE, comm_jacobi_block));
     }
-
-    PetscCall(comm_sync_convergence_detection(&broadcast_message, send_signal, rcv_signal, message_dest, message_source, rank_jacobi_block, idx_non_current_block, proc_local_rank));
-
-    PetscCallMPI(MPI_Bcast(&broadcast_message, ONE, MPIU_INT, ROOT_NODE, comm_jacobi_block));
 
     number_of_iterations = number_of_iterations + 1;
 
