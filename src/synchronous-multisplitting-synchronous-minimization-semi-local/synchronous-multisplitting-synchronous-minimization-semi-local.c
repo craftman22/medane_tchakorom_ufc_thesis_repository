@@ -49,7 +49,8 @@ int main(int argc, char **argv)
   // PetscScalar current_iterate_norm_inf = PETSC_MAX_REAL;
   KSP inner_ksp = NULL;
   KSP outer_ksp = NULL;
-  PetscMPIInt vec_local_size = ZERO;
+  PetscMPIInt nlocal_rows_x_block = ZERO;
+  PetscMPIInt nlocal_rows_x = ZERO;
 
   PetscInt *vec_local_idx = NULL;
   PetscInt x_local_size;
@@ -59,7 +60,7 @@ int main(int argc, char **argv)
 
   Mat R = NULL;
   Mat S = NULL;
-  PetscInt n_vectors_inserted;
+  PetscInt basis_vector_i;
   Vec x_minimized = NULL;
   Vec x_minimized_prev_iteration = NULL;
   Vec local_iterates_difference = NULL;
@@ -99,12 +100,17 @@ int main(int argc, char **argv)
   comm_jacobi_block = PetscSubcommChild(sub_comm_context);
 
   idx_non_current_block = (rank_jacobi_block == ZERO) ? ONE : ZERO;
+
+  ISLocalToGlobalMapping rmapping;
+  ISLocalToGlobalMapping cmapping;
   IS is_cols_block_jacobi[njacobi_blocks];
   Mat A_block_jacobi_subMat[njacobi_blocks];
   Vec b_block_jacobi[njacobi_blocks];
   Vec x_block_jacobi[njacobi_blocks];
   VecScatter scatter_jacobi_vec_part_to_merged_vec[njacobi_blocks];
   IS is_merged_vec[njacobi_blocks];
+  PetscInt rstart_matrix_S, rend_matrix_S;
+  // PetscInt rstart_matrix_R, rend_matrix_R;
   // Mat R_transpose_R = NULL;
   // Vec vec_R_transpose_b_block_jacobi = NULL;
   Vec alpha = NULL;
@@ -178,8 +184,8 @@ int main(int argc, char **argv)
     PetscCall(initializeKSP(comm_jacobi_block, &outer_ksp, R, rank_jacobi_block, PETSC_TRUE, "outer2_", "outer2_"));
   }
 
-  PetscCall(VecGetLocalSize(x_block_jacobi[rank_jacobi_block], &vec_local_size));
-
+  PetscCall(VecGetLocalSize(x_block_jacobi[rank_jacobi_block], &nlocal_rows_x_block));
+  PetscCall(VecGetLocalSize(x, &nlocal_rows_x));
   PetscCall(create_vector(comm_jacobi_block, &x_minimized, n_mesh_points, VECMPI));
   PetscCall(VecSet(x_minimized, ZERO));
 
@@ -197,6 +203,34 @@ int main(int argc, char **argv)
   PetscCall(PetscMalloc1(x_local_size, &vector_to_insert_into_S));
   PetscCall(VecDuplicate(x_minimized, &local_iterates_difference));
 
+  PetscCall(MatGetOwnershipRange(S, &rstart_matrix_S, &rend_matrix_S));
+
+  PetscInt *global_cols_idx;
+  PetscInt *global_rows_idx;
+  PetscInt *local_row_indices;
+
+  PetscCall(PetscMalloc1((rend_matrix_S - rstart_matrix_S), &global_rows_idx));
+  PetscCall(PetscMalloc1(s, &global_cols_idx));
+  PetscCall(PetscMalloc1(nlocal_rows_x, &local_row_indices));
+
+  for (PetscInt i = 0; i < s; i++)
+  {
+    global_cols_idx[i] = i;
+  }
+
+  for (PetscInt row = rstart_matrix_S, i = 0; row < rend_matrix_S; row++, i++)
+  {
+    global_rows_idx[i] = row;
+    local_row_indices[i] = i;
+  }
+
+  // PetscCall(PetscFinalize());
+  // return 0;
+
+  PetscCall(ISLocalToGlobalMappingCreate(PETSC_COMM_SELF, 1, nlocal_rows_x, global_rows_idx, PETSC_COPY_VALUES, &rmapping));
+  PetscCall(ISLocalToGlobalMappingCreate(PETSC_COMM_SELF, 1, s, global_cols_idx, PETSC_COPY_VALUES, &cmapping));
+  PetscCall(MatSetLocalToGlobalMapping(S, rmapping, cmapping));
+
   PetscScalar initial_global_residual_norm;
   PetscCall(computeFinalResidualNorm(A_block_jacobi, x_minimized, b_block_jacobi, rank_jacobi_block, proc_local_rank, &initial_global_residual_norm));
   PetscCall(printFinalResidualNorm(initial_global_residual_norm));
@@ -208,6 +242,8 @@ int main(int argc, char **argv)
   PetscScalar norm;
   PetscScalar global_norm_0 = 0.0;
   PetscCall(computeFinalResidualNorm(A_block_jacobi, x_minimized, b_block_jacobi, rank_jacobi_block, proc_local_rank, &global_norm_0));
+
+  const PetscScalar *vals = NULL;
 
   PetscLogEvent USER_EVENT;
   PetscLogEventRegister("outer_solve", 0, &USER_EVENT);
@@ -225,26 +261,30 @@ int main(int argc, char **argv)
     PetscCall(PetscLogStagePush(inner_solver_stage));
     // XXX: profiling
 
-    n_vectors_inserted = 0;
+    basis_vector_i = 0;
 
-    while (n_vectors_inserted < s)
+    while (basis_vector_i < s)
     {
 
       PetscCall(updateLocalRHS(A_block_jacobi_subMat[idx_non_current_block], x_block_jacobi[idx_non_current_block], b_block_jacobi[rank_jacobi_block], local_right_side_vector));
 
       PetscCall(inner_solver(comm_jacobi_block, inner_ksp, A_block_jacobi_subMat, x_block_jacobi, b_block_jacobi, local_right_side_vector, rank_jacobi_block, NULL, number_of_iterations));
 
-      PetscCall(comm_sync_send_and_receive(x_block_jacobi, vec_local_size, message_dest, message_source, rank_jacobi_block, idx_non_current_block));
+      PetscCall(comm_sync_send_and_receive(x_block_jacobi, nlocal_rows_x_block, message_dest, message_source, rank_jacobi_block, idx_non_current_block));
 
       PetscCall(VecScatterBegin(scatter_jacobi_vec_part_to_merged_vec[rank_jacobi_block], x_block_jacobi[rank_jacobi_block], x, INSERT_VALUES, SCATTER_FORWARD));
       PetscCall(VecScatterEnd(scatter_jacobi_vec_part_to_merged_vec[rank_jacobi_block], x_block_jacobi[rank_jacobi_block], x, INSERT_VALUES, SCATTER_FORWARD));
       PetscCall(VecScatterBegin(scatter_jacobi_vec_part_to_merged_vec[idx_non_current_block], x_block_jacobi[idx_non_current_block], x, INSERT_VALUES, SCATTER_FORWARD));
       PetscCall(VecScatterEnd(scatter_jacobi_vec_part_to_merged_vec[idx_non_current_block], x_block_jacobi[idx_non_current_block], x, INSERT_VALUES, SCATTER_FORWARD));
 
-      PetscCall(VecGetValues(x, x_local_size, vec_local_idx, vector_to_insert_into_S));
-      PetscCall(MatSetValuesLocal(S, x_local_size, vec_local_idx, ONE, &n_vectors_inserted, vector_to_insert_into_S, INSERT_VALUES));
+      // PetscCall(VecGetValues(x, x_local_size, vec_local_idx, vector_to_insert_into_S));
+      // PetscCall(MatSetValuesLocal(S, x_local_size, vec_local_idx, ONE, &basis_vector_i, vector_to_insert_into_S, INSERT_VALUES));
 
-      n_vectors_inserted++;
+      PetscCall(VecGetArrayRead(x, &vals));
+      PetscCall(MatSetValuesLocal(S, nlocal_rows_x, local_row_indices, 1, &basis_vector_i, vals, INSERT_VALUES));
+      PetscCall(VecRestoreArrayRead(x, &vals));
+
+      basis_vector_i++;
     }
 
     PetscCall(MatAssemblyBegin(S, MAT_FINAL_ASSEMBLY));
@@ -324,8 +364,8 @@ int main(int argc, char **argv)
 
   PetscCall(KSPDestroy(&inner_ksp));
   PetscCall(KSPDestroy(&outer_ksp));
-  // PetscCall(MatDestroy(&R_transpose_R));
   PetscCall(VecDestroy(&alpha));
+  // PetscCall(MatDestroy(&R_transpose_R));
   // PetscCall(VecDestroy(&vec_R_transpose_b_block_jacobi));
 
   PetscCall(PetscSubcommDestroy(&sub_comm_context));
