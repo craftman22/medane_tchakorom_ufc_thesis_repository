@@ -1068,7 +1068,7 @@ PetscErrorCode outer_solver_norm_equation_modify(MPI_Comm comm_jacobi_block, KSP
   PetscInt n_iterations = 0;
   PetscCall(KSPGetIterationNumber(outer_ksp, &n_iterations));
 
-  PetscCall(printOuterSolverIterations(comm_jacobi_block, rank_jacobi_block, n_iterations, outer_iteration_number));
+  // PetscCall(printOuterSolverIterations(comm_jacobi_block, rank_jacobi_block, n_iterations, outer_iteration_number));
 
   // PetscCall(VecView(intermediate_solution_alpha, PETSC_VIEWER_STDOUT_(comm_jacobi_block)));
 
