@@ -6,6 +6,7 @@
 #define ONE 1
 #define MINUS_ONE -1
 
+
 #define INNER_KSP_PREFIX "inner_"
 #define INNER_PC_PREFIX "inner_"
 
@@ -37,6 +38,9 @@
 
 
 #define MAX_NEIGHBORS 50
+
+
+#define ROOT_NODE 0
 
 // #define CONVERGENCE_COUNT_MIN 4
 

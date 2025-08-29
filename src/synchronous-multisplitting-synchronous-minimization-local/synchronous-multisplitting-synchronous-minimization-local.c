@@ -255,7 +255,7 @@ int main(int argc, char **argv)
     }
 
     PetscCall(comm_sync_convergence_detection(&broadcast_message, send_signal, rcv_signal, message_dest, message_source, rank_jacobi_block, idx_non_current_block, proc_local_rank));
-    PetscCallMPI(MPI_Bcast(&broadcast_message, ONE, MPIU_INT, proc_local_rank, comm_jacobi_block));
+    PetscCallMPI(MPI_Bcast(&broadcast_message, ONE, MPIU_INT, ROOT_NODE, comm_jacobi_block));
 
     number_of_iterations = number_of_iterations + 1;
 

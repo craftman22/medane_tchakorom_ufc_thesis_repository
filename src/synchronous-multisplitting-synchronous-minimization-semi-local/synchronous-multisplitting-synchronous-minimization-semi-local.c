@@ -270,7 +270,7 @@ int main(int argc, char **argv)
 
     PetscCall(comm_sync_convergence_detection(&broadcast_message, send_signal, rcv_signal, message_dest, message_source, rank_jacobi_block, idx_non_current_block, proc_local_rank));
 
-    PetscCallMPI(MPI_Bcast(&broadcast_message, ONE, MPIU_INT, proc_local_rank, comm_jacobi_block));
+    PetscCallMPI(MPI_Bcast(&broadcast_message, ONE, MPIU_INT, ROOT_NODE, comm_jacobi_block));
 
     number_of_iterations = number_of_iterations + 1;
 
@@ -278,20 +278,14 @@ int main(int argc, char **argv)
 
   } while (broadcast_message != TERMINATE_SIGNAL);
 
-  PetscCall(PetscPrintf(PETSC_COMM_SELF,"SORTIE_/  proc %d \n", proc_global_rank));
   PetscCall(PetscBarrier(NULL));
   end_time = MPI_Wtime();
   PetscCall(PetscBarrier(NULL));
-  PetscCall(PetscPrintf(PETSC_COMM_SELF,"SORTIE_// proc %d \n", proc_global_rank));
 
-
-
-  
   // XXX: profiling
   PetscCall(PetscLogStagePush(last_stage));
   // XXX: profiling
 
- 
   PetscCall(printElapsedTime(start_time, end_time));
   PetscCall(printTotalNumberOfIterations_2(comm_jacobi_block, rank_jacobi_block, number_of_iterations, s));
 
@@ -327,8 +321,6 @@ int main(int argc, char **argv)
   PetscCall(MatDestroy(&A_block_jacobi));
   PetscCall(MatDestroy(&S));
   PetscCall(MatDestroy(&R));
-
-
 
   PetscCall(KSPDestroy(&inner_ksp));
   PetscCall(KSPDestroy(&outer_ksp));
