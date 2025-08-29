@@ -278,9 +278,13 @@ int main(int argc, char **argv)
 
   } while (broadcast_message != TERMINATE_SIGNAL);
 
+  PetscCall(PetscPrintf(PETSC_COMM_SELF,"SORTIE_/  proc %d \n", proc_global_rank));
   PetscCall(PetscBarrier(NULL));
   end_time = MPI_Wtime();
   PetscCall(PetscBarrier(NULL));
+  PetscCall(PetscPrintf(PETSC_COMM_SELF,"SORTIE_// proc %d \n", proc_global_rank));
+
+
 
   
   // XXX: profiling
