@@ -280,13 +280,14 @@ int main(int argc, char **argv)
 
   PetscCall(PetscBarrier(NULL));
   end_time = MPI_Wtime();
-
   PetscCall(PetscBarrier(NULL));
+
+  
   // XXX: profiling
   PetscCall(PetscLogStagePush(last_stage));
   // XXX: profiling
 
-  PetscCall(PetscBarrier(NULL));
+ 
   PetscCall(printElapsedTime(start_time, end_time));
   PetscCall(printTotalNumberOfIterations_2(comm_jacobi_block, rank_jacobi_block, number_of_iterations, s));
 

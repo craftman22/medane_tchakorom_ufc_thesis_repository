@@ -267,8 +267,9 @@ int main(int argc, char **argv)
 
   PetscCallMPI(MPI_Barrier(MPI_COMM_WORLD));
   end_time = MPI_Wtime();
-
   PetscCall(PetscBarrier(NULL));
+
+
   // XXX: profiling
   PetscCall(PetscLogStagePush(last_stage));
   // XXX: profiling
