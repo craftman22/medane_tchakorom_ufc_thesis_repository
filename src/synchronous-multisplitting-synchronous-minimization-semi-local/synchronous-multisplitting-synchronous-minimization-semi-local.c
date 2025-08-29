@@ -301,7 +301,7 @@ int main(int argc, char **argv)
     PetscCall(outer_solver_norm_equation_modify(comm_jacobi_block, outer_ksp, x_minimized, R, S, alpha, b_block_jacobi[rank_jacobi_block], rank_jacobi_block, number_of_iterations, message_dest, message_source));
     PetscLogEventEnd(USER_EVENT, 0, 0, 0, 0);
 
-    if (number_of_iterations >= 23)
+    if (number_of_iterations >= 48)
     {
 
       PetscCall(computeFinalResidualNorm(A_block_jacobi, x_minimized, b_block_jacobi, rank_jacobi_block, proc_local_rank, &norm));
