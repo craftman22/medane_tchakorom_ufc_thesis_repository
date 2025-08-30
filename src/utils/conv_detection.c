@@ -1,6 +1,6 @@
 #include "constants.h"
 #include "utils.h"
-#include "comm.h"
+// #include "comm.h"
 #include "conv_detection.h"
 
 PetscErrorCode comm_async_convDetection(PetscMPIInt rank_jacobi_block, PetscInt nbNeighbors, PetscInt *nbNeigNotLCV, PetscInt *neighbors, PetscInt *prevIterNumS, PetscInt *prevIterNumC, PetscInt *nbIterPreLocalCV, PetscBool *preLocalCV, PetscBool *sLocalCV, PetscBool *globalCV, PetscMPIInt *dest_node, PetscInt THRESHOLD_SLCV, PetscInt current_iteration, PetscMPIInt *cancelSPartialBuffer, MPI_Request *cancelSPartialRequest, PetscMPIInt *sendSPartialBuffer, MPI_Request *sendSPartialRequest)

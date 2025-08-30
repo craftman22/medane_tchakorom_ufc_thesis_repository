@@ -113,16 +113,23 @@ int main(int argc, char **argv)
     MPI_Request sendSPartialRequest;
     PetscLogDouble time_period_with_globalCV __attribute__((unused)) = 0.0;
     PetscLogDouble globalCV_timer = 0.0;
-    PetscLogDouble MAX_TRAVERSAL_TIME __attribute__((unused)) = 0.059680; // 13.21 ms
+    PetscLogDouble MAX_TRAVERSAL_TIME __attribute__((unused)) = 0.0; // 13.21 ms
     PetscInt MAX_NEIGHBORS = ONE;
 
     // FIXME: latency between all local root node
+
     PetscCall(PetscBarrier(NULL));
-    PetscCall(PetscPrintf(PETSC_COMM_WORLD, "Starting latency checking .... \n"));
-    PetscMPIInt proc_rank_node_1 = 0;
-    PetscMPIInt proc_rank_node_2 = 1;
-    PetscCall(comm_sync_measure_latency_between_two_nodes(proc_rank_node_1, proc_rank_node_2, proc_global_rank));
-    PetscCall(PetscBarrier(NULL));
+    if (proc_local_rank == 0)
+    {
+        PetscCall(PetscPrintf(PETSC_COMM_WORLD, "Starting latency checking .... \n"));
+        PetscMPIInt proc_rank_node_1 = 0;
+        PetscMPIInt proc_rank_node_2 = nprocs_per_jacobi_block;
+        PetscCall(comm_sync_measure_latency_between_two_nodes(proc_rank_node_1, proc_rank_node_2, proc_global_rank, &MAX_TRAVERSAL_TIME));
+    }
+
+    PetscCallMPI(MPI_Bcast(&MAX_TRAVERSAL_TIME, 1, MPI_DOUBLE, ROOT_NODE, PETSC_COMM_WORLD));
+
+    PetscCall(PetscPrintf(PETSC_COMM_SELF, "MAX_TRAVERSAL_TIME = %e \n", MAX_TRAVERSAL_TIME));
 
     if (proc_local_rank == 0)
     {

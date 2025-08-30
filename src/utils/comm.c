@@ -67,7 +67,6 @@ PetscErrorCode comm_async_test_and_send(Vec *x_block_jacobi, PetscScalar *send_b
         // PetscCall(mpi_pack_multisplitting_data(send_buffer, vec_local_size, current_number_of_iterations, pack_buffer, &position));
         // PetscCallMPI(MPI_Isend((*pack_buffer), position, MPI_PACKED, message_dest, TAG_MULTISPLITTING_DATA + rank_jacobi_block, MPI_COMM_WORLD, send_data_request));
         PetscCallMPI(MPI_Isend(send_buffer, vec_local_size, MPIU_SCALAR, message_dest, TAG_MULTISPLITTING_DATA, MPI_COMM_WORLD, send_data_request));
-
     }
 
     PetscFunctionReturn(PETSC_SUCCESS);
@@ -299,40 +298,6 @@ PetscErrorCode comm_async_test_and_send_min(Mat R, PetscScalar *send_minimizatio
     PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode comm_sync_measure_latency_between_two_nodes(PetscMPIInt proc_rank_node_1, PetscMPIInt proc_rank_node_2, PetscMPIInt actual_rank)
-{
-
-    PetscFunctionBeginUser;
-    PetscInt MSG_SIZE = 1;
-    PetscInt NUM_ITER = 100;
-    char msg[MSG_SIZE];
-    MPI_Status status;
-
-    if (actual_rank == proc_rank_node_1)
-    {
-        double start = MPI_Wtime();
-        for (int i = 0; i < NUM_ITER; i++)
-        {
-            PetscCallMPI(MPI_Send(msg, MSG_SIZE, MPI_CHAR, proc_rank_node_2, 0, MPI_COMM_WORLD));
-            PetscCallMPI(MPI_Recv(msg, MSG_SIZE, MPI_CHAR, proc_rank_node_2, 0, MPI_COMM_WORLD, &status));
-        }
-        double end = MPI_Wtime();
-        double rtt = (end - start) / NUM_ITER;
-        printf("Average round-trip time: %.6f ms\n", rtt * 1000);
-        printf("Estimated one-way latency: %.6f ms\n", (rtt * 1000) / 2);
-    }
-    else if (actual_rank == proc_rank_node_2)
-    {
-        for (int i = 0; i < NUM_ITER; i++)
-        {
-            PetscCallMPI(MPI_Recv(msg, MSG_SIZE, MPI_CHAR, proc_rank_node_1, 0, MPI_COMM_WORLD, &status));
-            PetscCallMPI(MPI_Send(msg, MSG_SIZE, MPI_CHAR, proc_rank_node_1, 0, MPI_COMM_WORLD));
-        }
-    }
-
-    PetscFunctionReturn(PETSC_SUCCESS);
-}
-
 PetscErrorCode mpi_pack_multisplitting_data(PetscScalar *send_buffer, PetscMPIInt data_size, PetscInt *version, char **pack_buffer, PetscMPIInt *position)
 {
 
@@ -366,6 +331,42 @@ PetscErrorCode mpi_unpack_multisplitting_data(PetscScalar *rcv_buffer, PetscMPII
     PetscMPIInt position = 0;
     PetscCallMPI(MPI_Unpack((*pack_buffer), pack_size, &position, version, 1, MPIU_INT, MPI_COMM_WORLD));
     PetscCallMPI(MPI_Unpack((*pack_buffer), pack_size, &position, rcv_buffer, data_size, MPIU_SCALAR, MPI_COMM_WORLD));
+
+    PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+PetscErrorCode comm_sync_measure_latency_between_two_nodes(PetscMPIInt proc_rank_node_1, PetscMPIInt proc_rank_node_2, PetscMPIInt actual_rank, PetscLogDouble *MAX_TRAVERSAL_TIME)
+{
+
+    PetscFunctionBeginUser;
+    PetscInt MSG_SIZE = 1;
+    PetscInt NUM_ITER = 100;
+    char msg[MSG_SIZE];
+    MPI_Status status;
+
+    if (actual_rank == proc_rank_node_1)
+    {
+        PetscLogDouble start = MPI_Wtime();
+        for (int i = 0; i < NUM_ITER; i++)
+        {
+            PetscCallMPI(MPI_Send(msg, MSG_SIZE, MPI_CHAR, proc_rank_node_2, 0, MPI_COMM_WORLD));
+            PetscCallMPI(MPI_Recv(msg, MSG_SIZE, MPI_CHAR, proc_rank_node_2, 0, MPI_COMM_WORLD, &status));
+        }
+        PetscLogDouble end = MPI_Wtime();
+        PetscLogDouble rtt = (end - start) / (NUM_ITER * 1.0);
+        PetscCall(PetscPrintf(PETSC_COMM_WORLD, "Average round-trip time: %.6f ms\n", rtt * 1000));
+
+        PetscCall(PetscPrintf(PETSC_COMM_WORLD, "Estimated one-way latency: %.6f ms\n", (rtt * 1000) / 2));
+        (*MAX_TRAVERSAL_TIME) = (rtt * 1000) / 2;
+    }
+    else if (actual_rank == proc_rank_node_2)
+    {
+        for (int i = 0; i < NUM_ITER; i++)
+        {
+            PetscCallMPI(MPI_Recv(msg, MSG_SIZE, MPI_CHAR, proc_rank_node_1, 0, MPI_COMM_WORLD, &status));
+            PetscCallMPI(MPI_Send(msg, MSG_SIZE, MPI_CHAR, proc_rank_node_1, 0, MPI_COMM_WORLD));
+        }
+    }
 
     PetscFunctionReturn(PETSC_SUCCESS);
 }

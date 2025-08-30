@@ -13,9 +13,10 @@ PetscErrorCode comm_async_recvGlobalCV(PetscMPIInt rank_jacobi_block, PetscBool 
 PetscErrorCode comm_async_sendGlobalCV(PetscMPIInt rank_jacobi_block, PetscInt nbNeighbors, PetscInt *neighbors, PetscBool *globalCV, MPI_Request *requests);
 
 
-PetscErrorCode comm_sync_measure_latency_between_two_nodes(PetscMPIInt proc_rank_node_1, PetscMPIInt proc_rank_node_2, PetscMPIInt actual_rank);
 
 
 PetscErrorCode build_spanning_tree(PetscMPIInt rank_jacobi_block, PetscInt *neighbors, PetscInt *nbNeighbors, PetscMPIInt proc_local_rank, PetscMPIInt nprocs_per_jacobi_block );
+
+// PetscErrorCode comm_sync_measure_latency_between_two_nodes(PetscMPIInt proc_rank_node_1, PetscMPIInt proc_rank_node_2, PetscMPIInt actual_rank);
 
 #endif // SHARED_CONV_DETECTION_FUNCTIONS_H
