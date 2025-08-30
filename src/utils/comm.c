@@ -58,7 +58,7 @@ PetscErrorCode comm_async_test_and_send(Vec *x_block_jacobi, PetscScalar *send_b
     PetscFunctionBeginUser;
 
     // PetscMPIInt position = 0;
-    MPI_Test(send_data_request, &send_data_flag, MPI_STATUS_IGNORE);
+    PetscCallMPI(MPI_Test(send_data_request, &send_data_flag, MPI_STATUS_IGNORE));
     if (send_data_flag)
     {
         PetscCall(VecGetArray(x_block_jacobi[rank_jacobi_block], &temp_buffer));
@@ -68,8 +68,6 @@ PetscErrorCode comm_async_test_and_send(Vec *x_block_jacobi, PetscScalar *send_b
         // PetscCallMPI(MPI_Isend((*pack_buffer), position, MPI_PACKED, message_dest, TAG_MULTISPLITTING_DATA + rank_jacobi_block, MPI_COMM_WORLD, send_data_request));
         PetscCallMPI(MPI_Isend(send_buffer, vec_local_size, MPIU_SCALAR, message_dest, TAG_MULTISPLITTING_DATA, MPI_COMM_WORLD, send_data_request));
 
-        // printf(" PROC %d J'AI ENVOYE L'ITERATION %d \n", rank_jacobi_block, (*current_number_of_iterations));
-        // PetscCall(PetscSleep(10000));
     }
 
     PetscFunctionReturn(PETSC_SUCCESS);

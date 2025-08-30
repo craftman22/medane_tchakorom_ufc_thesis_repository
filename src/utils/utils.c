@@ -4,11 +4,14 @@
 #include <petscts.h>
 #include <petscdmda.h>
 
-PetscErrorCode PetscArrayfill(PetscInt *x, PetscScalar val, PetscInt n)
+
+/*
+  Fill array of scalar of size "n" with the value "val" for each entry
+*/
+PetscErrorCode PetscArrayfill_custom(PetscInt *x, PetscScalar val, PetscInt n)
 {
   PetscFunctionBeginUser;
-  PetscInt i;
-  for (i = 0; i < n; i++)
+  for (PetscInt i = 0; i < n; i++)
   {
     x[i] = val;
   }
@@ -937,7 +940,7 @@ PetscErrorCode inner_solver(MPI_Comm comm_jacobi_block, KSP ksp, Mat *A_block_ja
   PetscInt n_iterations = 0;
   PetscCall(KSPGetIterationNumber(ksp, &n_iterations));
 
-  // PetscCall(printInnerSolverIterations(comm_jacobi_block, rank_jacobi_block, n_iterations, outer_iteration_number));
+  PetscCall(printInnerSolverIterations(comm_jacobi_block, rank_jacobi_block, n_iterations, outer_iteration_number));
 
   if (inner_solver_iterations != NULL)
   {

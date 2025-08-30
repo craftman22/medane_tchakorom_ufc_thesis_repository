@@ -37,10 +37,12 @@
 #define BLOCK_RANK_ONE 1
 
 
-#define MAX_NEIGHBORS 50
+
 
 
 #define ROOT_NODE 0
+
+#define LOCAL_ROOT_NODE 0
 
 // #define CONVERGENCE_COUNT_MIN 4
 
