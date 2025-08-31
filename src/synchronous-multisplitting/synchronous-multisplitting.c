@@ -50,10 +50,10 @@ int main(int argc, char **argv)
 
   // XXX: profiling
   PetscLogStage loading_stage;
-  PetscCall(PetscLogStageRegister("Loading stage", &loading_stage));
   PetscLogStage inner_solver_stage;
   PetscLogStage outer_stage;
   PetscLogStage last_stage;
+  PetscCall(PetscLogStageRegister("Loading stage", &loading_stage));
   PetscCall(PetscLogStageRegister("I_Solver stage", &inner_solver_stage));
   PetscCall(PetscLogStageRegister("Outer stage", &outer_stage));
   PetscCall(PetscLogStageRegister("Last stage", &last_stage));
@@ -187,7 +187,7 @@ int main(int argc, char **argv)
 
     number_of_iterations = number_of_iterations + 1;
 
-    PetscCall(PetscLogStagePop()); // XXX: profiling
+    // PetscCall(PetscLogStagePop()); // XXX: profiling
   } while (stop_condition == PETSC_FALSE);
 
   PetscCall(PetscBarrier(NULL));

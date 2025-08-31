@@ -4,7 +4,6 @@
 #include <petscts.h>
 #include <petscdmda.h>
 
-
 /*
   Fill array of scalar of size "n" with the value "val" for each entry
 */
@@ -1034,6 +1033,7 @@ PetscErrorCode computeError(Vec x, Vec u, PetscScalar *error)
   PetscCall(VecZeroEntries(vec_difference));
   PetscCall(VecWAXPY(vec_difference, -1.0, u, x));
   PetscCall(VecNorm(vec_difference, NORM_2, error));
+  PetscCall(VecDestroy(&vec_difference));
 
   PetscFunctionReturn(PETSC_SUCCESS);
 }
