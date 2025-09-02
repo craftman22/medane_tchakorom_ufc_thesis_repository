@@ -110,6 +110,10 @@ int main(int argc, char **argv)
     PetscCall(PetscSubcommSetType(sub_comm_context, PETSC_SUBCOMM_CONTIGUOUS));
     comm_jacobi_block = PetscSubcommChild(sub_comm_context);
 
+    MPI_Comm comm_local_roots; // communicator only for local root procs
+    int color = (proc_global_rank == 0 || proc_global_rank == nprocs_per_jacobi_block) ? 0 : MPI_UNDEFINED;
+    PetscCallMPI(MPI_Comm_split(MPI_COMM_WORLD, color, 0, &comm_local_roots));
+
     idx_non_current_block = (rank_jacobi_block == ZERO) ? ONE : ZERO;
     IS is_cols_block_jacobi[njacobi_blocks];
     Mat A_block_jacobi_subMat[njacobi_blocks];
@@ -432,9 +436,9 @@ int main(int argc, char **argv)
     PetscCall(VecScatterBegin(scatter_jacobi_vec_part_to_merged_vec[idx_non_current_block], x_block_jacobi[idx_non_current_block], x, INSERT_VALUES, SCATTER_FORWARD));
     PetscCall(VecScatterEnd(scatter_jacobi_vec_part_to_merged_vec[idx_non_current_block], x_block_jacobi[idx_non_current_block], x, INSERT_VALUES, SCATTER_FORWARD));
 
-    PetscScalar global_norm;
-    PetscCall(computeFinalResidualNorm(A_block_jacobi, x, b_block_jacobi, rank_jacobi_block, proc_local_rank, &global_norm));
-    PetscCall(printFinalResidualNorm(global_norm));
+    PetscScalar norm;
+    PetscCall(computeFinalResidualNorm(comm_jacobi_block, comm_local_roots, A_block_jacobi, x, b_block_jacobi, local_residual, rank_jacobi_block, proc_local_rank, &norm));
+    PetscCall(printFinalResidualNorm(norm));
 
     PetscScalar error;
     PetscCall(computeError(x, u, &error));

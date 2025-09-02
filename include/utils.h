@@ -24,7 +24,9 @@ PetscErrorCode divideSubDomainIntoBlockMatrices(MPI_Comm comm_jacobi_block, Mat 
 
 PetscErrorCode initializeKSP(MPI_Comm comm_jacobi_block, KSP *ksp, Mat operator_matrix, PetscScalar rank_jacobi_block, PetscBool zero_initial_guess, const char *ksp_prefix, const char *pc_prefix);
 
-PetscErrorCode computeFinalResidualNorm(Mat A_block_jacobi, Vec x, Vec *b_block_jacobi, PetscInt rank_jacobi_block, PetscInt proc_local_rank, PetscScalar *direct_residual_norm);
+// PetscErrorCode computeFinalResidualNorm(Mat A_block_jacobi, Vec x, Vec *b_block_jacobi, PetscInt rank_jacobi_block, PetscInt proc_local_rank, PetscScalar *direct_residual_norm);
+PetscErrorCode computeFinalResidualNorm(MPI_Comm comm_jacobi_block, MPI_Comm comm_local_roots, Mat A_block_jacobi, Vec x, Vec *b_block_jacobi, Vec local_residual, PetscInt rank_jacobi_block, PetscInt proc_local_rank, PetscScalar *direct_residual_norm);
+
 
 PetscErrorCode computeFinalResidualNorm_new(Mat A_block_jacobi, Vec *x, Vec *b_block_jacobi, PetscInt rank_jacobi_block, PetscInt proc_local_rank, PetscScalar *direct_residual_norm);
 

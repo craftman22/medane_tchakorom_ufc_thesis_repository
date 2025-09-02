@@ -532,31 +532,24 @@ PetscErrorCode computelocalResidualNorm(Mat A_block_jacobi, Vec x, Vec *b_block_
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode computeFinalResidualNorm(Mat A_block_jacobi, Vec x, Vec *b_block_jacobi, PetscInt rank_jacobi_block, PetscInt proc_local_rank, PetscScalar *direct_residual_norm)
+PetscErrorCode computeFinalResidualNorm(MPI_Comm comm_jacobi_block, MPI_Comm comm_local_roots, Mat A_block_jacobi, Vec x, Vec *b_block_jacobi, Vec local_residual, PetscInt rank_jacobi_block, PetscInt proc_local_rank, PetscScalar *direct_residual_norm)
 {
   PetscFunctionBegin;
-  Vec local_residual = NULL;
-  PetscScalar local_residual_norm2 = PETSC_MAX_REAL;
-  PetscCall(VecDuplicate(b_block_jacobi[rank_jacobi_block], &local_residual));
+  PetscScalar local_norm = PETSC_MAX_REAL;
   PetscCall(MatResidual(A_block_jacobi, b_block_jacobi[rank_jacobi_block], x, local_residual));
-  PetscCall(VecNorm(local_residual, NORM_2, &local_residual_norm2));
+  PetscCall(VecNorm(local_residual, NORM_2, &local_norm));
 
-  // PetscCall(PetscPrintf(MPI_COMM_SELF, "Final local residual norm 2 block rank %d = %e \n", rank_jacobi_block, local_residual_norm2));
+  // PetscCall(PetscPrintf(MPI_COMM_SELF, "Final local residual norm 2 block rank %d = %e \n", rank_jacobi_block, local_norm));
 
-  local_residual_norm2 = local_residual_norm2 * local_residual_norm2;
-  if (proc_local_rank != 0)
+  if (proc_local_rank == LOCAL_ROOT_NODE)
   {
-    local_residual_norm2 = 0.0;
+    local_norm = local_norm * local_norm;
+    PetscCallMPI(MPI_Allreduce(&local_norm, direct_residual_norm, 1, MPIU_SCALAR, MPI_SUM, comm_local_roots));
+    (*direct_residual_norm) = sqrt(*direct_residual_norm);
   }
 
-  *direct_residual_norm = PETSC_MAX_REAL;
-  PetscCallMPI(MPI_Allreduce(&local_residual_norm2, direct_residual_norm, 1, MPIU_SCALAR, MPI_SUM, MPI_COMM_WORLD));
-  *direct_residual_norm = sqrt(*direct_residual_norm);
-
-  PetscCall(VecDestroy(&local_residual));
-
+  PetscCallMPI(MPI_Bcast(direct_residual_norm, 1, MPIU_SCALAR, LOCAL_ROOT_NODE, comm_jacobi_block));
   // PetscCall(PetscPrintf(MPI_COMM_WORLD, " Total number of iterations: %d   ====  Direct norm 2 ====  %e \n", number_of_iterations, direct_global_residual_norm2));
-
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 

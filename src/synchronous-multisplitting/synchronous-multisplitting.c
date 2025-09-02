@@ -72,6 +72,10 @@ int main(int argc, char **argv)
   PetscCall(PetscSubcommSetFromOptions(sub_comm_context));
   MPI_Comm comm_jacobi_block = PetscSubcommChild(sub_comm_context);
 
+  MPI_Comm comm_local_roots; // communicator only for local root procs
+  int color = (proc_global_rank == 0 || proc_global_rank == nprocs_per_jacobi_block) ? 0 : MPI_UNDEFINED;
+  PetscCallMPI(MPI_Comm_split(MPI_COMM_WORLD, color, 0, &comm_local_roots));
+
   PetscBool stop_condition = PETSC_FALSE;
   PetscInt number_of_iterations = ZERO;
   PetscMPIInt idx_non_current_block = (rank_jacobi_block == ZERO) ? ONE : ZERO;
@@ -92,6 +96,7 @@ int main(int argc, char **argv)
   PetscScalar *rcv_multisplitting_data_buffer = NULL;
   PetscMPIInt vec_local_size = 0;
   Vec iterates_difference;
+  Vec local_residual;
 
   PetscCall(create_vector(comm_jacobi_block, &x, n_mesh_points, VECMPI));
   PetscCall(VecDuplicate(x, &x_previous_iterate));
@@ -139,14 +144,15 @@ int main(int argc, char **argv)
   PetscCall(VecDuplicate(x, &iterates_difference));
   PetscCall(VecDuplicate(b_block_jacobi[rank_jacobi_block], &local_right_side_vector));
   PetscCall(VecDuplicate(b_block_jacobi[rank_jacobi_block], &mat_mult_vec_result));
+  PetscCall(VecDuplicate(b_block_jacobi[rank_jacobi_block], &local_residual));
 
   PetscScalar val;
   PetscCall(VecNorm(b, NORM_2, &val));
   printf("Norm de b %e \n", val);
 
+  PetscScalar norm;
   PetscScalar global_norm_0 = 0.0;
-  PetscCall(computeFinalResidualNorm(A_block_jacobi, x, b_block_jacobi, rank_jacobi_block, proc_local_rank, &global_norm_0));
-
+  PetscCall(computeFinalResidualNorm(comm_jacobi_block, comm_local_roots, A_block_jacobi, x, b_block_jacobi, local_residual, rank_jacobi_block, proc_local_rank, &global_norm_0));
   PetscCall(PetscLogStagePop()); // XXX: profiling
 
   PetscCall(PetscBarrier(NULL));
@@ -177,17 +183,16 @@ int main(int argc, char **argv)
     PetscCall(VecScatterBegin(scatter_jacobi_vec_part_to_merged_vec[idx_non_current_block], x_block_jacobi[idx_non_current_block], x, INSERT_VALUES, SCATTER_FORWARD));
     PetscCall(VecScatterEnd(scatter_jacobi_vec_part_to_merged_vec[idx_non_current_block], x_block_jacobi[idx_non_current_block], x, INSERT_VALUES, SCATTER_FORWARD));
 
-    PetscScalar direct_residual_norm;
-    PetscCall(computeFinalResidualNorm(A_block_jacobi, x, b_block_jacobi, rank_jacobi_block, proc_local_rank, &direct_residual_norm));
-    PetscCall(printFinalResidualNorm(direct_residual_norm));
-    if (direct_residual_norm <= PetscMax(absolute_tolerance, relative_tolerance * global_norm_0))
+    PetscCall(computeFinalResidualNorm(comm_jacobi_block, comm_local_roots, A_block_jacobi, x, b_block_jacobi, local_residual, rank_jacobi_block, proc_local_rank, &norm));
+    PetscCall(printFinalResidualNorm(norm));
+    if (norm <= PetscMax(absolute_tolerance, relative_tolerance * global_norm_0))
     {
       stop_condition = CONVERGENCE_SIGNAL;
     }
 
     number_of_iterations = number_of_iterations + 1;
 
-    // PetscCall(PetscLogStagePop()); // XXX: profiling
+    PetscCall(PetscLogStagePop()); // XXX: profiling
   } while (stop_condition == PETSC_FALSE);
 
   PetscCall(PetscBarrier(NULL));
@@ -202,10 +207,8 @@ int main(int argc, char **argv)
   PetscCall(printElapsedTime(start_time, end_time));
   PetscCall(printTotalNumberOfIterations(comm_jacobi_block, rank_jacobi_block, number_of_iterations));
 
-  PetscScalar direct_residual_norm;
-  PetscCall(computeFinalResidualNorm(A_block_jacobi, x, b_block_jacobi, rank_jacobi_block, proc_local_rank, &direct_residual_norm));
-
-  PetscCall(printFinalResidualNorm(direct_residual_norm));
+  PetscCall(computeFinalResidualNorm(comm_jacobi_block, comm_local_roots, A_block_jacobi, x, b_block_jacobi, local_residual, rank_jacobi_block, proc_local_rank, &norm));
+  PetscCall(printFinalResidualNorm(norm));
 
   PetscScalar error;
   PetscCall(computeError(x, u, &error));
@@ -225,6 +228,7 @@ int main(int argc, char **argv)
   }
 
   PetscCall(VecDestroy(&iterates_difference));
+  PetscCall(VecDestroy(&local_residual));
   PetscCall(VecDestroy(&x));
   PetscCall(VecDestroy(&b));
   PetscCall(VecDestroy(&u));
@@ -235,6 +239,7 @@ int main(int argc, char **argv)
   PetscCall(PetscFree(send_multisplitting_data_buffer));
   PetscCall(PetscFree(rcv_multisplitting_data_buffer));
   PetscCall(KSPDestroy(&inner_ksp));
+  PetscCall(MPI_Comm_free(&comm_local_roots));
   PetscCall(PetscSubcommDestroy(&sub_comm_context));
   PetscCall(PetscCommDestroy(&dcomm));
 
