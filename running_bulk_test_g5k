@@ -36,9 +36,9 @@ set -x  # Enable command tracing
 
 array_0=(2 32 1.e-4)
 
-array_1=(16 1024 1.e-4)
-array_2=(16 2048 1.e-4)
-array_3=(16 4096 1.e-4)
+# array_1=(16 1024 1.e-4)
+# array_2=(16 2048 1.e-4)
+# array_3=(16 4096 1.e-4)
 # array_4=(16 8192 1.e-4)
 
 # array_5=(32 1024 1.e-4)
@@ -46,7 +46,7 @@ array_3=(16 4096 1.e-4)
 # array_7=(32 4096 1.e-4)
 # array_8=(32 8192 1.e-4)
 
-n=3
+n=0
 
 for ((i=0; i<=n; i++)); do
     varname="array_$i"

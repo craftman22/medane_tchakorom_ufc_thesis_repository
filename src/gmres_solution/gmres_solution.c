@@ -37,6 +37,19 @@ int main(int argc, char **argv)
     PetscCallMPI(MPI_Comm_rank(PETSC_COMM_WORLD, &proc_global_rank));
     PetscCallMPI(MPI_Comm_size(PETSC_COMM_WORLD, &nprocs));
 
+    const char *envVar = getenv("MPI_BINDING");
+    if (envVar)
+    {
+        PetscPrintf(PETSC_COMM_SELF, " Rank %d MPI_BINDING = %s\n", proc_global_rank, envVar);
+    }
+    else
+    {
+        PetscPrintf(PETSC_COMM_SELF, "Rank %d  MPI_BINDING is not set\n", proc_global_rank);
+    }
+
+    PetscFinalize();
+    return 0;
+
     PetscCall(PetscOptionsGetInt(NULL, NULL, "-m", &n_mesh_lines, NULL));
     PetscCall(PetscOptionsGetInt(NULL, NULL, "-n", &n_mesh_columns, NULL));
     PetscCall(PetscOptionsGetReal(NULL, NULL, "-rtol", &relative_tolerance, NULL));
