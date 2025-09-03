@@ -37,14 +37,17 @@ int main(int argc, char **argv)
     PetscCallMPI(MPI_Comm_rank(PETSC_COMM_WORLD, &proc_global_rank));
     PetscCallMPI(MPI_Comm_size(PETSC_COMM_WORLD, &nprocs));
 
-    const char *envVar = getenv("MPI_BINDING");
+
+    // --mca mca_base_env_list "MY_ENV3=value3"
+
+    const char *envVar = getenv("MY_ENV3");
     if (envVar)
     {
-        PetscPrintf(PETSC_COMM_SELF, " Rank %d MPI_BINDING = %s\n", proc_global_rank, envVar);
+        PetscPrintf(PETSC_COMM_SELF, " Rank %d MY_ENV3 = %s\n", proc_global_rank, envVar);
     }
     else
     {
-        PetscPrintf(PETSC_COMM_SELF, "Rank %d  MPI_BINDING is not set\n", proc_global_rank);
+        PetscPrintf(PETSC_COMM_SELF, "Rank %d  MY_ENV3 is not set\n", proc_global_rank);
     }
 
     PetscFinalize();
