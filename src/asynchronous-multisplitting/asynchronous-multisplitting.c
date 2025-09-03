@@ -354,6 +354,7 @@ int main(int argc, char **argv)
     PetscCall(KSPDestroy(&inner_ksp));
 
     // Discard any pending message
+    PetscCall(PetscSleep(2 * 1000 * MAX_TRAVERSAL_TIME));
     PetscInt count;
     PetscInt message = NO_MESSAGE;
     MPI_Status status;

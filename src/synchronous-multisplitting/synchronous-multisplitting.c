@@ -148,7 +148,7 @@ int main(int argc, char **argv)
 
   PetscScalar val;
   PetscCall(VecNorm(b, NORM_2, &val));
-  printf("Norm de b %e \n", val);
+  PetscCall(PetscPrintf(comm_jacobi_block, "Global norm of b %e \n", val));
 
   PetscScalar norm;
   PetscScalar global_norm_0 = 0.0;

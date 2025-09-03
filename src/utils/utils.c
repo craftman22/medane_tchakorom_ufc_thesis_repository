@@ -1074,3 +1074,31 @@ PetscErrorCode outer_solver_norm_equation_modify(MPI_Comm comm_jacobi_block, KSP
 
   PetscFunctionReturn(PETSC_SUCCESS);
 }
+
+
+
+
+PetscErrorCode outer_solver_norm_equation_modify_async(MPI_Comm comm_jacobi_block, KSP outer_ksp, Vec final_solution, Mat R, Mat S, Vec intermediate_solution_alpha, Vec b, PetscInt rank_jacobi_block, PetscInt outer_iteration_number, PetscInt message_dest, PetscInt message_source)
+{
+
+  PetscFunctionBegin;
+  PetscInt idx_non_current_block = (rank_jacobi_block == ZERO) ? ONE : ZERO;
+
+  PetscCall(KSPConvergedDefaultSetUIRNorm(outer_ksp));
+  PetscCall(KSPSetOperators(outer_ksp, R, R)); // R = A * S
+  PetscCall(KSPSetInitialGuessNonzero(outer_ksp, PETSC_FALSE));
+  PetscCall(KSPSolve(outer_ksp, b, intermediate_solution_alpha));
+
+  PetscInt n_iterations = 0;
+  PetscCall(KSPGetIterationNumber(outer_ksp, &n_iterations));
+
+  // PetscCall(printOuterSolverIterations(comm_jacobi_block, rank_jacobi_block, n_iterations, outer_iteration_number));
+
+  // PetscCall(VecView(intermediate_solution_alpha, PETSC_VIEWER_STDOUT_(comm_jacobi_block)));
+
+  PetscCall(comm_async_send_and_receive_alpha(intermediate_solution_alpha, message_dest, message_source, rank_jacobi_block, idx_non_current_block));
+
+  PetscCall(MatMult(S, intermediate_solution_alpha, final_solution));
+
+  PetscFunctionReturn(PETSC_SUCCESS);
+}

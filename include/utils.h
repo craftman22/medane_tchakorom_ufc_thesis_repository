@@ -86,4 +86,6 @@ PetscErrorCode outer_solver_norm_equation(MPI_Comm comm_jacobi_block, KSP outer_
 
 PetscErrorCode outer_solver_norm_equation_modify(MPI_Comm comm_jacobi_block, KSP outer_ksp, Vec final_solution, Mat R, Mat S, Vec intermediate_solution_alpha, Vec b, PetscInt rank_jacobi_block, PetscInt outer_iteration_number, PetscInt message_dest, PetscInt message_source);
 
+PetscErrorCode outer_solver_norm_equation_modify_async(MPI_Comm comm_jacobi_block, KSP outer_ksp, Vec final_solution, Mat R, Mat S, Vec intermediate_solution_alpha, Vec b, PetscInt rank_jacobi_block, PetscInt outer_iteration_number, PetscInt message_dest, PetscInt message_source);
+
 #endif // SHARED_FUNCTIONS_H

@@ -476,6 +476,7 @@ int main(int argc, char **argv)
     PetscCall(VecDestroy(&vec_R_transpose_b_block_jacobi));
     PetscCall(VecDestroy(&alpha));
 
+    // PetscCall(PetscSleep(2 * 1000 * MAX_TRAVERSAL_TIME));
     // PetscMPIInt message = ZERO;
     // PetscMPIInt count;
 
