@@ -34,7 +34,7 @@ set -x  # Enable command tracing
 # array_i=(nprocs mesh_size rtol)
 
 
-array_0=(2 32 1.e-4)
+array_0=(8 32 1.e-4)
 
 # array_1=(16 1024 1.e-4)
 # array_2=(16 2048 1.e-4)
