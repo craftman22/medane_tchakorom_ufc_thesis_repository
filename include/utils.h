@@ -3,7 +3,7 @@
 #define SHARED_FUNCTIONS_H
 #include <petscts.h>
 
-PetscErrorCode PetscArrayfill_custom(PetscInt *x, PetscScalar val, PetscInt n);
+PetscErrorCode PetscArrayfill_custom(PetscInt *x, PetscInt val, PetscInt n);
 
 PetscErrorCode create_matrix_dense(MPI_Comm comm, Mat *mat, PetscInt n, PetscInt m, MatType mat_type);
 PetscErrorCode create_matrix_sparse(MPI_Comm comm, Mat *mat, PetscInt n, PetscInt m, MatType mat_type, PetscInt d_nz, PetscInt o_nz);
