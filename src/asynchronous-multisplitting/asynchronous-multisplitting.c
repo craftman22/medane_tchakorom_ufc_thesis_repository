@@ -340,6 +340,11 @@ int main(int argc, char **argv)
         PetscCall(VecScatterDestroy(&scatter_jacobi_vec_part_to_merged_vec[i]));
     }
 
+    PetscCall(PetscFree(rcv_buffer));
+    PetscCall(PetscFree(send_buffer));
+    PetscCall(PetscFree(prevIterNumS));
+    PetscCall(PetscFree(prevIterNumC));
+    PetscCall(PetscFree(neighbors));
     PetscCall(VecDestroy(&x_block_jacobi_previous_iterate));
     PetscCall(VecDestroy(&local_iterates_difference));
     PetscCall(VecDestroy(&local_right_side_vector));
@@ -354,7 +359,7 @@ int main(int argc, char **argv)
     // Discard any pending message
     // PetscCallMPI(MPI_Wait(&send_data_request, MPI_STATUS_IGNORE));
     // PetscCall(PetscFree(send_buffer));
-    // PetscCall(PetscFree(rcv_buffer));
+
     // PetscCallMPI(MPI_Wait(&send_signal_request, MPI_STATUS_IGNORE));
     MPI_Status status;
     int flag = 1;
@@ -376,7 +381,6 @@ int main(int argc, char **argv)
             free(buffer);
         }
     }
-
 
     // PetscCallMPI(MPI_Wait(&send_data_request, MPI_STATUS_IGNORE));
     // PetscCallMPI(MPI_Wait(&cancelSPartialRequest, MPI_STATUS_IGNORE));
