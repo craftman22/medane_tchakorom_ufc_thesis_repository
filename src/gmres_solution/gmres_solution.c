@@ -37,21 +37,18 @@ int main(int argc, char **argv)
     PetscCallMPI(MPI_Comm_rank(PETSC_COMM_WORLD, &proc_global_rank));
     PetscCallMPI(MPI_Comm_size(PETSC_COMM_WORLD, &nprocs));
 
-
     // --mca mca_base_env_list "MY_ENV3=value3"
-
-    const char *envVar = getenv("MY_ENV3");
-    if (envVar)
-    {
-        PetscPrintf(PETSC_COMM_SELF, " Rank %d MY_ENV3 = %s\n", proc_global_rank, envVar);
-    }
-    else
-    {
-        PetscPrintf(PETSC_COMM_SELF, "Rank %d  MY_ENV3 is not set\n", proc_global_rank);
-    }
-
-    PetscFinalize();
-    return 0;
+    // const char *envVar = getenv("MY_ENV3");
+    // if (envVar)
+    // {
+    //     PetscPrintf(PETSC_COMM_SELF, " Rank %d MY_ENV3 = %s\n", proc_global_rank, envVar);
+    // }
+    // else
+    // {
+    //     PetscPrintf(PETSC_COMM_SELF, "Rank %d  MY_ENV3 is not set\n", proc_global_rank);
+    // }
+    // PetscFinalize();
+    // return 0;
 
     PetscCall(PetscOptionsGetInt(NULL, NULL, "-m", &n_mesh_lines, NULL));
     PetscCall(PetscOptionsGetInt(NULL, NULL, "-n", &n_mesh_columns, NULL));
@@ -79,10 +76,10 @@ int main(int argc, char **argv)
     start_time = MPI_Wtime();
 
     PetscLogStage solving_stage;
-    PetscLogStageRegister("Solving stage", &solving_stage);
-    PetscLogStagePush(solving_stage);
+    PetscCall(PetscLogStageRegister("Solving stage", &solving_stage));
+    PetscCall(PetscLogStagePush(solving_stage));
     PetscCall(KSPSolve(ksp_context, b, x));
-    PetscLogStagePop();
+    PetscCall(PetscLogStagePop());
 
     PetscCallMPI(MPI_Barrier(PETSC_COMM_WORLD));
     end_time = MPI_Wtime();

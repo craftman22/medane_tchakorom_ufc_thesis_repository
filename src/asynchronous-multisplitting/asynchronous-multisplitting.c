@@ -33,7 +33,7 @@ int main(int argc, char **argv)
     Vec local_right_side_vector = NULL;
     Vec mat_mult_vec_result = NULL;
 
-    PetscInt MIN_CONVERGENCE_COUNT = 5;
+    PetscInt MIN_CONVERGENCE_COUNT = 3;
     PetscFunctionBeginUser;
     PetscCall(PetscInitialize(&argc, &argv, NULL, NULL));
 
@@ -323,8 +323,6 @@ int main(int argc, char **argv)
     PetscCall(computeFinalResidualNorm(comm_jacobi_block, comm_local_roots, A_block_jacobi, x, b_block_jacobi, local_residual, rank_jacobi_block, proc_local_rank, &norm));
     PetscCall(printFinalResidualNorm(norm));
 
-    // PetscCall(PetscFinalize());
-    // return 0;
     PetscScalar error;
     PetscCall(computeError(x, u, &error));
     PetscCall(PetscPrintf(PETSC_COMM_WORLD, "Erreur : %e \n", error));
@@ -354,42 +352,35 @@ int main(int argc, char **argv)
     PetscCall(KSPDestroy(&inner_ksp));
 
     // Discard any pending message
-    PetscCall(PetscSleep(2 * 1000 * MAX_TRAVERSAL_TIME));
-    PetscInt count;
-    PetscInt message = NO_MESSAGE;
-    MPI_Status status;
-
-    do
-    {
-        MPI_Datatype data_type = MPIU_INT;
-        PetscCallMPI(MPI_Iprobe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &message, &status));
-        if (message)
-        {
-            if (status.MPI_TAG == (TAG_MULTISPLITTING_DATA + idx_non_current_block))
-            {
-                data_type = MPIU_SCALAR;
-                PetscCall(MPI_Get_count(&status, data_type, &count));
-                PetscScalar *buffer;
-                PetscCall(PetscMalloc1(count, &buffer));
-                PetscCallMPI(MPI_Recv(buffer, count, data_type, status.MPI_SOURCE, status.MPI_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE));
-                PetscCall(PetscFree(buffer));
-            }
-            else
-            {
-                data_type = MPIU_INT;
-                PetscCall(MPI_Get_count(&status, data_type, &count));
-                PetscInt *buffer;
-                PetscCall(PetscMalloc1(count, &buffer));
-                PetscCallMPI(MPI_Recv(buffer, count, data_type, status.MPI_SOURCE, status.MPI_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE));
-                PetscCall(PetscFree(buffer));
-            }
-        }
-    } while (message);
-
-    PetscCallMPI(MPI_Wait(&send_data_request, MPI_STATUS_IGNORE));
+    // PetscCallMPI(MPI_Wait(&send_data_request, MPI_STATUS_IGNORE));
+    // PetscCall(PetscFree(send_buffer));
+    // PetscCall(PetscFree(rcv_buffer));
     // PetscCallMPI(MPI_Wait(&send_signal_request, MPI_STATUS_IGNORE));
-    PetscCall(PetscFree(send_buffer));
-    PetscCall(PetscFree(rcv_buffer));
+    MPI_Status status;
+    int flag = 1;
+
+    while (flag)
+    {
+        PetscCallMPI(MPI_Iprobe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &flag, &status));
+        if (flag)
+        {
+            int count;
+            PetscCallMPI(MPI_Get_count(&status, MPI_CHAR, &count)); // or use the correct type
+
+            char *buffer = malloc(count);
+            PetscCallMPI(MPI_Recv(buffer, count, MPI_CHAR, status.MPI_SOURCE, status.MPI_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE));
+
+            // Process or discard the message
+            printf("Rank %d Message from %d with tag %d received and discarded\n", proc_global_rank, status.MPI_SOURCE, status.MPI_TAG);
+
+            free(buffer);
+        }
+    }
+
+
+    // PetscCallMPI(MPI_Wait(&send_data_request, MPI_STATUS_IGNORE));
+    // PetscCallMPI(MPI_Wait(&cancelSPartialRequest, MPI_STATUS_IGNORE));
+    // PetscCallMPI(MPI_Wait(&sendSPartialRequest, MPI_STATUS_IGNORE));
 
     PetscCall(PetscSubcommDestroy(&sub_comm_context));
     PetscCall(PetscCommDestroy(&dcomm));

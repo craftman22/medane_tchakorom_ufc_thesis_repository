@@ -306,7 +306,7 @@ int main(int argc, char **argv)
     PetscCall(PetscPrintf(comm_jacobi_block, "rank block %d local b norm %e \n", rank_jacobi_block, local_norm_0));
 
     PetscLogEvent USER_EVENT;
-    PetscLogEventRegister("outer_solve", 0, &USER_EVENT);
+    PetscCall(PetscLogEventRegister("outer_solve", 0, &USER_EVENT));
 
     // PetscInt message_received __attribute__((unused)) = 0;
     // PetscInt inner_solver_iterations __attribute__((unused)) = ZERO;
@@ -360,9 +360,9 @@ int main(int argc, char **argv)
 
         PetscCall(comm_async_probe_and_receive_min(R, rcv_minimization_data_buffer, temp_minimization_data_buffer, R_local_values_count, rcv_minimization_data_flag, message_source, rank_jacobi_block, idx_non_current_block, n_mesh_points, rstart, rend, lda, s));
 
-        PetscLogEventBegin(USER_EVENT, 0, 0, 0, 0);
+        PetscCall(PetscLogEventBegin(USER_EVENT, 0, 0, 0, 0));
         PetscCall(outer_solver_norm_equation(comm_jacobi_block, outer_ksp, x_minimized, R, S, alpha, b, rank_jacobi_block, number_of_iterations));
-        PetscLogEventEnd(USER_EVENT, 0, 0, 0, 0);
+        PetscCall(PetscLogEventEnd(USER_EVENT, 0, 0, 0, 0));
 
         PetscCall(MatResidual(A_block_jacobi, b_block_jacobi[rank_jacobi_block], x_minimized, local_residual));
         PetscCall(VecNorm(local_residual, NORM_2, &local_norm));

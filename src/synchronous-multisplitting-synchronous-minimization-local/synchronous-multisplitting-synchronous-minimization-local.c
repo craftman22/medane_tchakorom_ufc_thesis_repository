@@ -197,10 +197,10 @@ int main(int argc, char **argv)
   PetscCall(updateLocalRHS(A_block_jacobi_subMat[idx_non_current_block], x_block_jacobi[idx_non_current_block], b_block_jacobi[rank_jacobi_block], local_right_side_vector));
   PetscCall(MatResidual(A_block_jacobi_subMat[rank_jacobi_block], local_right_side_vector, x_block_jacobi[rank_jacobi_block], local_residual)); // r_i = b_i - (A_i * x_i)
   PetscCall(VecNorm(local_residual, NORM_2, &local_norm_0));
-  PetscPrintf(MPI_COMM_SELF, "rank block %d local b norm %e \n", rank_jacobi_block, local_norm_0);
+  PetscCall(PetscPrintf(MPI_COMM_SELF, "rank block %d local b norm %e \n", rank_jacobi_block, local_norm_0));
 
   PetscLogEvent USER_EVENT;
-  PetscLogEventRegister("outer_solve", 0, &USER_EVENT);
+  PetscCall(PetscLogEventRegister("outer_solve", 0, &USER_EVENT));
 
   PetscCall(PetscLogStagePop()); // XXX: profiling
 
@@ -244,9 +244,9 @@ int main(int argc, char **argv)
 
     PetscCall(updateLocalRHS(A_block_jacobi_subMat[idx_non_current_block], x_block_jacobi[idx_non_current_block], b_block_jacobi[rank_jacobi_block], local_right_side_vector));
 
-    PetscLogEventBegin(USER_EVENT, 0, 0, 0, 0);
+    PetscCall(PetscLogEventBegin(USER_EVENT, 0, 0, 0, 0));
     PetscCall(outer_solver_norm_equation(comm_jacobi_block, outer_ksp, x_block_jacobi[rank_jacobi_block], R, S, alpha, local_right_side_vector, rank_jacobi_block, number_of_iterations));
-    PetscLogEventEnd(USER_EVENT, 0, 0, 0, 0);
+    PetscCall(PetscLogEventEnd(USER_EVENT, 0, 0, 0, 0));
 
     PetscCall(MatResidual(A_block_jacobi_subMat[rank_jacobi_block], local_right_side_vector, x_block_jacobi[rank_jacobi_block], local_residual));
     PetscCall(VecNorm(local_residual, NORM_2, &local_norm));
