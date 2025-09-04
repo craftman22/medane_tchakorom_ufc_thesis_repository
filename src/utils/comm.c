@@ -57,8 +57,11 @@ PetscErrorCode comm_async_test_and_send(Vec *x_block_jacobi, PetscScalar *send_b
 {
     PetscFunctionBeginUser;
 
-    // PetscMPIInt position = 0;
-    PetscCallMPI(MPI_Test(send_data_request, &send_data_flag, MPI_STATUS_IGNORE));
+    if ((*send_data_request) != MPI_REQUEST_NULL)
+        PetscCallMPI(MPI_Test(send_data_request, &send_data_flag, MPI_STATUS_IGNORE));
+    else
+        send_data_flag = 1;
+
     if (send_data_flag)
     {
         PetscCall(VecGetArray(x_block_jacobi[rank_jacobi_block], &temp_buffer));
@@ -154,11 +157,13 @@ PetscErrorCode comm_sync_send_and_receive_alpha(Vec alpha, PetscMPIInt message_d
     PetscCall(VecRestoreArray(alpha, &send_alpha_buffer));
     PetscCall(VecRestoreArray(alpha_other_block, &rcv_alpha_buffer));
 
-    PetscCall(VecView(alpha,PETSC_VIEWER_STDOUT_SELF));
+    // PetscCall(VecView(alpha, PETSC_VIEWER_STDOUT_SELF));
 
     PetscCall(VecAXPBY(alpha, 0.5, 0.5, alpha_other_block));
 
     // PetscCall(VecView(alpha, PETSC_VIEWER_STDOUT_(MPI_COMM_SELF)));
+
+    PetscCall(VecDestroy(&alpha_other_block));
 
     PetscFunctionReturn(PETSC_SUCCESS);
 }
@@ -178,8 +183,6 @@ PetscErrorCode comm_async_send_and_receive_alpha(Vec alpha, PetscMPIInt message_
     PetscCall(VecGetArray(alpha_other_block, &rcv_alpha_buffer));
 
     // PetscCallMPI(MPI_Sendrecv(send_alpha_buffer, vec_local_size, MPIU_SCALAR, message_dest, (TAG_MINIMIZATION_DATA + rank_jacobi_block), rcv_alpha_buffer, vec_local_size, MPIU_SCALAR, message_source, (TAG_MINIMIZATION_DATA + idx_non_current_block), MPI_COMM_WORLD, MPI_STATUS_IGNORE));
-    
-
 
     PetscCall(VecRestoreArray(alpha, &send_alpha_buffer));
     PetscCall(VecRestoreArray(alpha_other_block, &rcv_alpha_buffer));
@@ -311,18 +314,23 @@ PetscErrorCode comm_async_probe_and_receive_min(Mat R, PetscScalar *rcv_minimiza
     PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode comm_async_test_and_send_min(Mat R, PetscScalar *send_minimization_data_buffer, PetscScalar *temp_minimization_data_buffer, MPI_Request send_minimization_data_request, PetscMPIInt R_local_values_count, PetscMPIInt message_dest, PetscMPIInt rank_jacobi_block)
+PetscErrorCode comm_async_test_and_send_min(Mat R, PetscScalar *send_minimization_data_buffer, PetscScalar *temp_minimization_data_buffer, MPI_Request *send_minimization_data_request, PetscMPIInt R_local_values_count, PetscMPIInt message_dest, PetscMPIInt rank_jacobi_block)
 {
     PetscFunctionBeginUser;
-    PetscMPIInt send_minimization_data_flag;
-    PetscCallMPI(MPI_Test(&send_minimization_data_request, &send_minimization_data_flag, MPI_STATUS_IGNORE));
+    PetscMPIInt send_minimization_data_flag = 0;
+    // FIXME: ici, la variable send_minimization_data_request devrait etre crée dans le programme global, et envoyé ici
+    if ((*send_minimization_data_request) != MPI_REQUEST_NULL)
+        PetscCallMPI(MPI_Test(send_minimization_data_request, &send_minimization_data_flag, MPI_STATUS_IGNORE));
+    else
+        send_minimization_data_flag = 1;
+        
     if (send_minimization_data_flag)
     {
         PetscCall(MatDenseGetArray(R, &temp_minimization_data_buffer));
         PetscCall(PetscArraycpy(send_minimization_data_buffer, temp_minimization_data_buffer, R_local_values_count));
 
         PetscCall(MatDenseRestoreArray(R, &temp_minimization_data_buffer));
-        PetscCallMPI(MPI_Isend(send_minimization_data_buffer, R_local_values_count, MPIU_SCALAR, message_dest, (TAG_MINIMIZATION_DATA + rank_jacobi_block), MPI_COMM_WORLD, &send_minimization_data_request));
+        PetscCallMPI(MPI_Isend(send_minimization_data_buffer, R_local_values_count, MPIU_SCALAR, message_dest, (TAG_MINIMIZATION_DATA + rank_jacobi_block), MPI_COMM_WORLD, send_minimization_data_request));
     }
 
     PetscFunctionReturn(PETSC_SUCCESS);
@@ -394,7 +402,37 @@ PetscErrorCode comm_sync_measure_latency_between_two_nodes(PetscMPIInt proc_rank
         for (int i = 0; i < NUM_ITER; i++)
         {
             PetscCallMPI(MPI_Recv(msg, MSG_SIZE, MPI_CHAR, proc_rank_node_1, 0, MPI_COMM_WORLD, &status));
+            // FIXME: MAYBE A PROBLEM HERE BELOW
             PetscCallMPI(MPI_Send(msg, MSG_SIZE, MPI_CHAR, proc_rank_node_1, 0, MPI_COMM_WORLD));
+        }
+    }
+
+    PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+PetscErrorCode comm_discard_pending_messages()
+{
+
+    PetscFunctionBeginUser;
+
+    MPI_Status status;
+    PetscInt flag = 1;
+
+    while (flag)
+    {
+        PetscCallMPI(MPI_Iprobe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &flag, &status));
+        if (flag)
+        {
+            int count;
+            PetscCallMPI(MPI_Get_count(&status, MPI_CHAR, &count)); // or use the correct type
+
+            char *buffer = malloc(count);
+            PetscCallMPI(MPI_Recv(buffer, count, MPI_CHAR, status.MPI_SOURCE, status.MPI_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE));
+
+            // Process or discard the message
+            // printf("Rank %d Message from %d with tag %d received and discarded\n", proc_global_rank, status.MPI_SOURCE, status.MPI_TAG);
+
+            free(buffer);
         }
     }
 

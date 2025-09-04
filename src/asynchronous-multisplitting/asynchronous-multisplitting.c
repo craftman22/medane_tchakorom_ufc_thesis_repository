@@ -110,15 +110,13 @@ int main(int argc, char **argv)
     PetscInt *prevIterNumC = NULL; /* array containing previous iteration at witch node "i" notify convergence CANCELING */
     PetscMPIInt dest_node = -1;
     PetscInt cancelSPartialBuffer;
-    MPI_Request cancelSPartialRequest;
+    MPI_Request cancelSPartialRequest = MPI_REQUEST_NULL;
+    MPI_Request sendSPartialRequest = MPI_REQUEST_NULL;
     PetscInt sendSPartialBuffer;
-    MPI_Request sendSPartialRequest;
     PetscLogDouble time_period_with_globalCV __attribute__((unused)) = 0.0;
     PetscLogDouble globalCV_timer = 0.0;
     PetscLogDouble MAX_TRAVERSAL_TIME __attribute__((unused)) = 0.0; // 13.21 ms
     PetscInt MAX_NEIGHBORS = ONE;
-
-    // FIXME: latency between all local root node
 
     PetscCall(PetscBarrier(NULL));
     if (proc_local_rank == 0)
@@ -300,6 +298,10 @@ int main(int argc, char **argv)
     } while ((time_period_with_globalCV * 1000.0) <= MAX_TRAVERSAL_TIME);
 
     MPI_Request requests[nbNeighbors];
+    for (PetscInt i = 0; i < nbNeighbors; i++)
+    {
+        requests[i] = MPI_REQUEST_NULL;
+    }
     PetscCall(comm_async_sendGlobalCV(rank_jacobi_block, nbNeighbors, neighbors, &globalCV, requests));
     PetscCallMPI(MPI_Waitall(nbNeighbors, requests, MPI_STATUSES_IGNORE));
 
@@ -329,6 +331,37 @@ int main(int argc, char **argv)
 
     // END OF PROGRAM  - FREE MEMORY
 
+    for (PetscInt i = 0; i < nbNeighbors; i++)
+    {
+        if (requests[i] != MPI_REQUEST_NULL)
+        {
+            PetscCallMPI(MPI_Cancel(&requests[i]));
+            PetscCallMPI(MPI_Request_free(&requests[i]));
+        }
+    }
+
+    if (cancelSPartialRequest != MPI_REQUEST_NULL)
+    {
+
+        PetscCallMPI(MPI_Cancel(&cancelSPartialRequest));
+        PetscCallMPI(MPI_Request_free(&cancelSPartialRequest));
+    }
+
+    if (sendSPartialRequest != MPI_REQUEST_NULL)
+    {
+        PetscCallMPI(MPI_Cancel(&sendSPartialRequest));
+        PetscCallMPI(MPI_Request_free(&sendSPartialRequest));
+    }
+
+    if (send_data_request != MPI_REQUEST_NULL)
+    {
+        PetscCallMPI(MPI_Cancel(&send_data_request));
+        PetscCallMPI(MPI_Request_free(&send_data_request));
+    }
+
+    // Discard any pending message
+    PetscCall(comm_discard_pending_messages());
+
     PetscCall(ISDestroy(&is_jacobi_vec_parts));
     for (PetscInt i = 0; i < njacobi_blocks; i++)
     {
@@ -355,36 +388,6 @@ int main(int argc, char **argv)
     PetscCall(VecDestroy(&local_residual));
     PetscCall(MatDestroy(&A_block_jacobi));
     PetscCall(KSPDestroy(&inner_ksp));
-
-    // Discard any pending message
-    // PetscCallMPI(MPI_Wait(&send_data_request, MPI_STATUS_IGNORE));
-    // PetscCall(PetscFree(send_buffer));
-
-    // PetscCallMPI(MPI_Wait(&send_signal_request, MPI_STATUS_IGNORE));
-    MPI_Status status;
-    int flag = 1;
-
-    while (flag)
-    {
-        PetscCallMPI(MPI_Iprobe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &flag, &status));
-        if (flag)
-        {
-            int count;
-            PetscCallMPI(MPI_Get_count(&status, MPI_CHAR, &count)); // or use the correct type
-
-            char *buffer = malloc(count);
-            PetscCallMPI(MPI_Recv(buffer, count, MPI_CHAR, status.MPI_SOURCE, status.MPI_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE));
-
-            // Process or discard the message
-            printf("Rank %d Message from %d with tag %d received and discarded\n", proc_global_rank, status.MPI_SOURCE, status.MPI_TAG);
-
-            free(buffer);
-        }
-    }
-
-    // PetscCallMPI(MPI_Wait(&send_data_request, MPI_STATUS_IGNORE));
-    // PetscCallMPI(MPI_Wait(&cancelSPartialRequest, MPI_STATUS_IGNORE));
-    // PetscCallMPI(MPI_Wait(&sendSPartialRequest, MPI_STATUS_IGNORE));
 
     PetscCall(PetscSubcommDestroy(&sub_comm_context));
     PetscCall(PetscCommDestroy(&dcomm));

@@ -6,6 +6,7 @@
 PetscErrorCode comm_async_convDetection(PetscMPIInt rank_jacobi_block, PetscInt nbNeighbors, PetscInt *nbNeigNotLCV, PetscInt *neighbors, PetscInt *prevIterNumS, PetscInt *prevIterNumC, PetscInt *nbIterPreLocalCV, PetscBool *preLocalCV, PetscBool *sLocalCV, PetscBool *globalCV, PetscMPIInt *dest_node, PetscInt THRESHOLD_SLCV, PetscInt current_iteration, PetscMPIInt *cancelSPartialBuffer, MPI_Request *cancelSPartialRequest, PetscMPIInt *sendSPartialBuffer, MPI_Request *sendSPartialRequest)
 {
     PetscFunctionBeginUser;
+    PetscInt flag = 0;
 
     if ((*sLocalCV) == PETSC_FALSE)
     {
@@ -37,8 +38,16 @@ PetscErrorCode comm_async_convDetection(PetscMPIInt rank_jacobi_block, PetscInt 
             number of the node to which we should send the cancelation message */
             if ((*dest_node) != -1)
             {
-                (*cancelSPartialBuffer) = current_iteration;
-                PetscCallMPI(MPI_Isend(cancelSPartialBuffer, 1, MPIU_INT, (*dest_node), TAG_CANCEL_CV, MPI_COMM_WORLD, cancelSPartialRequest));
+                if ((*cancelSPartialRequest) != MPI_REQUEST_NULL)
+                    PetscCallMPI(MPI_Test(cancelSPartialRequest, &flag, MPI_STATUS_IGNORE));
+                else
+                    flag = 1;
+
+                if (flag)
+                {
+                    (*cancelSPartialBuffer) = current_iteration;
+                    PetscCallMPI(MPI_Isend(cancelSPartialBuffer, 1, MPIU_INT, (*dest_node), TAG_CANCEL_CV, MPI_COMM_WORLD, cancelSPartialRequest));
+                }
             }
         }
         else
@@ -49,10 +58,20 @@ PetscErrorCode comm_async_convDetection(PetscMPIInt rank_jacobi_block, PetscInt 
             }
             else
             {
+
                 if ((*nbNeigNotLCV) == 1)
                 {
                     (*dest_node) = neighbors[0]; // XXX: This is straighforward as there is just 2 nodes involved, each one has only one neighbor.
-                    PetscCallMPI(MPI_Isend(sendSPartialBuffer, 1, MPIU_INT, (*dest_node), TAG_SEND_CV, MPI_COMM_WORLD, sendSPartialRequest));
+                    if ((*sendSPartialRequest) != MPI_REQUEST_NULL)
+                        PetscCallMPI(MPI_Test(sendSPartialRequest, &flag, MPI_STATUS_IGNORE));
+                    else
+                        flag = 1;
+
+                    if (flag)
+                    {
+                        (*sendSPartialBuffer) = current_iteration;
+                        PetscCallMPI(MPI_Isend(sendSPartialBuffer, 1, MPIU_INT, (*dest_node), TAG_SEND_CV, MPI_COMM_WORLD, sendSPartialRequest));
+                    }
                 }
             }
         }
@@ -78,6 +97,7 @@ PetscErrorCode comm_async_recvSPartialCV(PetscMPIInt rank_jacobi_block, PetscInt
         PetscInt srcNode = status.MPI_SOURCE;
         PetscInt currentIterNum = buff;
 
+        // FIXME: MAYBE A PROBLEM HERE BELOW
         if ((prevIterNumS[srcNode] < prevIterNumC[srcNode]) && (prevIterNumC[srcNode] < currentIterNum))
         {
             (*nbNeigNotLCV) = (*nbNeigNotLCV) - 1;
@@ -85,6 +105,7 @@ PetscErrorCode comm_async_recvSPartialCV(PetscMPIInt rank_jacobi_block, PetscInt
                 (*nbNeigNotLCV) = 0;
         }
 
+        // FIXME: MAYBE A PROBLEM HERE BELOW
         if (prevIterNumS[srcNode] < currentIterNum)
         {
             prevIterNumS[srcNode] = currentIterNum;
@@ -99,7 +120,7 @@ PetscErrorCode comm_async_recvCancelSPartialCV(PetscMPIInt rank_jacobi_block, Pe
     PetscFunctionBeginUser;
 
     PetscMPIInt flag;
-    PetscMPIInt buff;
+    PetscInt buff;
     MPI_Status status;
     PetscCall(MPI_Iprobe(MPI_ANY_SOURCE, TAG_CANCEL_CV, MPI_COMM_WORLD, &flag, MPI_STATUS_IGNORE));
     if (flag)
@@ -158,7 +179,7 @@ PetscErrorCode comm_async_sendGlobalCV(PetscMPIInt rank_jacobi_block, PetscInt n
     each local root node is the neighbor of the other in the PETSC_COMM_WORLD
     No further complexity for the moment
 */
-PetscErrorCode build_spanning_tree(PetscMPIInt rank_jacobi_block, PetscInt *neighbors, PetscInt *nbNeighbors, PetscMPIInt proc_local_rank, PetscMPIInt nprocs_per_jacobi_block )
+PetscErrorCode build_spanning_tree(PetscMPIInt rank_jacobi_block, PetscInt *neighbors, PetscInt *nbNeighbors, PetscMPIInt proc_local_rank, PetscMPIInt nprocs_per_jacobi_block)
 {
     PetscFunctionBeginUser;
 

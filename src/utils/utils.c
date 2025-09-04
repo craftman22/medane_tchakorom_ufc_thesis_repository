@@ -436,7 +436,6 @@ PetscErrorCode poisson2DMatrix_complete(Mat A, PetscInt n_mesh_lines, PetscInt n
 
 // Divide the A_block_jacobi matrix into number_of_blocks matrices in the y direction. Resulting matrix has the possesses the same distribution
 // on the processor on the x axis, but different distribution on y-axis
-// TODO: revoir ce code juste pour verifier la decoupe correspond a la logique mathematique
 
 PetscErrorCode divideSubDomainIntoBlockMatrices(MPI_Comm comm_jacobi_block, Mat A_block_jacobi, Mat *A_block_jacobi_subMat, IS *is_cols_block_jacobi, PetscInt rank_jacobi_block, PetscInt njacobi_blocks, PetscInt proc_local_rank, PetscInt nprocs_per_jacobi_block)
 {
@@ -594,6 +593,7 @@ PetscErrorCode computeTheRightHandSideWithInitialGuess(MPI_Comm comm_jacobi_bloc
   {
 
     PetscCall(VecGetArray(b_block_jacobi[rank_jacobi_block], &send_buffer));
+    //FIXME: MAYBE A PROBLEM HERE BELOW 
     PetscCallMPI(MPI_Send(send_buffer, vec_local_size, MPIU_SCALAR, (idx_non_current_block * nprocs_per_jacobi_block) + proc_local_rank, 0, MPI_COMM_WORLD));
     PetscCall(VecRestoreArray(b_block_jacobi[rank_jacobi_block], &send_buffer));
 

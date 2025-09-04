@@ -56,8 +56,8 @@ int main(int argc, char **argv)
     PetscScalar *temp_minimization_data_buffer = NULL;
 
     MPI_Request send_multisplitting_data_request = MPI_REQUEST_NULL;
-    // MPI_Request rcv_multisplitting_data_request = MPI_REQUEST_NULL;
     MPI_Request send_minimization_data_request = MPI_REQUEST_NULL;
+    // MPI_Request rcv_multisplitting_data_request = MPI_REQUEST_NULL;
     // MPI_Request rcv_minimization_data_request = MPI_REQUEST_NULL;
 
     PetscMPIInt send_multisplitting_data_flag = 0;
@@ -70,9 +70,6 @@ int main(int argc, char **argv)
     PetscScalar *vector_to_insert_into_S;
 
     PetscInt MIN_CONVERGENCE_COUNT = 5;
-
-    // MPI_Request send_signal_request = MPI_REQUEST_NULL;
-    // MPI_Request rcv_signal_request = MPI_REQUEST_NULL;
 
     MPI_Status status __attribute__((unused));
 
@@ -145,9 +142,9 @@ int main(int argc, char **argv)
     PetscInt *prevIterNumC = NULL; /* array containing previous iteration at witch node "i" notify convergence CANCELING */
     PetscMPIInt dest_node = -1;
     PetscInt cancelSPartialBuffer;
-    MPI_Request cancelSPartialRequest;
+    MPI_Request cancelSPartialRequest = MPI_REQUEST_NULL;
+    MPI_Request sendSPartialRequest = MPI_REQUEST_NULL;
     PetscInt sendSPartialBuffer;
-    MPI_Request sendSPartialRequest;
     PetscLogDouble time_period_with_globalCV __attribute__((unused)) = 0.0;
     PetscLogDouble globalCV_timer = 0.0;
     PetscLogDouble MAX_TRAVERSAL_TIME __attribute__((unused)) = 0.0; // 13.21 ms
@@ -356,7 +353,7 @@ int main(int argc, char **argv)
         PetscCall(MatMatMult(A_block_jacobi_resdistributed, S, MAT_REUSE_MATRIX, PETSC_DETERMINE, &R_block_jacobi_subMat[rank_jacobi_block]));
         PetscCall(restoreHalfSubMatrixToR(R, R_block_jacobi_subMat, rank_jacobi_block));
 
-        PetscCall(comm_async_test_and_send_min(R, send_minimization_data_buffer, temp_minimization_data_buffer, send_minimization_data_request, R_local_values_count, message_destination, rank_jacobi_block));
+        PetscCall(comm_async_test_and_send_min(R, send_minimization_data_buffer, temp_minimization_data_buffer, &send_minimization_data_request, R_local_values_count, message_destination, rank_jacobi_block));
 
         PetscCall(comm_async_probe_and_receive_min(R, rcv_minimization_data_buffer, temp_minimization_data_buffer, R_local_values_count, rcv_minimization_data_flag, message_source, rank_jacobi_block, idx_non_current_block, n_mesh_points, rstart, rend, lda, s));
 
@@ -416,6 +413,11 @@ int main(int argc, char **argv)
     } while ((time_period_with_globalCV * 1000.0) <= MAX_TRAVERSAL_TIME);
 
     MPI_Request requests[nbNeighbors];
+    for (PetscInt i = 0; i < nbNeighbors; i++)
+    {
+        requests[i] = MPI_REQUEST_NULL;
+    }
+
     PetscCall(comm_async_sendGlobalCV(rank_jacobi_block, nbNeighbors, neighbors, &globalCV, requests));
     PetscCallMPI(MPI_Waitall(nbNeighbors, requests, MPI_STATUSES_IGNORE));
 
@@ -444,6 +446,45 @@ int main(int argc, char **argv)
     PetscCall(computeError(x, u, &error));
     PetscCall(PetscPrintf(PETSC_COMM_WORLD, "Erreur : %e \n", error));
 
+    // END OF PROGRAM  - FREE MEMORY
+
+    for (PetscInt i = 0; i < nbNeighbors; i++)
+    {
+        if (requests[i] != MPI_REQUEST_NULL)
+        {
+            PetscCallMPI(MPI_Cancel(&requests[i]));
+            PetscCallMPI(MPI_Request_free(&requests[i]));
+        }
+    }
+
+    if (cancelSPartialRequest != MPI_REQUEST_NULL)
+    {
+
+        PetscCallMPI(MPI_Cancel(&cancelSPartialRequest));
+        PetscCallMPI(MPI_Request_free(&cancelSPartialRequest));
+    }
+
+    if (sendSPartialRequest != MPI_REQUEST_NULL)
+    {
+        PetscCallMPI(MPI_Cancel(&sendSPartialRequest));
+        PetscCallMPI(MPI_Request_free(&sendSPartialRequest));
+    }
+
+    if (send_multisplitting_data_request != MPI_REQUEST_NULL)
+    {
+        PetscCallMPI(MPI_Cancel(&send_multisplitting_data_request));
+        PetscCallMPI(MPI_Request_free(&send_multisplitting_data_request));
+    }
+
+    if (send_minimization_data_request != MPI_REQUEST_NULL)
+    {
+        PetscCallMPI(MPI_Cancel(&send_minimization_data_request));
+        PetscCallMPI(MPI_Request_free(&send_minimization_data_request));
+    }
+
+    // Discard any pending message
+    PetscCall(comm_discard_pending_messages());
+
     for (PetscInt i = 0; i < njacobi_blocks; i++)
     {
         PetscCall(ISDestroy(&is_cols_block_jacobi[i]));
@@ -454,11 +495,19 @@ int main(int argc, char **argv)
         PetscCall(ISDestroy(&is_merged_vec[i]));
     }
 
-    PetscFree(vec_local_idx);
-    PetscFree(vector_to_insert_into_S);
+    PetscCall(PetscFree(neighbors));
+    PetscCall(PetscFree(prevIterNumS));
+    PetscCall(PetscFree(prevIterNumC));
+    PetscCall(PetscFree(send_minimization_data_buffer));
+    PetscCall(PetscFree(rcv_minimization_data_buffer));
+    PetscCall(PetscFree(rcv_multisplitting_data_buffer));
+    PetscCall(PetscFree(send_multisplitting_data_buffer));
+    PetscCall(PetscFree(vec_local_idx));
+    PetscCall(PetscFree(vector_to_insert_into_S));
     PetscCall(VecDestroy(&x_minimized_prev_iteration));
     PetscCall(VecDestroy(&global_iterates_difference));
     PetscCall(VecDestroy(&local_right_side_vector));
+    PetscCall(VecDestroy(&local_residual));
     PetscCall(VecDestroy(&mat_mult_vec_result));
     PetscCall(ISDestroy(&is_jacobi_vec_parts));
     PetscCall(VecDestroy(&x));
@@ -475,46 +524,6 @@ int main(int argc, char **argv)
     PetscCall(MatDestroy(&R_transpose_R));
     PetscCall(VecDestroy(&vec_R_transpose_b_block_jacobi));
     PetscCall(VecDestroy(&alpha));
-
-    // PetscCall(PetscSleep(2 * 1000 * MAX_TRAVERSAL_TIME));
-    // PetscMPIInt message = ZERO;
-    // PetscMPIInt count;
-
-    // do
-    // {
-    //     MPI_Datatype data_type = MPIU_INT;
-    //     PetscCallMPI(MPI_Iprobe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &message, &status));
-    //     if (message)
-    //     {
-    //         if (status.MPI_TAG == (TAG_MULTISPLITTING_DATA + rank_jacobi_block) || status.MPI_TAG == (TAG_MINIMIZATION_DATA + rank_jacobi_block))
-    //         {
-    //             data_type = MPIU_SCALAR;
-    //             PetscCall(MPI_Get_count(&status, data_type, &count));
-    //             PetscScalar *buffer;
-    //             PetscCall(PetscMalloc1(count, &buffer));
-    //             PetscCallMPI(MPI_Recv(buffer, count, data_type, status.MPI_SOURCE, status.MPI_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE));
-    //             PetscCall(PetscFree(buffer));
-    //         }
-    //         else
-    //         {
-    //             data_type = MPIU_INT;
-    //             PetscCall(MPI_Get_count(&status, data_type, &count));
-    //             PetscInt *buffer;
-    //             PetscCall(PetscMalloc1(count, &buffer));
-    //             PetscCallMPI(MPI_Recv(buffer, count, data_type, status.MPI_SOURCE, status.MPI_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE));
-    //             PetscCall(PetscFree(buffer));
-    //         }
-    //     }
-    // } while (message);
-
-    // PetscCallMPI(MPI_Wait(&send_minimization_data_request, MPI_STATUS_IGNORE));
-    // PetscCallMPI(MPI_Wait(&send_multisplitting_data_request, MPI_STATUS_IGNORE));
-    // PetscCallMPI(MPI_Wait(&send_signal_request, MPI_STATUS_IGNORE));
-
-    // PetscCall(PetscFree(send_multisplitting_data_buffer));
-    // PetscCall(PetscFree(rcv_multisplitting_data_buffer));
-    // PetscCall(PetscFree(send_minimization_data_buffer));
-    // PetscCall(PetscFree(rcv_minimization_data_buffer));
 
     PetscCall(PetscSubcommDestroy(&sub_comm_context));
     PetscCall(PetscCommDestroy(&dcomm));

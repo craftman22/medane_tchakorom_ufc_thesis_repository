@@ -309,6 +309,7 @@ int main(int argc, char **argv)
   PetscFree(vector_to_insert_into_S);
   PetscCall(ISDestroy(&is_jacobi_vec_parts));
   PetscCall(VecDestroy(&local_right_side_vector));
+  PetscCall(VecDestroy(&local_residual));
   PetscCall(VecDestroy(&x));
   PetscCall(VecDestroy(&b));
   PetscCall(VecDestroy(&u));

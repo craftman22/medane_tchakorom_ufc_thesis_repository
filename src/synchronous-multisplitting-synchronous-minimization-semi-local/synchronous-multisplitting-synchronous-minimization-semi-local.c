@@ -243,7 +243,7 @@ int main(int argc, char **argv)
 
   PetscScalar b_norm;
   PetscCall(VecNorm(b, NORM_2, &b_norm));
-  PetscPrintf(MPI_COMM_SELF, "rank block %d b norm %e \n", rank_jacobi_block, b_norm);
+  PetscCall(PetscPrintf(MPI_COMM_SELF, "rank block %d b norm %e \n", rank_jacobi_block, b_norm));
 
   PetscScalar norm;
   PetscScalar global_norm_0 = 0.0;
@@ -252,7 +252,7 @@ int main(int argc, char **argv)
   const PetscScalar *vals = NULL;
 
   PetscLogEvent USER_EVENT;
-  PetscLogEventRegister("outer_solve", 0, &USER_EVENT);
+  PetscCall(PetscLogEventRegister("outer_solve", 0, &USER_EVENT));
 
   PetscCall(PetscLogStagePop()); // XXX: profiling
 
@@ -303,9 +303,9 @@ int main(int argc, char **argv)
 
     PetscCall(MatMatMult(A_block_jacobi, S, MAT_REUSE_MATRIX, PETSC_DETERMINE, &R));
 
-    PetscLogEventBegin(USER_EVENT, 0, 0, 0, 0);
+    PetscCall(PetscLogEventBegin(USER_EVENT, 0, 0, 0, 0));
     PetscCall(outer_solver_norm_equation_modify(comm_jacobi_block, outer_ksp, x_minimized, R, S, alpha, b_block_jacobi[rank_jacobi_block], rank_jacobi_block, number_of_iterations, message_dest, message_source));
-    PetscLogEventEnd(USER_EVENT, 0, 0, 0, 0);
+    PetscCall(PetscLogEventEnd(USER_EVENT, 0, 0, 0, 0));
 
     PetscCall(VecScatterBegin(scatter_jacobi_vec_part_to_merged_vec[idx_non_current_block], x_minimized, x_block_jacobi[idx_non_current_block], INSERT_VALUES, SCATTER_REVERSE));
     PetscCall(VecScatterEnd(scatter_jacobi_vec_part_to_merged_vec[idx_non_current_block], x_minimized, x_block_jacobi[idx_non_current_block], INSERT_VALUES, SCATTER_REVERSE));
@@ -361,6 +361,12 @@ int main(int argc, char **argv)
     PetscCall(ISDestroy(&is_merged_vec[i]));
   }
 
+  PetscCall(ISLocalToGlobalMappingDestroy(&rmapping));
+  PetscCall(ISLocalToGlobalMappingDestroy(&cmapping));
+
+  PetscCall(PetscFree(global_cols_idx));
+  PetscCall(PetscFree(global_rows_idx));
+  PetscCall(PetscFree(local_row_indices));
   PetscCall(PetscFree(vec_local_idx));
   PetscCall(PetscFree(vector_to_insert_into_S));
   PetscCall(VecDestroy(&x_minimized_prev_iteration));
@@ -370,6 +376,7 @@ int main(int argc, char **argv)
   PetscCall(VecDestroy(&mat_mult_vec_result));
   PetscCall(ISDestroy(&is_jacobi_vec_parts));
   PetscCall(VecDestroy(&x));
+  PetscCall(VecDestroy(&alpha));
   PetscCall(VecDestroy(&x_minimized));
   PetscCall(VecDestroy(&b));
   PetscCall(VecDestroy(&u));
