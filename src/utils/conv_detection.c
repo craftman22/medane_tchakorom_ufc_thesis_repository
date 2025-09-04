@@ -68,7 +68,7 @@ PetscErrorCode comm_async_recvSPartialCV(PetscMPIInt rank_jacobi_block, PetscInt
 
     PetscMPIInt flag = 0;
     MPI_Status status;
-    PetscMPIInt buff = -1;
+    PetscInt buff = -1;
     PetscCall(MPI_Iprobe(MPI_ANY_SOURCE, TAG_SEND_CV, MPI_COMM_WORLD, &flag, MPI_STATUS_IGNORE));
     if (flag)
     {
