@@ -239,7 +239,7 @@ int main(int argc, char **argv)
   PetscCall(PetscFree(send_multisplitting_data_buffer));
   PetscCall(PetscFree(rcv_multisplitting_data_buffer));
   PetscCall(KSPDestroy(&inner_ksp));
-  PetscCall(MPI_Comm_free(&comm_local_roots));
+  // PetscCall(MPI_Comm_free(&comm_local_roots));
   PetscCall(PetscSubcommDestroy(&sub_comm_context));
   PetscCall(PetscCommDestroy(&dcomm));
 
