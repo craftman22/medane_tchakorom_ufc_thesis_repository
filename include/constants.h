@@ -28,7 +28,8 @@
 #define TAG_FINAL_DATA_EXCHANGE 40     
 #define TAG_SEND_CV 123  
 #define TAG_CANCEL_CV 1024    
-#define TAG_SEND_RCV_GLOBAL_CV 888   
+#define TAG_SEND_RCV_GLOBAL_CV 888  
+#define TAG_SEND_RCV_RIGHT_HAND_SIDE 333
 // #define TAG_CONTROL 2   // Control or command messages
 // #define TAG_TERMINATE 3 // Termination signal
 // #define TAG_DATA_OUT_LOOP 6

@@ -402,7 +402,6 @@ PetscErrorCode comm_sync_measure_latency_between_two_nodes(PetscMPIInt proc_rank
         for (int i = 0; i < NUM_ITER; i++)
         {
             PetscCallMPI(MPI_Recv(msg, MSG_SIZE, MPI_CHAR, proc_rank_node_1, 0, MPI_COMM_WORLD, &status));
-            // FIXME: MAYBE A PROBLEM HERE BELOW
             PetscCallMPI(MPI_Send(msg, MSG_SIZE, MPI_CHAR, proc_rank_node_1, 0, MPI_COMM_WORLD));
         }
     }

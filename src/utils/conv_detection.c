@@ -61,7 +61,7 @@ PetscErrorCode comm_async_convDetection(PetscMPIInt rank_jacobi_block, PetscInt 
 
                 if ((*nbNeigNotLCV) == 1)
                 {
-                    (*dest_node) = neighbors[0]; // XXX: This is straighforward as there is just 2 nodes involved, each one has only one neighbor.
+                    (*dest_node) = neighbors[0]; // This is straighforward as there is just 2 nodes involved, each one has only one neighbor.
                     if ((*sendSPartialRequest) != MPI_REQUEST_NULL)
                         PetscCallMPI(MPI_Test(sendSPartialRequest, &flag, MPI_STATUS_IGNORE));
                     else
@@ -97,7 +97,6 @@ PetscErrorCode comm_async_recvSPartialCV(PetscMPIInt rank_jacobi_block, PetscInt
         PetscInt srcNode = status.MPI_SOURCE;
         PetscInt currentIterNum = buff;
 
-        // FIXME: MAYBE A PROBLEM HERE BELOW
         if ((prevIterNumS[srcNode] < prevIterNumC[srcNode]) && (prevIterNumC[srcNode] < currentIterNum))
         {
             (*nbNeigNotLCV) = (*nbNeigNotLCV) - 1;
@@ -105,7 +104,6 @@ PetscErrorCode comm_async_recvSPartialCV(PetscMPIInt rank_jacobi_block, PetscInt
                 (*nbNeigNotLCV) = 0;
         }
 
-        // FIXME: MAYBE A PROBLEM HERE BELOW
         if (prevIterNumS[srcNode] < currentIterNum)
         {
             prevIterNumS[srcNode] = currentIterNum;
