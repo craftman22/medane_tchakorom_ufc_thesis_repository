@@ -296,8 +296,6 @@ int main(int argc, char **argv)
       PetscCall(VecScatterBegin(scatter_jacobi_vec_part_to_merged_vec[idx_non_current_block], x_block_jacobi[idx_non_current_block], x, INSERT_VALUES, SCATTER_FORWARD));
       PetscCall(VecScatterEnd(scatter_jacobi_vec_part_to_merged_vec[idx_non_current_block], x_block_jacobi[idx_non_current_block], x, INSERT_VALUES, SCATTER_FORWARD));
 
-      // if (rank_jacobi_block == 0)
-      //   PetscCall(VecView(x, PETSC_VIEWER_STDOUT_(comm_jacobi_block)));
 
       PetscCall(VecGetArrayRead(x, &vals));
       PetscCall(MatSetValuesLocal(S, nlocal_rows_x, local_row_indices, 1, &basis_vector_i, vals, INSERT_VALUES));
@@ -310,11 +308,7 @@ int main(int argc, char **argv)
     PetscCall(MatAssemblyEnd(S, MAT_FINAL_ASSEMBLY));
     PetscCall(PetscLogStagePop()); // XXX: profiling
 
-    // if (rank_jacobi_block == 0)
-    //   PetscCall(MatView(S, PETSC_VIEWER_STDOUT_(comm_jacobi_block)));
 
-    // PetscCall(PetscFinalize());
-    // return 0;
 
     // XXX: profiling
     PetscCall(PetscLogStagePush(outer_solver_stage));

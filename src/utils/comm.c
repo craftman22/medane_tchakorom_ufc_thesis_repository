@@ -267,7 +267,7 @@ PetscErrorCode comm_sync_send_and_receive_minimization(Mat R, PetscScalar *send_
 PetscErrorCode comm_async_probe_and_receive_min(Mat R, PetscScalar *rcv_minimization_data_buffer, PetscScalar *temp_minimization_data_buffer, PetscMPIInt R_local_values_count, PetscMPIInt rcv_minimization_data_flag, PetscMPIInt message_source, PetscMPIInt rank_jacobi_block, PetscMPIInt idx_non_current_block, PetscInt n_mesh_points, PetscInt rstart, PetscInt rend, PetscInt lda, PetscInt s)
 {
     PetscFunctionBeginUser;
-    PetscMPIInt loop_counter = 0;
+    // PetscMPIInt loop_counter = 0;
 
     PetscCallMPI(MPI_Iprobe(message_source, (TAG_MINIMIZATION_DATA + idx_non_current_block), MPI_COMM_WORLD, &rcv_minimization_data_flag, MPI_STATUS_IGNORE));
     if (rcv_minimization_data_flag)
@@ -278,11 +278,11 @@ PetscErrorCode comm_async_probe_and_receive_min(Mat R, PetscScalar *rcv_minimiza
             // printf("=============Block rank %d START minimization RCV communication\n", rank_jacobi_block);
             PetscCallMPI(MPI_Recv(rcv_minimization_data_buffer, R_local_values_count, MPIU_SCALAR, message_source, (TAG_MINIMIZATION_DATA + idx_non_current_block), MPI_COMM_WORLD, MPI_STATUS_IGNORE));
             // printf("=============Block rank %d END minimization RCV communication\n", rank_jacobi_block);
-            loop_counter++;
-            if (loop_counter >= 2) // TODO: remember this, possibly make it an argument of the program
-            {
-                break;
-            }
+            // loop_counter++;
+            // if (loop_counter >= 2) // TODO: remember this, possibly make it an argument of the program
+            // {
+            //     break;
+            // }
 
             PetscCallMPI(MPI_Iprobe(message_source, (TAG_MINIMIZATION_DATA + idx_non_current_block), MPI_COMM_WORLD, &rcv_minimization_data_flag, MPI_STATUS_IGNORE));
         } while (rcv_minimization_data_flag);
@@ -323,7 +323,7 @@ PetscErrorCode comm_async_test_and_send_min(Mat R, PetscScalar *send_minimizatio
         PetscCallMPI(MPI_Test(send_minimization_data_request, &send_minimization_data_flag, MPI_STATUS_IGNORE));
     else
         send_minimization_data_flag = 1;
-        
+
     if (send_minimization_data_flag)
     {
         PetscCall(MatDenseGetArray(R, &temp_minimization_data_buffer));
