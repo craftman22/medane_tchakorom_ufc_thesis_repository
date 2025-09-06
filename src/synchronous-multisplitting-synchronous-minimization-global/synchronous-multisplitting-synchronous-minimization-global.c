@@ -267,7 +267,7 @@ int main(int argc, char **argv)
 
   PetscScalar norm_b;
   PetscCall(VecNorm(b, NORM_2, &norm_b));
-  printf("Norm de b %e \n", norm_b);
+  PetscCall(PetscPrintf(comm_jacobi_block,"Norm de b %e \n", norm_b));
 
   PetscScalar norm = 0.0;
   PetscScalar global_norm_0 = 0.0;
