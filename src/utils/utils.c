@@ -467,6 +467,37 @@ PetscErrorCode divideSubDomainIntoBlockMatrices(MPI_Comm comm_jacobi_block, Mat 
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
+/*
+  Ok, let's make it simple. This function get read of so-called unused database options due
+  to different ksp context created on different sub_comm. Process rank 0 on PETSC_COMM_WORLD
+  thinks some ksp options are unused. This function create a temporary unused kps context, and then
+  delete it. This way, i only get real unused options if there are some.
+*/
+PetscErrorCode offloadJunk_00001(MPI_Comm comm_jacobi_block, PetscScalar rank_jacobi_block, PetscInt number_of_target)
+{
+  PetscFunctionBeginUser;
+  KSP dummy_ksp_context;
+  PetscCall(KSPCreate(comm_jacobi_block, &dummy_ksp_context));
+  if (rank_jacobi_block == 0)
+    PetscCall(KSPSetOptionsPrefix(dummy_ksp_context, "inner2_"));
+  if (rank_jacobi_block == 1)
+    PetscCall(KSPSetOptionsPrefix(dummy_ksp_context, "inner1_"));
+  PetscCall(KSPSetFromOptions(dummy_ksp_context));
+
+  if (number_of_target > 1)
+  {
+    if (rank_jacobi_block == 0)
+      PetscCall(KSPSetOptionsPrefix(dummy_ksp_context, "outer2_"));
+    if (rank_jacobi_block == 1)
+      PetscCall(KSPSetOptionsPrefix(dummy_ksp_context, "outer1_"));
+    PetscCall(KSPSetFromOptions(dummy_ksp_context));
+  }
+
+  PetscCall(KSPDestroy(&dummy_ksp_context));
+
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
+
 // Initiliaze a KSP context
 PetscErrorCode initializeKSP(MPI_Comm comm_jacobi_block, KSP *ksp, Mat operator_matrix, PetscScalar rank_jacobi_block, PetscBool zero_initial_guess, const char *ksp_prefix, const char *pc_prefix)
 {

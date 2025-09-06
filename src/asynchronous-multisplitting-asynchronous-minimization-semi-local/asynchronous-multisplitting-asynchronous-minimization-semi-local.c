@@ -218,27 +218,36 @@ int main(int argc, char **argv)
 
     // PetscCall(initializeKSP(comm_jacobi_block, &inner_ksp, A_block_jacobi_subMat[rank_jacobi_block], rank_jacobi_block, PETSC_FALSE, INNER_KSP_PREFIX, INNER_PC_PREFIX));
     // PetscCall(initializeKSP(comm_jacobi_block, &outer_ksp, NULL, rank_jacobi_block, PETSC_TRUE, OUTER_KSP_PREFIX, OUTER_PC_PREFIX));
-
+    const char *ksp_prefix;
+    const char *pc_prefix;
     if (rank_jacobi_block == 0)
     {
-        PetscCall(initializeKSP(comm_jacobi_block, &inner_ksp, A_block_jacobi_subMat[rank_jacobi_block], rank_jacobi_block, PETSC_FALSE, "inner1_", "inner1_"));
+        ksp_prefix = "inner1_";
+        pc_prefix = "inner1_";
     }
 
     if (rank_jacobi_block == 1)
     {
-        PetscCall(initializeKSP(comm_jacobi_block, &inner_ksp, A_block_jacobi_subMat[rank_jacobi_block], rank_jacobi_block, PETSC_FALSE, "inner2_", "inner2_"));
+        ksp_prefix = "inner2_";
+        pc_prefix = "inner2_";
     }
+
+    PetscCall(initializeKSP(comm_jacobi_block, &inner_ksp, A_block_jacobi_subMat[rank_jacobi_block], rank_jacobi_block, PETSC_FALSE, ksp_prefix, pc_prefix));
 
     if (rank_jacobi_block == 0)
     {
-
-        PetscCall(initializeKSP(comm_jacobi_block, &outer_ksp, R, rank_jacobi_block, PETSC_TRUE, "outer1_", "outer1_"));
+        ksp_prefix = "outer1_";
+        pc_prefix = "outer1_";
     }
 
     if (rank_jacobi_block == 1)
     {
-        PetscCall(initializeKSP(comm_jacobi_block, &outer_ksp, R, rank_jacobi_block, PETSC_TRUE, "outer2_", "outer2_"));
+        ksp_prefix = "outer2_";
+        pc_prefix = "outer2_";
     }
+
+    PetscCall(initializeKSP(comm_jacobi_block, &outer_ksp, R, rank_jacobi_block, PETSC_TRUE, ksp_prefix, pc_prefix));
+    PetscCall(offloadJunk_00001(comm_jacobi_block, rank_jacobi_block, 2));
 
     PetscCall(VecGetLocalSize(x_block_jacobi[rank_jacobi_block], &vec_local_size));
     PetscCall(PetscMalloc1(vec_local_size, &send_multisplitting_data_buffer));
@@ -340,28 +349,28 @@ int main(int argc, char **argv)
         PetscCall(PetscPrintf(comm_jacobi_block, "Local norm_2 block rank %d = %e \n", rank_jacobi_block, local_norm));
 
         if (proc_local_rank == 0)  ONLY root node from each block check for convergence
-        {
-
-            if (local_norm <= PetscMax(absolute_tolerance, relative_tolerance * local_norm_0))
             {
-                preLocalCV = PETSC_TRUE;
+
+                if (local_norm <= PetscMax(absolute_tolerance, relative_tolerance * local_norm_0))
+                {
+                    preLocalCV = PETSC_TRUE;
+                }
+                else
+                {
+                    preLocalCV = PETSC_FALSE;
+                }
+
+                cancelSPartialBuffer = number_of_iterations;
+                sendSPartialBuffer = number_of_iterations;
+
+                PetscCall(comm_async_convDetection(rank_jacobi_block, nbNeighbors, &nbNeigNotLCV, neighbors, prevIterNumS, prevIterNumC, &nbIterPreLocalCV, &preLocalCV, &sLocalCV, &globalCV, &dest_node, THRESHOLD_SLCV, number_of_iterations, &cancelSPartialBuffer, &cancelSPartialRequest, &sendSPartialBuffer, &sendSPartialRequest));
+
+                PetscCall(comm_async_recvSPartialCV(rank_jacobi_block, &nbNeigNotLCV, prevIterNumS, prevIterNumC));
+
+                PetscCall(comm_async_recvCancelSPartialCV(rank_jacobi_block, &nbNeigNotLCV, nbNeighbors, prevIterNumS, prevIterNumC, &globalCV));
+
+                PetscCall(comm_async_recvGlobalCV(rank_jacobi_block, &globalCV));
             }
-            else
-            {
-                preLocalCV = PETSC_FALSE;
-            }
-
-            cancelSPartialBuffer = number_of_iterations;
-            sendSPartialBuffer = number_of_iterations;
-
-            PetscCall(comm_async_convDetection(rank_jacobi_block, nbNeighbors, &nbNeigNotLCV, neighbors, prevIterNumS, prevIterNumC, &nbIterPreLocalCV, &preLocalCV, &sLocalCV, &globalCV, &dest_node, THRESHOLD_SLCV, number_of_iterations, &cancelSPartialBuffer, &cancelSPartialRequest, &sendSPartialBuffer, &sendSPartialRequest));
-
-            PetscCall(comm_async_recvSPartialCV(rank_jacobi_block, &nbNeigNotLCV, prevIterNumS, prevIterNumC));
-
-            PetscCall(comm_async_recvCancelSPartialCV(rank_jacobi_block, &nbNeigNotLCV, nbNeighbors, prevIterNumS, prevIterNumC, &globalCV));
-
-            PetscCall(comm_async_recvGlobalCV(rank_jacobi_block, &globalCV));
-        }
 
         PetscCallMPI(MPI_Bcast(&globalCV, 1, MPIU_BOOL, LOCAL_ROOT_NODE, comm_jacobi_block));
 

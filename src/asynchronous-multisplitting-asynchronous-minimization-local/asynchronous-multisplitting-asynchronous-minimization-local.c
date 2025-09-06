@@ -225,26 +225,36 @@ int main(int argc, char **argv)
 
     // PetscCall(initializeKSP(comm_jacobi_block, &inner_ksp, A_block_jacobi_subMat[rank_jacobi_block], rank_jacobi_block, PETSC_FALSE, INNER_KSP_PREFIX, INNER_PC_PREFIX));
     // PetscCall(initializeKSP(comm_jacobi_block, &outer_ksp, NULL, rank_jacobi_block, PETSC_TRUE, OUTER_KSP_PREFIX, OUTER_PC_PREFIX));
+    const char *ksp_prefix;
+    const char *pc_prefix;
     if (rank_jacobi_block == 0)
     {
-        PetscCall(initializeKSP(comm_jacobi_block, &inner_ksp, A_block_jacobi_subMat[rank_jacobi_block], rank_jacobi_block, PETSC_FALSE, "inner1_", "inner1_"));
+        ksp_prefix = "inner1_";
+        pc_prefix = "inner1_";
     }
 
     if (rank_jacobi_block == 1)
     {
-        PetscCall(initializeKSP(comm_jacobi_block, &inner_ksp, A_block_jacobi_subMat[rank_jacobi_block], rank_jacobi_block, PETSC_FALSE, "inner2_", "inner2_"));
+        ksp_prefix = "inner2_";
+        pc_prefix = "inner2_";
     }
+
+    PetscCall(initializeKSP(comm_jacobi_block, &inner_ksp, A_block_jacobi_subMat[rank_jacobi_block], rank_jacobi_block, PETSC_FALSE, ksp_prefix, pc_prefix));
 
     if (rank_jacobi_block == 0)
     {
-
-        PetscCall(initializeKSP(comm_jacobi_block, &outer_ksp, R, rank_jacobi_block, PETSC_TRUE, "outer1_", "outer1_"));
+        ksp_prefix = "outer1_";
+        pc_prefix = "outer1_";
     }
 
     if (rank_jacobi_block == 1)
     {
-        PetscCall(initializeKSP(comm_jacobi_block, &outer_ksp, R, rank_jacobi_block, PETSC_TRUE, "outer2_", "outer2_"));
+        ksp_prefix = "outer2_";
+        pc_prefix = "outer2_";
     }
+
+    PetscCall(initializeKSP(comm_jacobi_block, &outer_ksp, R, rank_jacobi_block, PETSC_TRUE, ksp_prefix, pc_prefix));
+    PetscCall(offloadJunk_00001(comm_jacobi_block, rank_jacobi_block, 2));
 
     PetscCall(VecGetLocalSize(x_block_jacobi[rank_jacobi_block], &vec_local_size));
 
