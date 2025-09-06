@@ -267,7 +267,7 @@ int main(int argc, char **argv)
 
   PetscScalar norm_b;
   PetscCall(VecNorm(b, NORM_2, &norm_b));
-  PetscCall(PetscPrintf(comm_jacobi_block,"Norm de b %e \n", norm_b));
+  PetscCall(PetscPrintf(comm_jacobi_block, "Norm de b %e \n", norm_b));
 
   PetscScalar norm = 0.0;
   PetscScalar global_norm_0 = 0.0;
@@ -343,8 +343,12 @@ int main(int argc, char **argv)
     PetscCall(VecScatterBegin(scatter_jacobi_vec_part_to_merged_vec[rank_jacobi_block], x_minimized, x_block_jacobi[rank_jacobi_block], INSERT_VALUES, SCATTER_REVERSE));
     PetscCall(VecScatterEnd(scatter_jacobi_vec_part_to_merged_vec[rank_jacobi_block], x_minimized, x_block_jacobi[rank_jacobi_block], INSERT_VALUES, SCATTER_REVERSE));
 
+    
+    PetscInt k;
+    PetscCall(KSPGetTolerances(inner_ksp, NULL, NULL, NULL, &k));
+    PetscCall(KSPSetTolerances(inner_ksp, PETSC_CURRENT, PETSC_CURRENT, PETSC_CURRENT, k + number_of_iterations));
+    
     number_of_iterations = number_of_iterations + 1;
-
     PetscCall(PetscLogStagePop()); // XXX: profiling
 
   } while (send_signal != CONVERGENCE_SIGNAL);
