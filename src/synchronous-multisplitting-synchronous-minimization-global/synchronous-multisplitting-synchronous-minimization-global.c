@@ -344,9 +344,9 @@ int main(int argc, char **argv)
     PetscCall(VecScatterEnd(scatter_jacobi_vec_part_to_merged_vec[rank_jacobi_block], x_minimized, x_block_jacobi[rank_jacobi_block], INSERT_VALUES, SCATTER_REVERSE));
 
     
-    PetscInt k;
-    PetscCall(KSPGetTolerances(inner_ksp, NULL, NULL, NULL, &k));
-    PetscCall(KSPSetTolerances(inner_ksp, PETSC_CURRENT, PETSC_CURRENT, PETSC_CURRENT, k + number_of_iterations));
+    // PetscInt k;
+    // PetscCall(KSPGetTolerances(inner_ksp, NULL, NULL, NULL, &k));
+    // PetscCall(KSPSetTolerances(inner_ksp, PETSC_CURRENT, PETSC_CURRENT, PETSC_CURRENT, k + 1));
     
     number_of_iterations = number_of_iterations + 1;
     PetscCall(PetscLogStagePop()); // XXX: profiling
