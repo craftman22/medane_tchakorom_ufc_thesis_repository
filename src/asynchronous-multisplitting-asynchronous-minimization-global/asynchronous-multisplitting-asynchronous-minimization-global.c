@@ -161,7 +161,7 @@ int main(int argc, char **argv)
 
     PetscCallMPI(MPI_Bcast(&MAX_TRAVERSAL_TIME, 1, MPI_DOUBLE, ROOT_NODE, PETSC_COMM_WORLD));
 
-    PetscCall(PetscPrintf(PETSC_COMM_SELF, "MAX_TRAVERSAL_TIME = %e \n", MAX_TRAVERSAL_TIME));
+    PetscCall(PetscPrintf(comm_jacobi_block, "MAX_TRAVERSAL_TIME = %e \n", MAX_TRAVERSAL_TIME));
 
     if (proc_local_rank == 0)
     {
@@ -271,7 +271,7 @@ int main(int argc, char **argv)
         pc_prefix = "outer2_";
     }
 
-    PetscCall(initializeKSP(comm_jacobi_block, &outer_ksp, R, rank_jacobi_block, PETSC_TRUE, ksp_prefix, pc_prefix));
+    PetscCall(initializeKSP(comm_jacobi_block, &outer_ksp, NULL, rank_jacobi_block, PETSC_TRUE, ksp_prefix, pc_prefix));
     PetscCall(offloadJunk_00001(comm_jacobi_block, rank_jacobi_block, 2));
 
     PetscCall(VecGetLocalSize(x_block_jacobi[rank_jacobi_block], &vec_local_size));
@@ -329,6 +329,9 @@ int main(int argc, char **argv)
     double start_time, end_time;
     start_time = MPI_Wtime();
 
+    if (rank_jacobi_block == 1)
+        PetscCall(PetscSleep(1));
+
     do
     {
 
@@ -368,6 +371,7 @@ int main(int argc, char **argv)
 
         PetscCall(comm_async_probe_and_receive_min(R, rcv_minimization_data_buffer, temp_minimization_data_buffer, R_local_values_count, rcv_minimization_data_flag, message_source, rank_jacobi_block, idx_non_current_block, n_mesh_points, rstart, rend, lda, s));
 
+        // PetscCall(PetscBarrier((PetscObject)S));
         PetscCall(PetscLogEventBegin(USER_EVENT, 0, 0, 0, 0));
         PetscCall(outer_solver_norm_equation(comm_jacobi_block, outer_ksp, x_minimized, R, S, alpha, b, rank_jacobi_block, number_of_iterations));
         PetscCall(PetscLogEventEnd(USER_EVENT, 0, 0, 0, 0));
@@ -406,6 +410,8 @@ int main(int argc, char **argv)
             PetscCall(comm_async_recvGlobalCV(rank_jacobi_block, &globalCV));
         }
 
+        globalCV = PETSC_TRUE; // FIXME: delete
+
         PetscCallMPI(MPI_Bcast(&globalCV, 1, MPIU_BOOL, LOCAL_ROOT_NODE, comm_jacobi_block));
 
         if (globalCV == PETSC_FALSE)
@@ -420,6 +426,7 @@ int main(int argc, char **argv)
         }
 
         number_of_iterations = number_of_iterations + 1;
+        break; // FIXME: delete
 
     } while ((time_period_with_globalCV * 1000.0) <= MAX_TRAVERSAL_TIME);
 
@@ -434,8 +441,7 @@ int main(int argc, char **argv)
 
     PetscCall(PetscPrintf(comm_jacobi_block, "Rank %d: PROGRAMME TERMINE\n", rank_jacobi_block));
 
-    PetscCall(PetscPrintf(comm_jacobi_block, "Rank %d: PROGRAMME TERMINE\n", rank_jacobi_block));
-
+    PetscCallMPI(MPI_Barrier(MPI_COMM_WORLD));
     PetscCall(PetscBarrier(NULL));
 
     end_time = MPI_Wtime();

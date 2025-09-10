@@ -210,7 +210,7 @@ int main(int argc, char **argv)
     pc_prefix = "outer2_";
   }
 
-  PetscCall(initializeKSP(comm_jacobi_block, &outer_ksp, R, rank_jacobi_block, PETSC_TRUE, ksp_prefix, pc_prefix));
+  PetscCall(initializeKSP(comm_jacobi_block, &outer_ksp, NULL, rank_jacobi_block, PETSC_TRUE, ksp_prefix, pc_prefix));
   PetscCall(offloadJunk_00001(comm_jacobi_block, rank_jacobi_block, 2));
 
   PetscCall(VecGetLocalSize(x_block_jacobi[rank_jacobi_block], &nlocal_rows_x_block));
