@@ -139,7 +139,7 @@ int main(int argc, char **argv)
     PetscLogDouble time_period_with_globalCV __attribute__((unused)) = 0.0;
     PetscLogDouble globalCV_timer = 0.0;
     PetscLogDouble MAX_TRAVERSAL_TIME __attribute__((unused)) = 0.0; // 13.21 ms
-    PetscInt MAX_NEIGHBORS = ONE;
+    PetscInt MAX_NEIGHBORS = nprocs;
 
     PetscCall(PetscBarrier(NULL));
     if (proc_local_rank == 0)
@@ -156,8 +156,8 @@ int main(int argc, char **argv)
 
     if (proc_local_rank == 0)
     {
-        PetscCall(PetscMalloc1(MAX_NEIGHBORS, &neighbors));
-        PetscCall(PetscArrayfill_custom(neighbors, -11, MAX_NEIGHBORS));
+        PetscCall(PetscMalloc1(1, &neighbors));
+        PetscCall(PetscArrayfill_custom(neighbors, -11, 1));
 
         PetscCall(PetscMalloc1(MAX_NEIGHBORS, &prevIterNumS));
         PetscCall(PetscArrayfill_custom(prevIterNumS, -1, MAX_NEIGHBORS));
