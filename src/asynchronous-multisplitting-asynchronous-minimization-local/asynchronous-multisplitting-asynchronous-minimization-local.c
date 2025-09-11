@@ -407,6 +407,8 @@ int main(int argc, char **argv)
     PetscCall(PetscPrintf(PETSC_COMM_WORLD, "Erreur : %e \n", error));
 
     // END OF PROGRAM  - FREE MEMORY
+    // Discard any pending message
+    PetscCall(comm_discard_pending_messages());
 
     for (PetscInt i = 0; i < nbNeighbors; i++)
     {
@@ -436,8 +438,7 @@ int main(int argc, char **argv)
         PetscCallMPI(MPI_Request_free(&send_multisplitting_data_request));
     }
 
-    // Discard any pending message
-    PetscCall(comm_discard_pending_messages());
+    PetscCall(PetscBarrier(NULL));
 
     for (PetscInt i = 0; i < njacobi_blocks; i++)
     {

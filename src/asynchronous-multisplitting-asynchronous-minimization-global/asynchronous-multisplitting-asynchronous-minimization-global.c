@@ -148,7 +148,7 @@ int main(int argc, char **argv)
     PetscLogDouble time_period_with_globalCV __attribute__((unused)) = 0.0;
     PetscLogDouble globalCV_timer = 0.0;
     PetscLogDouble MAX_TRAVERSAL_TIME __attribute__((unused)) = 0.0; // 13.21 ms
-    PetscInt MAX_NEIGHBORS = nprocs; 
+    PetscInt MAX_NEIGHBORS = nprocs;
 
     PetscCall(PetscBarrier(NULL));
     if (proc_local_rank == 0)
@@ -165,8 +165,8 @@ int main(int argc, char **argv)
 
     if (proc_local_rank == 0)
     {
-        PetscCall(PetscMalloc1(1, &neighbors));  
-        PetscCall(PetscArrayfill_custom(neighbors, -11, 1)); 
+        PetscCall(PetscMalloc1(1, &neighbors));
+        PetscCall(PetscArrayfill_custom(neighbors, -11, 1));
 
         PetscCall(PetscMalloc1(MAX_NEIGHBORS, &prevIterNumS));
         PetscCall(PetscArrayfill_custom(prevIterNumS, -1, MAX_NEIGHBORS));
@@ -329,8 +329,6 @@ int main(int argc, char **argv)
     double start_time, end_time;
     start_time = MPI_Wtime();
 
-    if (rank_jacobi_block == 1)
-        PetscCall(PetscSleep(1));
 
     do
     {
@@ -410,7 +408,7 @@ int main(int argc, char **argv)
             PetscCall(comm_async_recvGlobalCV(rank_jacobi_block, &globalCV));
         }
 
-        globalCV = PETSC_TRUE; // FIXME: delete
+
 
         PetscCallMPI(MPI_Bcast(&globalCV, 1, MPIU_BOOL, LOCAL_ROOT_NODE, comm_jacobi_block));
 
@@ -426,7 +424,7 @@ int main(int argc, char **argv)
         }
 
         number_of_iterations = number_of_iterations + 1;
-        break; // FIXME: delete
+       
 
     } while ((time_period_with_globalCV * 1000.0) <= MAX_TRAVERSAL_TIME);
 
@@ -441,7 +439,6 @@ int main(int argc, char **argv)
 
     PetscCall(PetscPrintf(comm_jacobi_block, "Rank %d: PROGRAMME TERMINE\n", rank_jacobi_block));
 
-    PetscCallMPI(MPI_Barrier(MPI_COMM_WORLD));
     PetscCall(PetscBarrier(NULL));
 
     end_time = MPI_Wtime();
@@ -465,11 +462,15 @@ int main(int argc, char **argv)
 
     // END OF PROGRAM  - FREE MEMORY
 
+    // Discard any pending message
+    PetscCall(comm_discard_pending_messages());
+
     for (PetscInt i = 0; i < nbNeighbors; i++)
     {
         if (requests[i] != MPI_REQUEST_NULL)
         {
             PetscCallMPI(MPI_Cancel(&requests[i]));
+            PetscCallMPI(MPI_Wait(&requests[i], MPI_STATUS_IGNORE));
             PetscCallMPI(MPI_Request_free(&requests[i]));
         }
     }
@@ -499,8 +500,7 @@ int main(int argc, char **argv)
         PetscCallMPI(MPI_Request_free(&send_minimization_data_request));
     }
 
-    // Discard any pending message
-    PetscCall(comm_discard_pending_messages());
+    PetscCall(PetscBarrier(NULL));
 
     for (PetscInt i = 0; i < njacobi_blocks; i++)
     {
