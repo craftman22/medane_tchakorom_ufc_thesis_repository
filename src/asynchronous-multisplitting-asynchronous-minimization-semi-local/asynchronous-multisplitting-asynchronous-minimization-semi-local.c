@@ -152,7 +152,7 @@ int main(int argc, char **argv)
 
     PetscCallMPI(MPI_Bcast(&MAX_TRAVERSAL_TIME, 1, MPI_DOUBLE, ROOT_NODE, PETSC_COMM_WORLD));
 
-    PetscCall(PetscPrintf(PETSC_COMM_SELF, "MAX_TRAVERSAL_TIME = %e \n", MAX_TRAVERSAL_TIME));
+    PetscCall(PetscPrintf(comm_jacobi_block, "MAX_TRAVERSAL_TIME = %e \n", MAX_TRAVERSAL_TIME));
 
     if (proc_local_rank == 0)
     {
@@ -292,10 +292,6 @@ int main(int argc, char **argv)
     double start_time, end_time;
     start_time = MPI_Wtime();
 
-    if (rank_jacobi_block == 0)
-    {
-        PetscCall(PetscSleep(1000000));
-    }
 
     do
     {
@@ -346,7 +342,8 @@ int main(int argc, char **argv)
         PetscCall(MatResidual(A_block_jacobi, b_block_jacobi[rank_jacobi_block], x_minimized, local_residual));
         PetscCall(VecNorm(local_residual, NORM_2, &local_norm));
 
-        PetscCall(PetscPrintf(comm_jacobi_block, "Local norm_2 block rank %d = %e \n", rank_jacobi_block, local_norm));
+        PetscCall(PetscPrintf(comm_jacobi_block, "[Rank %d] Local norm_2 block  = %e \n", rank_jacobi_block, local_norm));
+
 
         if (proc_local_rank == 0)  ONLY root node from each block check for convergence
             {
