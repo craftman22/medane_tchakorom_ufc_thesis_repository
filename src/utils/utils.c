@@ -1116,6 +1116,22 @@ PetscErrorCode outer_solver_norm_equation_modify_async(MPI_Comm comm_jacobi_bloc
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
+
+
+
+PetscErrorCode MyConvergeTest(KSP ksp, PetscInt it, PetscReal rnorm, KSPConvergedReason *reason, void *ctx)
+{
+  static PetscReal prev_rnorm = -1;
+  if (prev_rnorm > 0 && PetscAbsReal(prev_rnorm - rnorm) / prev_rnorm < 1e-50)
+  {
+    // PetscPrintf(PETSC_COMM_WORLD, "Possible stagnation at iter %d: residual ratio ~1\n", it);
+    *reason = KSP_DIVERGED_BREAKDOWN; // or define a custom code
+  }
+  prev_rnorm = rnorm;
+  return 0;
+}
+
+
 // if (rank_jacobi_block == 0)
 // {
 
