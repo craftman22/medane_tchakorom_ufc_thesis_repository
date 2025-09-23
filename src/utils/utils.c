@@ -575,7 +575,8 @@ PetscErrorCode computeFinalResidualNorm(MPI_Comm comm_jacobi_block, MPI_Comm com
   {
     local_norm = local_norm * local_norm;
     PetscCallMPI(MPI_Allreduce(&local_norm, direct_residual_norm, 1, MPIU_SCALAR, MPI_SUM, comm_local_roots));
-    (*direct_residual_norm) = sqrt(*direct_residual_norm);
+    // (*direct_residual_norm) = sqrt(*direct_residual_norm);
+    (*direct_residual_norm) = PetscSqrtScalar(*direct_residual_norm);
   }
 
   PetscCallMPI(MPI_Bcast(direct_residual_norm, 1, MPIU_SCALAR, LOCAL_ROOT_NODE, comm_jacobi_block));
@@ -1116,9 +1117,6 @@ PetscErrorCode outer_solver_norm_equation_modify_async(MPI_Comm comm_jacobi_bloc
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-
-
-
 PetscErrorCode MyConvergeTest(KSP ksp, PetscInt it, PetscReal rnorm, KSPConvergedReason *reason, void *ctx)
 {
   static PetscReal prev_rnorm = -1;
@@ -1130,7 +1128,6 @@ PetscErrorCode MyConvergeTest(KSP ksp, PetscInt it, PetscReal rnorm, KSPConverge
   prev_rnorm = rnorm;
   return 0;
 }
-
 
 // if (rank_jacobi_block == 0)
 // {

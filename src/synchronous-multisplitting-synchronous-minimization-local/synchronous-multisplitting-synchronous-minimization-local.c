@@ -266,6 +266,7 @@ int main(int argc, char **argv)
       send_signal = CONVERGENCE_SIGNAL;
     }
 
+    //FIXME: here it's possible to compute local residual and then reduce data accross root nodes (we are in synchronous mode)
     PetscCall(comm_sync_convergence_detection(&broadcast_message, send_signal, rcv_signal, message_dest, message_source, rank_jacobi_block, idx_non_current_block, proc_local_rank));
     PetscCallMPI(MPI_Bcast(&broadcast_message, ONE, MPIU_INT, ROOT_NODE, comm_jacobi_block));
 

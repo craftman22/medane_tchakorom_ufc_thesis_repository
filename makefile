@@ -107,7 +107,7 @@ print:
 # SRC_DIRS :=  src/synchronous-multisplitting  src/asynchronous-multisplitting  src/synchronous-multisplitting-synchronous-minimization-local src/synchronous-multisplitting-synchronous-minimization-semi-local src/synchronous-multisplitting-synchronous-minimization-global  src/asynchronous-multisplitting-asynchronous-minimization-global src/asynchronous-multisplitting-asynchronous-minimization-local src/asynchronous-multisplitting-asynchronous-minimization-semi-local src/gmres_solution 
 
 # Asynchronous
-# SRC_DIRS :=  src/synchronous-multisplitting   src/synchronous-multisplitting-synchronous-minimization-local src/synchronous-multisplitting-synchronous-minimization-semi-local src/synchronous-multisplitting-synchronous-minimization-global   src/gmres_solution
+SRC_DIRS :=  src/synchronous-multisplitting   src/synchronous-multisplitting-synchronous-minimization-local src/synchronous-multisplitting-synchronous-minimization-semi-local src/synchronous-multisplitting-synchronous-minimization-global  
 
 # Synchronous
 #SRC_DIRS :=   src/asynchronous-multisplitting src/asynchronous-multisplitting-asynchronous-minimization-global src/asynchronous-multisplitting-asynchronous-minimization-local src/asynchronous-multisplitting-asynchronous-minimization-semi-local src/gmres_solution
@@ -115,7 +115,7 @@ print:
 #experimenting
 # SRC_DIRS :=  src/experimenting
 # SRC_DIRS :=  src/synchronous-multisplitting  src/asynchronous-multisplitting  src/synchronous-multisplitting-synchronous-minimization-local  src/synchronous-multisplitting-synchronous-minimization-global  src/asynchronous-multisplitting-asynchronous-minimization-global src/asynchronous-multisplitting-asynchronous-minimization-local src/synchronous-multisplitting-synchronous-minimization-semi-local src/gmres_solution 
-SRC_DIRS :=  src/asynchronous-multisplitting-asynchronous-minimization-global
+# SRC_DIRS :=  src/synchronous-multisplitting-synchronous-minimization-global
 
 
 
