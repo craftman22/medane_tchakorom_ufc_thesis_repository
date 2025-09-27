@@ -37,18 +37,19 @@ int main(int argc, char **argv)
     PetscCallMPI(MPI_Comm_rank(PETSC_COMM_WORLD, &proc_global_rank));
     PetscCallMPI(MPI_Comm_size(PETSC_COMM_WORLD, &nprocs));
 
-    // --mca mca_base_env_list "MY_ENV3=value3"
-    // const char *envVar = getenv("MY_ENV3");
-    // if (envVar)
-    // {
-    //     PetscPrintf(PETSC_COMM_SELF, " Rank %d MY_ENV3 = %s\n", proc_global_rank, envVar);
-    // }
-    // else
-    // {
-    //     PetscPrintf(PETSC_COMM_SELF, "Rank %d  MY_ENV3 is not set\n", proc_global_rank);
-    // }
-    // PetscFinalize();
-    // return 0;
+    if (proc_global_rank)
+    {
+        extern char **environ; // POSIX global for env vars
+        char **env = environ;
+        PetscPrintf(PETSC_COMM_SELF, "=== Environment variables visible to rank 0 ===\n");
+        while (*env)
+        {
+            PetscPrintf(PETSC_COMM_SELF, "%s\n", *env);
+            env++;
+        }
+    }
+    PetscFinalize();
+    return 0;
 
     PetscCall(PetscOptionsGetInt(NULL, NULL, "-m", &n_mesh_lines, NULL));
     PetscCall(PetscOptionsGetInt(NULL, NULL, "-n", &n_mesh_columns, NULL));
