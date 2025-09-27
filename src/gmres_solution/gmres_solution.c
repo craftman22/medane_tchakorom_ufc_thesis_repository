@@ -41,7 +41,7 @@ int main(int argc, char **argv)
     {
         extern char **environ; // POSIX global for env vars
         char **env = environ;
-        PetscPrintf(PETSC_COMM_SELF, "=== Environment variables visible to rank 0 ===\n");
+        PetscPrintf(PETSC_COMM_SELF, "=== Environment variables visible to rank %d ===\n",proc_global_rank);
         while (*env)
         {
             PetscPrintf(PETSC_COMM_SELF, "%s\n", *env);
