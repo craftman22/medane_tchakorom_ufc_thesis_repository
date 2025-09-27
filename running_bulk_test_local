@@ -28,18 +28,21 @@ set -x  # Enable command tracing
 # petscmpiexec -n 2 ./bin/exp-v1.0 
 
 
+timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION bash \
+petscmpiexec -n 2 ./bin/exp-v1.0 
+
 
 
 # ==================================================================================================
 # ============================# GMRES SOLUTION =====================================
 # ==================================================================================================
 
-timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION bash \
-petscmpiexec -n 4 ./bin/gmres_solution-v1.0 \
--m 32 -n 32  \
--ksp_type gmres -ksp_rtol 1e-4 -ksp_atol 1e-100 -ksp_max_it 1000000000 -pc_type  none \
--ksp_norm_type UNPRECONDITIONED -ksp_converged_use_initial_residual_norm \
--ksp_gmres_restart 30 
+# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION bash \
+# petscmpiexec -n 4 ./bin/gmres_solution-v1.0 \
+# -m 32 -n 32  \
+# -ksp_type gmres -ksp_rtol 1e-4 -ksp_atol 1e-100 -ksp_max_it 1000000000 -pc_type  none \
+# -ksp_norm_type UNPRECONDITIONED -ksp_converged_use_initial_residual_norm \
+# -ksp_gmres_restart 30 
 
 # timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION bash \
 # petscmpiexec -n 4 ./bin/gmres_solution-v1.0 \
