@@ -22,12 +22,15 @@ export OMPI_MCA_pml=^ucx,cm
 export OMPI_MCA_btl=self,vader,tcp
 export OMPI_MCA_orte_keep_fqdn_hostnames=1
 
+# overwritten by petsc "mpiexec --oversubscribe" conf
+export OMPI_MCA_rmaps_base_oversubscribe=1 
 
 export OMPI_MCA_hwloc_base_report_bindings=1
-export OMPI_MCA_rmaps_base_oversubscribe=0
-export OMPI_MCA_hwloc_base_binding_policy=core
 export OMPI_MCA_rmaps_base_mapping_policy=socket
+export OMPI_MCA_hwloc_base_binding_policy=core
 export OMPI_MCA_rmaps_base_ranking_policy=slot
 
-export MPI_BINDING="-hostfile ./hostfiles/default"
+
+export MPI_BINDING=""
+# export MPI_BINDING="-hostfile ./hostfiles/default"
 
