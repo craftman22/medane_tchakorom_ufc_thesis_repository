@@ -262,7 +262,7 @@ int main(int argc, char **argv)
         PetscCall(MatResidual(A_block_jacobi_subMat[rank_jacobi_block], local_right_side_vector, x_block_jacobi[rank_jacobi_block], local_residual));
         PetscCall(VecNorm(local_residual, NORM_2, &local_norm));
 
-        PetscCall(PetscPrintf(comm_jacobi_block, "[Rank %d] Local norm_2 block  = %e \n", rank_jacobi_block, local_norm));
+        // PetscCall(PetscPrintf(comm_jacobi_block, "[Rank %d] Local norm_2 block  = %e \n", rank_jacobi_block, local_norm));
 
         if (proc_local_rank == 0) // ONLY root node from each block check for convergence
         {
