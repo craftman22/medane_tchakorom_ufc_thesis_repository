@@ -196,8 +196,6 @@ int main(int argc, char **argv)
     }
 
     number_of_iterations = number_of_iterations + 1;
-    if (number_of_iterations == 1)
-      break;
 
     PetscCall(PetscLogStagePop()); // XXX: profiling
   } while (stop_condition == PETSC_FALSE);
