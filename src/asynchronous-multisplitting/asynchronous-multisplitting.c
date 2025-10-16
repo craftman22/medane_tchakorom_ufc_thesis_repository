@@ -237,8 +237,8 @@ int main(int argc, char **argv)
     PetscCall(MatResidual(A_block_jacobi_subMat[rank_jacobi_block], local_right_side_vector, x_block_jacobi[rank_jacobi_block], local_residual)); // r_i = b_i - (A_i * x_i)
     PetscCall(VecNorm(local_residual, NORM_2, &local_norm_0));
     PetscScalar global_norm_0 = local_norm_0 * PetscSqrtScalar(2);
-    PetscCall(PetscPrintf(comm_jacobi_block, "Rank block %d local b norm %e \n", rank_jacobi_block, local_norm_0));
-    PetscCall(PetscPrintf(comm_jacobi_block, "Rank block %d globa b norm %e \n", rank_jacobi_block, global_norm_0));
+    PetscCall(PetscPrintf(comm_jacobi_block, "Rank block %d [local] b nor : %e \n", rank_jacobi_block, local_norm_0));
+    PetscCall(PetscPrintf(comm_jacobi_block, "Rank block %d [global] b norm : %e \n", rank_jacobi_block, global_norm_0));
 
     PetscCall(PetscBarrier(NULL));
     PetscCall(PetscTime(&globalCV_timer));
