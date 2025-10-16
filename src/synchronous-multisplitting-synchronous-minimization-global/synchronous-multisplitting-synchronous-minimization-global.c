@@ -337,7 +337,6 @@ int main(int argc, char **argv)
       in an iteration, in that case the previous norm
        is returned. */
 
-       
     // PetscCall(computeFinalResidualNorm(comm_jacobi_block, comm_local_roots, A_block_jacobi, x_minimized, b_block_jacobi, local_residual, rank_jacobi_block, proc_local_rank, &norm));
     // PetscCall(printFinalResidualNorm(norm));
     // PetscScalar norm_test;
@@ -374,19 +373,28 @@ int main(int argc, char **argv)
   PetscCall(printElapsedTime(start_time, end_time));
   PetscCall(printTotalNumberOfIterations_2(comm_jacobi_block, rank_jacobi_block, number_of_iterations, s));
 
-  PetscCall(comm_sync_send_and_receive_final(x_block_jacobi, nlocal_rows_x_block, message_dest, message_source, rank_jacobi_block, idx_non_current_block));
+  // Get the final solution from the other block, in order to sum it with current block solution and divide by 2
+  PetscScalar *arr_rcv = NULL;
+  const PetscScalar *arr_send = NULL;
+  PetscInt local_size = 0;
+  PetscCall(VecGetLocalSize(x, &local_size));
+  PetscCall(VecGetArrayRead(x_minimized, &arr_send));
+  PetscCall(VecGetArrayWrite(x, &arr_rcv));
 
-  PetscCall(VecScatterBegin(scatter_jacobi_vec_part_to_merged_vec[rank_jacobi_block], x_block_jacobi[rank_jacobi_block], x, INSERT_VALUES, SCATTER_FORWARD));
-  PetscCall(VecScatterEnd(scatter_jacobi_vec_part_to_merged_vec[rank_jacobi_block], x_block_jacobi[rank_jacobi_block], x, INSERT_VALUES, SCATTER_FORWARD));
-  PetscCall(VecScatterBegin(scatter_jacobi_vec_part_to_merged_vec[idx_non_current_block], x_block_jacobi[idx_non_current_block], x, INSERT_VALUES, SCATTER_FORWARD));
-  PetscCall(VecScatterEnd(scatter_jacobi_vec_part_to_merged_vec[idx_non_current_block], x_block_jacobi[idx_non_current_block], x, INSERT_VALUES, SCATTER_FORWARD));
+  PetscCallMPI(MPI_Sendrecv(arr_send, local_size, MPIU_SCALAR, message_dest, (TAG_FINAL_DATA_EXCHANGE + rank_jacobi_block), arr_rcv, local_size, MPIU_SCALAR, message_source, (TAG_FINAL_DATA_EXCHANGE + idx_non_current_block), MPI_COMM_WORLD, MPI_STATUS_IGNORE));
+
+  PetscCall(VecRestoreArrayRead(x_minimized, &arr_send));
+  PetscCall(VecRestoreArrayWrite(x, &arr_rcv));
+
+  PetscCall(VecAXPBY(x, 0.5, 0.5, x_minimized));
 
   PetscCall(computeFinalResidualNorm(comm_jacobi_block, comm_local_roots, A_block_jacobi, x, b_block_jacobi, local_residual, rank_jacobi_block, proc_local_rank, &norm));
-  PetscCall(printFinalResidualNorm(norm));
+  // PetscCall(printFinalResidualNorm(norm));
+  PetscCall(PetscPrintf(comm_jacobi_block, "[Rank %d] Final residual norm 2 = %e \n", rank_jacobi_block, norm));
 
   PetscScalar error;
   PetscCall(computeError(x, u, &error));
-  PetscCall(PetscPrintf(PETSC_COMM_WORLD, "Erreur : %e \n", error));
+  PetscCall(PetscPrintf(comm_jacobi_block, "[Rank %d] Erreur : %e \n", rank_jacobi_block, error));
 
   // Start free of memory
   for (PetscInt i = 0; i < njacobi_blocks; i++)
@@ -492,3 +500,32 @@ int main(int argc, char **argv)
 // PetscCall(VecRestoreArrayRead(x_block_jacobi[idx_non_current_block], &vals));
 
 // PetscCall(MatSetValuesLocal(S, x_local_size, vec_local_idx, ONE, &n_vectors_inserted, &vector_to_insert_into_S, INSERT_VALUES));
+
+// PetscCall(computeFinalResidualNorm(comm_jacobi_block, comm_local_roots, A_block_jacobi, x, b_block_jacobi, local_residual, rank_jacobi_block, proc_local_rank, &norm));
+
+// VecScatter scatter_ctx;
+// Vec x_minimized_on_first_process = NULL;
+// PetscInt vec_size;
+// PetscCall(VecScatterCreateToZero(x_minimized, &scatter_ctx, &x_minimized_on_first_process));
+// PetscCall(VecScatterBegin(scatter_ctx, x_minimized, x_minimized_on_first_process, INSERT_VALUES, SCATTER_FORWARD));
+// PetscCall(VecScatterEnd(scatter_ctx, x_minimized, x_minimized_on_first_process, INSERT_VALUES, SCATTER_FORWARD));
+// PetscCall(VecGetSize(x_minimized_on_first_process, &vec_size));
+
+// if (proc_local_rank == LOCAL_ROOT_NODE)
+// {
+//   const PetscScalar *arr_read = NULL;
+//   PetscScalar *arr_write = NULL;
+//   PetscCall(VecGetArrayRead(x_minimized_on_first_process, &arr_read));
+//   PetscCall(VecGetArrayWrite(, &arr_write));
+//   PetscCallMPI(MPI_Allreduce(arr_read, arr_write, vec_size, MPIU_SCALAR, MPI_SUM, comm_local_roots));
+//   PetscCall(VecRestoreArrayRead(x_minimized_on_first_process, &arr_read));
+//   PetscCall(VecRestoreArrayWrite(, &arr_write));
+//   PetscCall(VecScale(,0.5));
+
+// }
+
+// PetscCall(printFinalResidualNorm(norm));
+
+// PetscScalar error;
+// PetscCall(computeError(x_minimized, u, &error));
+// PetscCall(PetscPrintf(PETSC_COMM_WORLD, "Erreur : %e \n", error));
