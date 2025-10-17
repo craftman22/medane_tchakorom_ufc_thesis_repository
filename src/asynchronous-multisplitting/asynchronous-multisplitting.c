@@ -233,10 +233,9 @@ int main(int argc, char **argv)
     PetscCall(VecDuplicate(x_block_jacobi[idx_non_current_block], &local_residual));
     PetscScalar local_norm = PETSC_MAX_REAL;
     PetscScalar local_norm_0 = 0.0;
-    PetscCall(updateLocalRHS(A_block_jacobi_subMat[idx_non_current_block], x_block_jacobi[idx_non_current_block], b_block_jacobi[rank_jacobi_block], local_right_side_vector));
-    PetscCall(MatResidual(A_block_jacobi_subMat[rank_jacobi_block], local_right_side_vector, x_block_jacobi[rank_jacobi_block], local_residual)); // r_i = b_i - (A_i * x_i)
+    PetscCall(MatResidual(A_block_jacobi, b_block_jacobi[rank_jacobi_block], x, local_residual));
     PetscCall(VecNorm(local_residual, NORM_2, &local_norm_0));
-    PetscScalar global_norm_0 = local_norm_0 * PetscSqrtScalar(2);
+
     PetscCall(PetscPrintf(comm_jacobi_block, "Rank block %d [local] b nor : %e \n", rank_jacobi_block, local_norm_0));
     PetscCall(PetscPrintf(comm_jacobi_block, "Rank block %d [global] b norm : %e \n", rank_jacobi_block, global_norm_0));
 
@@ -276,7 +275,7 @@ int main(int argc, char **argv)
         if (proc_local_rank == 0) // ONLY root node from each block check for convergence
         {
 
-            if (local_norm <= PetscMax(absolute_tolerance, relative_tolerance * global_norm_0))
+            if (local_norm <= PetscMax(absolute_tolerance, relative_tolerance * local_norm_0))
             {
                 preLocalCV = PETSC_TRUE;
             }
