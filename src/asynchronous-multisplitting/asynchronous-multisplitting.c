@@ -236,8 +236,13 @@ int main(int argc, char **argv)
     PetscCall(MatResidual(A_block_jacobi, b_block_jacobi[rank_jacobi_block], x, local_residual));
     PetscCall(VecNorm(local_residual, NORM_2, &local_norm_0));
 
+    {
+        PetscScalar global_norm_0 = local_norm_0 * PetscSqrtScalar(njacobi_blocks);
+        PetscCall(PetscPrintf(comm_jacobi_block, "Rank block %d [global] b norm : %e \n", rank_jacobi_block, global_norm_0));
+        
+    }
+    
     PetscCall(PetscPrintf(comm_jacobi_block, "Rank block %d [local] b nor : %e \n", rank_jacobi_block, local_norm_0));
-    PetscCall(PetscPrintf(comm_jacobi_block, "Rank block %d [global] b norm : %e \n", rank_jacobi_block, global_norm_0));
 
     PetscCall(PetscBarrier(NULL));
     PetscCall(PetscTime(&globalCV_timer));
