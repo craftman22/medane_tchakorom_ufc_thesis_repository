@@ -278,7 +278,7 @@ int main(int argc, char **argv)
         if (proc_local_rank == 0) // ONLY root node from each block check for convergence
         {
 
-            if (local_norm <= PetscMax(absolute_tolerance, (relative_tolerance / PetscSqrtScalar(njacobi_blocks)) * local_norm_0))
+            if (local_norm <= PetscMax(absolute_tolerance, relative_tolerance * local_norm_0))
             {
                 preLocalCV = PETSC_TRUE;
             }
