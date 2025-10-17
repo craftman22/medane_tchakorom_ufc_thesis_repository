@@ -261,10 +261,17 @@ int main(int argc, char **argv)
 
         PetscCall(comm_async_probe_and_receive(x_block_jacobi, rcv_buffer, vec_local_size, rcv_data_flag, message_source, idx_non_current_block, &message_received, NULL, NULL));
 
-        PetscCall(MatResidual(A_block_jacobi_subMat[rank_jacobi_block], local_right_side_vector, x_block_jacobi[rank_jacobi_block], local_residual));
-        PetscCall(VecNorm(local_residual, NORM_2, &local_norm));
+        PetscCall(VecScatterBegin(scatter_jacobi_vec_part_to_merged_vec[rank_jacobi_block], x_block_jacobi[rank_jacobi_block], x, INSERT_VALUES, SCATTER_FORWARD));
+        PetscCall(VecScatterEnd(scatter_jacobi_vec_part_to_merged_vec[rank_jacobi_block], x_block_jacobi[rank_jacobi_block], x, INSERT_VALUES, SCATTER_FORWARD));
+        PetscCall(VecScatterBegin(scatter_jacobi_vec_part_to_merged_vec[idx_non_current_block], x_block_jacobi[idx_non_current_block], x, INSERT_VALUES, SCATTER_FORWARD));
+        PetscCall(VecScatterEnd(scatter_jacobi_vec_part_to_merged_vec[idx_non_current_block], x_block_jacobi[idx_non_current_block], x, INSERT_VALUES, SCATTER_FORWARD));
 
-        // PetscCall(PetscPrintf(comm_jacobi_block, "[Rank %d] Local norm_2 block  = %e \n", rank_jacobi_block, local_norm));
+        // PetscCall(MatResidual(A_block_jacobi_subMat[rank_jacobi_block], local_right_side_vector, x_block_jacobi[rank_jacobi_block], local_residual));
+        // PetscCall(VecNorm(local_residual, NORM_2, &local_norm));
+
+        PetscCall(MatResidual(A_block_jacobi, b_block_jacobi[rank_jacobi_block], x, local_residual));
+        PetscCall(VecNorm(local_residual, NORM_2, &local_norm));
+        PetscCall(PetscPrintf(comm_jacobi_block, "[Rank %d] Local norm_2 block  = %e \n", rank_jacobi_block, local_norm));
 
         if (proc_local_rank == 0) // ONLY root node from each block check for convergence
         {
