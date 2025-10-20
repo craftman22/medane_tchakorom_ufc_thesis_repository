@@ -33,6 +33,14 @@
 // #define TAG_CONTROL 2   // Control or command messages
 // #define TAG_TERMINATE 3 // Termination signal
 // #define TAG_DATA_OUT_LOOP 6
+#define TAG_SEND_RCV_VERDICT 111
+#define TAG_SEND_RCV_VERIFICATION 114
+#define TAG_SEND_RCV_PARTIAL_CV 117
+
+
+
+
+
 
 #define BLOCK_RANK_ZERO 0
 #define BLOCK_RANK_ONE 1
@@ -46,6 +54,14 @@
 #define LOCAL_ROOT_NODE 0
 
 // #define CONVERGENCE_COUNT_MIN 4
+
+
+typedef enum {
+    NORMAL,
+    WAIT4VERIFICATION,
+    VERIFICATION,
+    FINISHED
+} State;
 
 
 #endif // CONSTANTS_H

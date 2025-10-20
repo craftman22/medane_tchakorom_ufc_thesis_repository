@@ -303,7 +303,7 @@ int main(int argc, char **argv)
 
         if (globalCV == PETSC_FALSE)
         {
-            PetscCall(PetscTime(&globalCV_timer));
+            PetscCall(PetscTime(&globalCV_timer)); // A revoir
         }
         else
         {
