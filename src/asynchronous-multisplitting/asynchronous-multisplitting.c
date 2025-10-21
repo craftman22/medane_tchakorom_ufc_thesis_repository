@@ -134,13 +134,13 @@ int main(int argc, char **argv)
     if (proc_local_rank == 0)
     {
         PetscCall(PetscMalloc1(1, &neighbors));
-        PetscCall(PetscArrayfill_custom(neighbors, -11, 1));
+        PetscCall(PetscArrayfill_custom_int(neighbors, -11, 1));
 
         PetscCall(PetscMalloc1(MAX_NEIGHBORS, &prevIterNumS));
-        PetscCall(PetscArrayfill_custom(prevIterNumS, -1, MAX_NEIGHBORS));
+        PetscCall(PetscArrayfill_custom_int(prevIterNumS, -1, MAX_NEIGHBORS));
 
         PetscCall(PetscMalloc1(MAX_NEIGHBORS, &prevIterNumC));
-        PetscCall(PetscArrayfill_custom(prevIterNumC, 0, MAX_NEIGHBORS));
+        PetscCall(PetscArrayfill_custom_int(prevIterNumC, 0, MAX_NEIGHBORS));
 
         PetscCall(build_spanning_tree(rank_jacobi_block, neighbors, &nbNeighbors, proc_local_rank, nprocs_per_jacobi_block));
         nbNeigNotLCV = nbNeighbors;

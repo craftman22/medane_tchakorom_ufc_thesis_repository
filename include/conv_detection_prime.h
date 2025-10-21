@@ -8,21 +8,45 @@
 #ifndef SHARED_CONV_DETECTION_PRIME_FUNCTIONS_H
 #define SHARED_CONV_DETECTION_PRIME_FUNCTIONS_H
 
-#define PARAMS                                                                             \
-    PetscInt NbNeighbors, PetscBool *UnderThreashold,                                      \
-        PetscInt NbDependencies, PetscInt *Responses,                                      \
-        PetscBool *NewerDependencies, PetscBool *PseudoPeriodBegin,                        \
-        PetscBool *PseudoPeriodEnd, PetscBool *ReceivedPartialCV,                          \
-        PetscBool *ElectedNode, PetscInt *PhaseTag, PetscBool *ResponseSent, State *state, \
-        PetscBool *LocalCV, PetscInt *NbNotRecvd, PetscBool *PartialCVSent
+#define PARAMS                                                                                 \
+    PetscInt NbNeighbors, PetscBool *UnderThreashold,                                          \
+        PetscInt NbDependencies, PetscInt *Responses,                                          \
+        Vec NewerDependencies_global, PetscBool *PseudoPeriodBegin,                            \
+        Vec LastIteration_global, Vec LastIteration_local,                                     \
+        Vec NewerDependencies_local, PetscBool *PseudoPeriodEnd, PetscBool *ReceivedPartialCV, \
+        PetscBool *ElectedNode, PetscInt *PhaseTag, PetscBool *ResponseSent, State *state,     \
+        PetscBool *LocalCV, PetscInt *NbNotRecvd, PetscBool *PartialCVSent,                    \
+        PetscInt *neighbors, Vec UNITARY_VECTOR, Vec NULL_VECTOR,                              \
+        char *pack_send_verdict_buffer, char *pack_rcv_verdict_buffer,                         \
+        char *pack_send_response_buffer, char *pack_rcv_response_buffer,                       \
+        MPI_Request *send_verdict_request, MPI_Request *send_response_request, MPI_Request *send_verification_request
 
-#define ACTUAL_PARAMS                               \
-    NbNeighbors, UnderThreashold,                   \
-        NbDependencies, Responses,                  \
-        NewerDependencies, PseudoPeriodBegin,       \
-        PseudoPeriodEnd, ReceivedPartialCV,         \
-        ElectedNode, PhaseTag, ResponseSent, state, \
-        LocalCV, NbNotRecvd, PartialCVSent
+#define ACTUAL_PARAMS                                                \
+    NbNeighbors, UnderThreashold,                                    \
+        NbDependencies, Responses,                                   \
+        NewerDependencies_global, PseudoPeriodBegin,                 \
+        LastIteration_global, LastIteration_local,                   \
+        NewerDependencies_local, PseudoPeriodEnd, ReceivedPartialCV, \
+        ElectedNode, PhaseTag, ResponseSent, state,                  \
+        LocalCV, NbNotRecvd, PartialCVSent,                          \
+        neighbors, UNITARY_VECTOR, NULL_VECTOR,                      \
+        pack_send_verdict_buffer, pack_rcv_verdict_buffer,           \
+        pack_send_response_buffer, pack_rcv_response_buffer,         \
+        send_verdict_request, send_response_request, send_verification_request
+
+// Use in main program
+#define ACTUAL_PARAMS_POINTERS                                        \
+    NbNeighbors, &UnderThreashold,                                    \
+        NbDependencies, Responses,                                    \
+        NewerDependencies_global, &PseudoPeriodBegin,                 \
+        LastIteration_global, LastIteration_local,                    \
+        NewerDependencies_local, &PseudoPeriodEnd, ReceivedPartialCV, \
+        &ElectedNode, &PhaseTag, &ResponseSent, &state,               \
+        &LocalCV, &NbNotRecvd, &PartialCVSent,                        \
+        neighbors, UNITARY_VECTOR, NULL_VECTOR,                       \
+        pack_send_verdict_buffer, pack_rcv_verdict_buffer,            \
+        pack_send_response_buffer, pack_rcv_response_buffer,          \
+        &send_verdict_request, &send_response_request, &send_verification_request
 
 #include "constants.h"
 #include "utils.h"
@@ -35,9 +59,7 @@ PetscErrorCode reinitialize_pseudo_period(PARAMS);
 
 PetscErrorCode initialize_verification(PARAMS);
 
-
-PetscErrorCode receive_data_dependency(PARAMS, PetscInt *LastIteration);
-
+PetscErrorCode receive_data_dependency(PARAMS);
 
 PetscErrorCode receive_verification(PARAMS);
 
@@ -53,4 +75,6 @@ PetscErrorCode pack_convergence_data(PetscInt *first_place, PetscInt *second_pla
 
 PetscErrorCode unpack_convergence_data(PetscInt *first_place, PetscInt *second_place, char **pack_buffer, PetscMPIInt pack_size);
 
-#endif // SHARED_CONV_DETECTION_FUNCTIONS_H
+PetscErrorCode find_value_in_responses(PARAMS, PetscInt value_to_search, PetscBool *found, PetscInt *nb_occurences_found);
+
+#endif // SHARED_CONV_DETECTION_PRIME_FUNCTIONS_H

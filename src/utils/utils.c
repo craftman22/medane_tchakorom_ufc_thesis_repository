@@ -7,7 +7,18 @@
 /*
   Fill array of scalar of size "n" with the value "val" for each entry
 */
-PetscErrorCode PetscArrayfill_custom(PetscInt *x, PetscInt val, PetscInt n)
+PetscErrorCode PetscArrayfill_custom_int(PetscInt *x, PetscInt val, PetscInt n)
+{
+  PetscFunctionBeginUser;
+  for (PetscInt i = 0; i < n; i++)
+  {
+    x[i] = val;
+  }
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+
+PetscErrorCode PetscArrayfill_custom_bool(PetscBool *x, PetscBool val, PetscInt n)
 {
   PetscFunctionBeginUser;
   for (PetscInt i = 0; i < n; i++)
