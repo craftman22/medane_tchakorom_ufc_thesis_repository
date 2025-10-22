@@ -115,10 +115,14 @@ int main(int argc, char **argv)
     PetscInt NbNotRecvd = 0;
     PetscBool PartialCVSent = PETSC_FALSE;
     PetscInt *neighbors = NULL; /* array containing all the node neighbors */
-    char *pack_send_verdict_buffer = NULL;
-    char *pack_rcv_verdict_buffer = NULL;
-    char *pack_send_response_buffer = NULL;
-    char *pack_rcv_response_buffer = NULL;
+    PetscInt *send_verdict_buffer = NULL;
+    PetscInt *rcv_verdict_buffer = NULL;
+    PetscInt *send_response_buffer = NULL;
+    PetscInt *rcv_response_buffer = NULL;
+    PetscInt *send_verification_buffer = NULL;
+    PetscInt *rcv_verification_buffer = NULL;
+    PetscInt *send_partialCV_buffer = NULL;
+    PetscInt *rcv_partialCV_buffer = NULL;
     MPI_Request send_verdict_request = MPI_REQUEST_NULL;
     MPI_Request send_response_request = MPI_REQUEST_NULL;
     MPI_Request send_verification_request = MPI_REQUEST_NULL;
@@ -150,10 +154,25 @@ int main(int argc, char **argv)
         PetscCall(create_vector(comm_jacobi_block, &LastIteration_local, NbDependencies, VECSEQ));
         PetscCall(VecSet(LastIteration_local, -1));
 
-        // PetscCall(PetscMalloc1(NbDependencies, &NewerDependencies));
-        // PetscCall(PetscArrayfill_custom_bool(NewerDependencies, PETSC_FALSE, NbDependencies));
-        // PetscCall(PetscMalloc1(NbDependencies, &LastIteration));
-        // PetscCall(PetscArrayfill_custom_int(LastIteration, -1, NbDependencies));
+        PetscCall(PetscMalloc1(2, &send_verdict_buffer));
+        PetscCall(PetscArrayfill_custom_int(send_verdict_buffer, 0, NbDependencies));
+        PetscCall(PetscMalloc1(2, &rcv_verdict_buffer));
+        PetscCall(PetscArrayfill_custom_int(rcv_verdict_buffer, 0, NbDependencies));
+
+        PetscCall(PetscMalloc1(2, &send_response_buffer));
+        PetscCall(PetscArrayfill_custom_int(send_response_buffer, 0, NbDependencies));
+        PetscCall(PetscMalloc1(2, &rcv_response_buffer));
+        PetscCall(PetscArrayfill_custom_int(rcv_response_buffer, 0, NbDependencies));
+
+        PetscCall(PetscMalloc1(1, &send_verification_buffer));
+        PetscCall(PetscArrayfill_custom_int(send_verification_buffer, 0, NbDependencies));
+        PetscCall(PetscMalloc1(1, &rcv_verification_buffer));
+        PetscCall(PetscArrayfill_custom_int(rcv_verification_buffer, 0, NbDependencies));
+
+        PetscCall(PetscMalloc1(1, &send_partialCV_buffer));
+        PetscCall(PetscArrayfill_custom_int(send_partialCV_buffer, 0, NbDependencies));
+        PetscCall(PetscMalloc1(1, &rcv_partialCV_buffer));
+        PetscCall(PetscArrayfill_custom_int(rcv_partialCV_buffer, 0, NbDependencies));
 
         PetscCall(PetscMalloc1(NbNeighbors, &ReceivedPartialCV));
         PetscCall(PetscArrayfill_custom_bool(ReceivedPartialCV, PETSC_FALSE, NbNeighbors));

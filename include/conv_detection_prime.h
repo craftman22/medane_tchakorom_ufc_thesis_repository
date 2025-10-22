@@ -17,8 +17,10 @@
         PetscBool *ElectedNode, PetscInt *PhaseTag, PetscBool *ResponseSent, State *state,     \
         PetscBool *LocalCV, PetscInt *NbNotRecvd, PetscBool *PartialCVSent,                    \
         PetscInt *neighbors, Vec UNITARY_VECTOR, Vec NULL_VECTOR,                              \
-        char *pack_send_verdict_buffer, char *pack_rcv_verdict_buffer,                         \
-        char *pack_send_response_buffer, char *pack_rcv_response_buffer,                       \
+        PetscInt *send_verdict_buffer, PetscInt *rcv_verdict_buffer,                           \
+        PetscInt *send_response_buffer, PetscInt *rcv_response_buffer,                         \
+        PetscInt *send_verification_buffer, PetscInt *rcv_verification_buffer,                 \
+        PetscInt *send_partialCV_buffer, PetscInt *rcv_partialCV_buffer,                       \
         MPI_Request *send_verdict_request, MPI_Request *send_response_request, MPI_Request *send_verification_request
 
 #define ACTUAL_PARAMS                                                \
@@ -30,8 +32,10 @@
         ElectedNode, PhaseTag, ResponseSent, state,                  \
         LocalCV, NbNotRecvd, PartialCVSent,                          \
         neighbors, UNITARY_VECTOR, NULL_VECTOR,                      \
-        pack_send_verdict_buffer, pack_rcv_verdict_buffer,           \
-        pack_send_response_buffer, pack_rcv_response_buffer,         \
+        send_verdict_buffer, rcv_verdict_buffer,                     \
+        send_response_buffer, rcv_response_buffer,                   \
+        send_verification_buffer, rcv_verification_buffer,           \
+        send_partialCV_buffer, rcv_partialCV_buffer,                 \
         send_verdict_request, send_response_request, send_verification_request
 
 // Use in main program
@@ -44,8 +48,10 @@
         &ElectedNode, &PhaseTag, &ResponseSent, &state,               \
         &LocalCV, &NbNotRecvd, &PartialCVSent,                        \
         neighbors, UNITARY_VECTOR, NULL_VECTOR,                       \
-        pack_send_verdict_buffer, pack_rcv_verdict_buffer,            \
-        pack_send_response_buffer, pack_rcv_response_buffer,          \
+        send_verdict_buffer, rcv_verdict_buffer,                      \
+        send_response_buffer, rcv_response_buffer,                    \
+        send_verification_buffer, rcv_verification_buffer,            \
+        send_partialCV_buffer, rcv_partialCV_buffer,                  \
         &send_verdict_request, &send_response_request, &send_verification_request
 
 #include "constants.h"
@@ -71,10 +77,13 @@ PetscErrorCode receive_partial_CV(PARAMS, PetscInt proc_global_rank);
 
 PetscErrorCode choose_leader(PetscInt CurrentNode, PetscInt SrcNode, PetscInt *leader);
 
-PetscErrorCode pack_convergence_data(PetscInt *first_place, PetscInt *second_place, char **pack_buffer, PetscMPIInt *position);
+PetscErrorCode get_neighbor_node_index(PARAMS, const PetscInt node_rank , PetscInt *idx_found);
 
+
+PetscErrorCode find_value_in_responses_array(PARAMS, PetscInt value_to_search, PetscBool *found, PetscInt *nb_occurences_found);
+
+PetscErrorCode pack_convergence_data(PetscInt *first_place, PetscInt *second_place, char **pack_buffer, PetscMPIInt *position);
 PetscErrorCode unpack_convergence_data(PetscInt *first_place, PetscInt *second_place, char **pack_buffer, PetscMPIInt pack_size);
 
-PetscErrorCode find_value_in_responses(PARAMS, PetscInt value_to_search, PetscBool *found, PetscInt *nb_occurences_found);
 
 #endif // SHARED_CONV_DETECTION_PRIME_FUNCTIONS_H

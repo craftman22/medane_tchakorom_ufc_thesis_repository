@@ -34,9 +34,10 @@ PetscErrorCode comm_async_convDetection_prime(PARAMS)
                         (*ElectedNode) = PETSC_TRUE;
                         PetscCall(initialize_verification(ACTUAL_PARAMS));
                         // XXX: Broadcast a verification message to all its neighbors
+                        send_verification_buffer[0] = (*PhaseTag);
                         for (PetscInt idx = 0; idx < NbNeighbors; idx++)
                         {
-                            PetscCallMPI(MPI_Isend(PhaseTag, 1, MPIU_INT, neighbors[idx], TAG_SEND_RCV_VERIFICATION, MPI_COMM_WORLD, NULL));
+                            PetscCallMPI(MPI_Isend(send_verification_buffer, 1, MPIU_INT, neighbors[idx], TAG_SEND_RCV_VERIFICATION, MPI_COMM_WORLD, NULL));
                         }
 
                         (*state) = VERIFICATION;
@@ -46,11 +47,12 @@ PetscErrorCode comm_async_convDetection_prime(PARAMS)
                         if ((*NbNotRecvd) == 1)
                         {
                             // XXX: Send a PartialCV message to the neighbor corresponding to the unique cell of RecvdPCV[] being false
+                            send_partialCV_buffer[0] = (*PhaseTag);
                             for (PetscInt idx = 0; idx < NbNeighbors; idx++)
                             {
                                 if (ReceivedPartialCV[idx] == PETSC_FALSE)
                                 {
-                                    PetscCallMPI(MPI_Isend(PhaseTag, 1, MPIU_INT, neighbors[idx], TAG_SEND_RCV_PARTIAL_CV, MPI_COMM_WORLD, NULL));
+                                    PetscCallMPI(MPI_Isend(send_partialCV_buffer, 1, MPIU_INT, neighbors[idx], TAG_SEND_RCV_PARTIAL_CV, MPI_COMM_WORLD, NULL));
                                     break;
                                 }
                             }
@@ -86,15 +88,16 @@ PetscErrorCode comm_async_convDetection_prime(PARAMS)
         {
             // or at least one cell of Resps[] is negative
             PetscBool found_negative_response = PETSC_FALSE;
-            PetscCall(find_value_in_responses(ACTUAL_PARAMS, -1, &found_negative_response, NULL));
+            PetscCall(find_value_in_responses_array(ACTUAL_PARAMS, RESPONSE_NEGATIVE, &found_negative_response, NULL));
             if (UnderThreashold == PETSC_FALSE || (*LocalCV) == PETSC_FALSE || found_negative_response == PETSC_TRUE)
             {
                 (*PhaseTag) = (*PhaseTag) + 1;
                 // Broadcast a negative verdict message to all its neighbors
+                send_verdict_buffer[0] = (*PhaseTag);
+                send_verdict_buffer[1] = VERDICT_NEGATIVE; // negative verdict
                 for (PetscInt idx = 0; idx < NbNeighbors; idx++)
                 {
-                    // XXX: changer
-                    PetscCallMPI(MPI_Isend(PhaseTag, 1, MPIU_INT, neighbors[idx], TAG_SEND_RCV_VERDICT, MPI_COMM_WORLD, NULL));
+                    PetscCallMPI(MPI_Isend(send_verdict_buffer, 2, MPIU_INT, neighbors[idx], TAG_SEND_RCV_VERDICT, MPI_COMM_WORLD, NULL));
                 }
                 PetscCall(initialize_state(ACTUAL_PARAMS));
             }
@@ -104,21 +107,33 @@ PetscErrorCode comm_async_convDetection_prime(PARAMS)
                 {
                     /*there are no more 0 in Resps[]*/
                     PetscBool found_neutral_response = PETSC_TRUE;
-                    PetscCall(find_value_in_responses(ACTUAL_PARAMS, 0, &found_neutral_response, NULL));
+                    PetscCall(find_value_in_responses_array(ACTUAL_PARAMS, RESPONSE_NEUTRAL, &found_neutral_response, NULL));
                     if (found_neutral_response == PETSC_FALSE)
                     {
                         /*all the cells of Resps[] are positive*/
                         PetscBool found_negative_response = PETSC_TRUE;
-                        PetscCall(find_value_in_responses(ACTUAL_PARAMS, -1, &found_negative_response, NULL));
+                        PetscCall(find_value_in_responses_array(ACTUAL_PARAMS, RESPONSE_NEGATIVE, &found_negative_response, NULL));
                         if ((found_neutral_response == PETSC_FALSE) && (found_negative_response == PETSC_FALSE))
                         {
                             // XXX: Broadcast a positive verdict message to all its neighbors
+                            send_verdict_buffer[0] = (*PhaseTag);
+                            send_verdict_buffer[1] = VERDICT_POSITIVE; // positive verdict
+                            for (PetscInt idx = 0; idx < NbNeighbors; idx++)
+                            {
+                                PetscCallMPI(MPI_Isend(send_verdict_buffer, 2, MPIU_INT, neighbors[idx], TAG_SEND_RCV_VERDICT, MPI_COMM_WORLD, NULL));
+                            }
                             (*state) = FINISHED;
                         }
                         else
                         {
                             (*PhaseTag) = (*PhaseTag) + 1;
                             // Broadcast a negative verdict message to all its neighbors
+                            send_verdict_buffer[0] = (*PhaseTag);
+                            send_verdict_buffer[1] = VERDICT_NEGATIVE; // negative verdict
+                            for (PetscInt idx = 0; idx < NbNeighbors; idx++)
+                            {
+                                PetscCallMPI(MPI_Isend(send_verdict_buffer, 2, MPIU_INT, neighbors[idx], TAG_SEND_RCV_VERDICT, MPI_COMM_WORLD, NULL));
+                            }
                             PetscCall(initialize_state(ACTUAL_PARAMS));
                         }
                     }
@@ -141,7 +156,7 @@ PetscErrorCode comm_async_convDetection_prime(PARAMS)
             {
                 /* or at least one cell of Resps[] is negative*/
                 PetscBool found_negative_response = PETSC_FALSE;
-                PetscCall(find_value_in_responses(ACTUAL_PARAMS, -1, &found_negative_response, NULL));
+                PetscCall(find_value_in_responses_array(ACTUAL_PARAMS, RESPONSE_NEGATIVE, &found_negative_response, NULL));
                 if (UnderThreashold == PETSC_FALSE || (*LocalCV) == PETSC_FALSE || found_negative_response == PETSC_TRUE)
                 {
                     // Send a negative response to the asking neighbor
@@ -155,20 +170,36 @@ PetscErrorCode comm_async_convDetection_prime(PARAMS)
                     {
                         /*there remains only one 0 in Resps[]*/
                         PetscInt nb_neutral_responses_occurences = 0;
-                        PetscCall(find_value_in_responses(ACTUAL_PARAMS, 0, NULL, &nb_neutral_responses_occurences));
+                        PetscCall(find_value_in_responses_array(ACTUAL_PARAMS, RESPONSE_NEUTRAL ,NULL, &nb_neutral_responses_occurences));
                         if (nb_neutral_responses_occurences == 1)
                         {
                             // that last 0 is located in the cell of the asking neighbor
+                            PetscInt AskingNeigbor = -1;
+                            for (PetscInt idx = 0; idx < NbNeighbors; idx++)
+                            {
+                                if (Responses[idx] == RESPONSE_NEUTRAL)
+                                {
+                                    AskingNeigbor = neighbors[idx];
+                                    break;
+                                }
+                            }
+
                             PetscInt nb_positive_responses_occurences = 0;
-                            PetscCall(find_value_in_responses(ACTUAL_PARAMS, 1, NULL, &nb_positive_responses_occurences));
+                            PetscCall(find_value_in_responses_array(ACTUAL_PARAMS, RESPONSE_POSITIVE, NULL, &nb_positive_responses_occurences));
                             /*the other cells of Resps[] are all positive*/
                             if (nb_positive_responses_occurences == (NbNeighbors - 1))
                             {
                                 // Send a positive response to the asking neighbor
+                                send_response_buffer[0] = (*PhaseTag);
+                                send_response_buffer[1] = RESPONSE_POSITIVE;
+                                PetscCallMPI(MPI_Isend(send_response_buffer, 2, MPIU_INT, AskingNeigbor, TAG_SEND_RCV_RESPONSE, MPI_COMM_WORLD, NULL));
                             }
                             else
                             {
                                 // Send a negative response to the asking neighbor
+                                send_response_buffer[0] = (*PhaseTag);
+                                send_response_buffer[1] = RESPONSE_NEGATIVE;
+                                PetscCallMPI(MPI_Isend(send_response_buffer, 2, MPIU_INT, AskingNeigbor, TAG_SEND_RCV_RESPONSE, MPI_COMM_WORLD, NULL));
                             }
                             (*ResponseSent) = PETSC_TRUE;
                         }
@@ -258,7 +289,9 @@ PetscErrorCode receive_verification(PARAMS)
             for (PetscInt idx = 0; idx < NbNeighbors; idx++)
             {
                 if (neighbors[idx] != SrcNode)
+                {
                     PetscCallMPI(MPI_Isend(PhaseTag, 1, MPIU_INT, neighbors[idx], TAG_SEND_RCV_VERIFICATION, MPI_COMM_WORLD, NULL));
+                }
             }
         }
     }
@@ -270,14 +303,27 @@ PetscErrorCode receive_verification(PARAMS)
 PetscErrorCode receive_response(PARAMS)
 {
     PetscFunctionBeginUser;
-    // Extract SrcNode, SrcTag and SrcResp from the message
-    // PetscInt SrcNode = 0;
+    PetscMPIInt flag = 0;
+    PetscInt SrcNode = 0;
     PetscInt SrcTag = 0;
     PetscInt SrcResponse = 0;
     PetscInt SrcIndexNeighbor = 0; /*corresponding index of SrcNode in the list of neighbors of the current node (−1 if not in the list)*/
-    if (SrcIndexNeighbor >= 0 && (*PhaseTag) == SrcTag)
+    MPI_Status status;
+    // Extract SrcNode, SrcTag and SrcResp from the message
+
+    PetscCall(MPI_Iprobe(MPI_ANY_SOURCE, TAG_SEND_RCV_RESPONSE, MPI_COMM_WORLD, &flag, MPI_STATUS_IGNORE));
+    if (flag)
     {
-        Responses[SrcIndexNeighbor] = SrcResponse;
+        PetscCallMPI(MPI_Recv(rcv_response_buffer, 2, MPIU_INT, MPI_ANY_SOURCE, TAG_SEND_RCV_RESPONSE, MPI_COMM_WORLD, &status));
+        SrcNode = status.MPI_SOURCE;
+        SrcTag = rcv_response_buffer[0];
+        SrcResponse = rcv_response_buffer[1];
+        PetscCall(get_neighbor_node_index(ACTUAL_PARAMS, SrcNode, &SrcIndexNeighbor));
+
+        if (SrcIndexNeighbor >= 0 && (*PhaseTag) == SrcTag)
+        {
+            Responses[SrcIndexNeighbor] = SrcResponse;
+        }
     }
 
     PetscFunctionReturn(PETSC_SUCCESS);
@@ -288,20 +334,41 @@ PetscErrorCode receive_verdict(PARAMS)
 {
     PetscFunctionBeginUser;
     // Extract SrcNode, SrcTag and SrcVerdict from the message
-    // PetscInt SrcNode = 0;
+    PetscInt SrcNode = 0;
     PetscInt SrcTag = 0;
-    // PetscInt SrcVerdict = 0;
-    if (1 /*SrcVerdict is positive*/)
+    PetscInt SrcVerdict = 0;
+    PetscMPIInt flag = 0;
+    MPI_Status status;
+
+    PetscCall(MPI_Iprobe(MPI_ANY_SOURCE, TAG_SEND_RCV_VERDICT, MPI_COMM_WORLD, &flag, MPI_STATUS_IGNORE));
+    if (flag)
     {
-        (*state) = FINISHED;
-    }
-    else
-    {
-        PetscCall(initialize_state(ACTUAL_PARAMS));
-        (*PhaseTag) = SrcTag;
+        PetscCallMPI(MPI_Recv(rcv_verdict_buffer, 2, MPIU_INT, MPI_ANY_SOURCE, TAG_SEND_RCV_VERDICT, MPI_COMM_WORLD, &status));
+        SrcNode = status.MPI_SOURCE;
+        SrcTag = rcv_verdict_buffer[0];
+        SrcVerdict = rcv_verdict_buffer[1];
+
+        if (SrcVerdict == VERDICT_POSITIVE)
+        {
+            (*state) = FINISHED;
+        }
+        else
+        {
+            PetscCall(initialize_state(ACTUAL_PARAMS));
+            (*PhaseTag) = SrcTag;
+        }
     }
 
     // Broadcast the verdict message to all its neighbors but SrcNode
+    send_verdict_buffer[0] = (*PhaseTag);
+    send_verdict_buffer[1] = rcv_verdict_buffer[1]; // TODO: which verdict message ???? think about initialization
+    for (PetscInt idx = 0; idx < NbNeighbors; idx++)
+    {
+        if (neighbors[idx] != SrcNode)
+        {
+            PetscCallMPI(MPI_Isend(send_verdict_buffer, 2, MPIU_INT, neighbors[idx], TAG_SEND_RCV_VERDICT, MPI_COMM_WORLD, NULL));
+        }
+    }
 
     PetscFunctionReturn(PETSC_SUCCESS);
 }
@@ -358,6 +425,11 @@ PetscErrorCode receive_partial_CV(PARAMS, PetscInt proc_global_rank)
                 (*ElectedNode) = PETSC_TRUE;
                 PetscCall(initialize_verification(ACTUAL_PARAMS));
                 // TODO: Broadcast a verification message to all its neighbors
+                send_verification_buffer[0] = (*PhaseTag);
+                for (PetscInt idx = 0; idx < NbNeighbors; idx++)
+                {
+                    PetscCallMPI(MPI_Isend(send_verification_buffer, 1, MPIU_INT, neighbors[idx], TAG_SEND_RCV_VERIFICATION, MPI_COMM_WORLD, NULL));
+                }
 
                 (*state) = VERIFICATION;
             }
@@ -375,13 +447,48 @@ PetscErrorCode choose_leader(PetscInt CurrentNode, PetscInt SrcNode, PetscInt *l
     PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-// PetscErrorCode pack_data(PetscScalar *send_buffer, PetscMPIInt data_size, PetscInt *version, char **pack_buffer, PetscMPIInt *position)
-// {
+PetscErrorCode get_neighbor_node_index(PARAMS, const PetscInt node_rank, PetscInt *idx_found)
+{
+    PetscFunctionBeginUser;
+    (*idx_found) = -1;
+    for (PetscInt idx = 0; idx < NbNeighbors; idx++)
+    {
+        if (neighbors[idx] == node_rank)
+        {
+            (*idx_found) = idx;
+            break;
+        }
+    }
 
-//     PetscFunctionBeginUser;
+    PetscFunctionReturn(PETSC_SUCCESS);
+}
 
-//     PetscFunctionReturn(PETSC_SUCCESS);
-// }
+PetscErrorCode find_value_in_responses_array(PARAMS, PetscInt value_to_search, PetscBool *found, PetscInt *nb_occurences_found)
+{
+    PetscFunctionBeginUser;
+    PetscBool _found = PETSC_FALSE;
+    PetscInt _nb_occurences_found = 0;
+    for (PetscInt idx = 0; idx < NbNeighbors; idx++)
+    {
+        if (Responses[idx] == value_to_search)
+        {
+            _found = PETSC_TRUE;
+            _nb_occurences_found = _nb_occurences_found + 1;
+        }
+    }
+
+    if (found != NULL)
+    {
+        (*found) = _found;
+    }
+
+    if (nb_occurences_found != NULL)
+    {
+        (*nb_occurences_found) = _nb_occurences_found;
+    }
+
+    PetscFunctionReturn(PETSC_SUCCESS);
+}
 
 PetscErrorCode pack_convergence_data(PetscInt *first_place, PetscInt *second_place, char **pack_buffer, PetscMPIInt *position)
 {
@@ -421,29 +528,10 @@ PetscErrorCode unpack_convergence_data(PetscInt *first_place, PetscInt *second_p
     PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode find_value_in_responses(PARAMS, PetscInt value_to_search, PetscBool *found, PetscInt *nb_occurences_found)
-{
-    PetscFunctionBeginUser;
-    PetscBool _found = PETSC_FALSE;
-    PetscInt _nb_occurences_found = 0;
-    for (PetscInt idx = 0; idx < NbNeighbors; idx++)
-    {
-        if (Responses[idx] == value_to_search)
-        {
-            _found = PETSC_TRUE;
-            _nb_occurences_found = _nb_occurences_found + 1;
-        }
-    }
+// PetscErrorCode pack_data(PetscScalar *send_buffer, PetscMPIInt data_size, PetscInt *version, char **pack_buffer, PetscMPIInt *position)
+// {
 
-    if (found != NULL)
-    {
-        (*found) = _found;
-    }
+//     PetscFunctionBeginUser;
 
-    if (nb_occurences_found != NULL)
-    {
-        (*nb_occurences_found) = _nb_occurences_found;
-    }
-
-    PetscFunctionReturn(PETSC_SUCCESS);
-}
+//     PetscFunctionReturn(PETSC_SUCCESS);
+// }
