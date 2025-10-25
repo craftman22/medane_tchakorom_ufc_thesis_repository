@@ -156,13 +156,13 @@ int main(int argc, char **argv)
         // PetscCall(create_vector(comm_jacobi_block, &NewerDependencies_local, NbDependencies, VECSEQ));
         // PetscCall(VecSet(NewerDependencies_local, PETSC_FALSE)); // Meaning petsc_false
 
-        PetscCall(create_vector(comm_jacobi_block, &UNITARY_VECTOR, NbDependencies, VECSEQ));
+        PetscCall(create_vector(PETSC_COMM_SELF, &UNITARY_VECTOR, NbDependencies, VECSEQ));
         PetscCall(VecSet(UNITARY_VECTOR, PETSC_TRUE)); // Meaning petsc_false
 
-        PetscCall(create_vector(comm_jacobi_block, &NULL_VECTOR, NbDependencies, VECSEQ));
+        PetscCall(create_vector(PETSC_COMM_SELF, &NULL_VECTOR, NbDependencies, VECSEQ));
         PetscCall(VecSet(NULL_VECTOR, PETSC_FALSE)); // Meaning petsc_false
 
-        PetscCall(create_vector(comm_jacobi_block, &LastIteration_local, NbDependencies, VECSEQ));
+        PetscCall(create_vector(PETSC_COMM_SELF, &LastIteration_local, NbDependencies, VECSEQ));
         PetscCall(VecSet(LastIteration_local, -1));
 
         PetscCall(PetscMalloc1(2, &send_verdict_buffer));
@@ -200,9 +200,26 @@ int main(int argc, char **argv)
         PhaseTag = 0;
     }
 
-    PetscCall(PetscBarrier(NULL));
+    PetscCall(PetscPrintf(PETSC_COMM_SELF, "this is rank %d\n", proc_global_rank));
+    
+    // PetscScalar LastIterationRegistered = -11;
+    // PetscInt idx = proc_local_rank;
+    // PetscCall(VecSetValueLocal(LastIteration_global, proc_local_rank, 89 * proc_local_rank, INSERT_VALUES));
+    
+    // PetscCall(VecAssemblyBegin(LastIteration_global));
+    // PetscCall(VecAssemblyEnd(LastIteration_global));
+    
+    // PetscCall(VecGetValues(LastIteration_global, 1, &idx, &LastIterationRegistered));
+    // if (rank_jacobi_block == 0)
+    // {
+    //     PetscCall(PetscPrintf(PETSC_COMM_SELF, "this is rank %d last iteration %e \n",proc_local_rank, LastIterationRegistered));
+    //     PetscCall(VecView(LastIteration_global, PETSC_VIEWER_STDOUT_(comm_jacobi_block)));
+    // }
+    // PetscCall(PetscBarrier(NULL));
+    // PetscCall(PetscFinalize());
+    // return 0;
 
-    PetscCall(PetscPrintf(MPI_COMM_SELF, " this is rank %d with neighbor %d\n\n", proc_global_rank, neighbors[0]));
+    PetscCall(PetscBarrier(NULL));
 
     PetscCall(VecCreate(comm_jacobi_block, &x));
     PetscCall(VecSetSizes(x, PETSC_DECIDE, n_mesh_points));
@@ -311,7 +328,7 @@ int main(int argc, char **argv)
                                                      rcv_buffer, vec_local_size, message_source, idx_non_current_block,
                                                      &dependency_received, &neighbor_current_iteration,
                                                      &rcv_pack_buffer, NewerDependencies_global, LastIteration_global,
-                                                     state, PhaseTag, &scatter_ctx, NewerDependencies_local));
+                                                     state, PhaseTag, &scatter_ctx, NewerDependencies_local, proc_local_rank));
 
         // PetscCall(PetscPrintf(MPI_COMM_SELF, "[rank %d] Another Another hot spot!\n", proc_global_rank));
 

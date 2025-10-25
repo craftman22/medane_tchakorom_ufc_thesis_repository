@@ -42,7 +42,7 @@ PetscErrorCode comm_async_probe_and_receive_prime(Vec *x_block_jacobi,
                                                   PetscScalar *rcv_buffer, PetscMPIInt vec_local_size, PetscMPIInt message_source, PetscMPIInt idx_non_current_block,
                                                   PetscInt *message_received, PetscMPIInt *other_block_current_iteration, char **pack_buffer, Vec NewerDependencies_global,
                                                   Vec LastIteration_global, State state, PetscInt PhaseTag,
-                                                  VecScatter *scatter_ctx, Vec NewerDependencies_local);
+                                                  VecScatter *scatter_ctx, Vec NewerDependencies_local,const PetscInt proc_local_rank);
 
 PetscErrorCode comm_async_test_and_send_prime(PetscInt PhaseTag_param, PetscInt NumIteration_param, Vec *x_block_jacobi,
                                               PetscScalar *send_buffer, MPI_Request *send_data_request, PetscMPIInt vec_local_size, PetscMPIInt message_dest,

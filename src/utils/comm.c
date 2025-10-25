@@ -443,7 +443,7 @@ PetscErrorCode comm_async_probe_and_receive_prime(Vec *x_block_jacobi,
                                                   PetscScalar *rcv_buffer, PetscMPIInt vec_local_size, PetscMPIInt message_source,
                                                   PetscMPIInt idx_non_current_block, PetscInt *message_received, PetscMPIInt *other_block_current_iteration, char **pack_buffer,
                                                   Vec NewerDependencies_global, Vec LastIteration_global, const State state, const PetscInt PhaseTag,
-                                                  VecScatter *scatter_ctx, Vec NewerDependencies_local)
+                                                  VecScatter *scatter_ctx, Vec NewerDependencies_local, const PetscInt proc_local_rank)
 {
     PetscFunctionBeginUser;
     MPI_Status status;
@@ -477,15 +477,15 @@ PetscErrorCode comm_async_probe_and_receive_prime(Vec *x_block_jacobi,
         if (message_received != NULL)
         {
             (*message_received) = 1;
-            RcvMessage = PETSC_TRUE;
         }
+        
+        RcvMessage = PETSC_TRUE;
     }
 
     if (RcvMessage == PETSC_TRUE)
     {
-        PetscCall(receive_data_dependency(NewerDependencies_global, LastIteration_global, state, PhaseTag, SrcPhaseTag, SrcCurrentIteration));
+        PetscCall(receive_data_dependency(NewerDependencies_global, proc_local_rank, LastIteration_global, state, PhaseTag, SrcPhaseTag, SrcCurrentIteration));
     }
-
 
     PetscCall(VecAssemblyBegin(LastIteration_global));
     PetscCall(VecAssemblyEnd(LastIteration_global));

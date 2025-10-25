@@ -293,7 +293,7 @@ PetscErrorCode reinitialize_pseudo_period(PARAMS)
     for (PetscInt idx = 0; idx < NbDependencies; idx++)
     {
         PetscCall(VecSet(NewerDependencies_local, PETSC_FALSE));
-        PetscCall(VecSetValueLocal(NewerDependencies_global, 0, PETSC_FALSE, INSERT_VALUES));
+        PetscCall(VecSetValueLocal(NewerDependencies_global, proc_local_rank, PETSC_FALSE, INSERT_VALUES));
     }
 
     PetscFunctionReturn(PETSC_SUCCESS);
@@ -613,7 +613,7 @@ PetscErrorCode unpack_computed_data_dependency(PetscInt *SrcPhaseTag, PetscInt *
 // }
 
 // called by all rank in the sub_communicator
-PetscErrorCode receive_data_dependency(Vec NewerDependencies_global, Vec LastIteration_global, const State state, const PetscInt PhaseTag, const PetscInt SrcPhaseTag, const PetscInt SrcCurrentIteration)
+PetscErrorCode receive_data_dependency(Vec NewerDependencies_global, const PetscInt proc_local_rank, Vec LastIteration_global, const State state, const PetscInt PhaseTag, const PetscInt SrcPhaseTag, const PetscInt SrcCurrentIteration)
 {
     PetscFunctionBeginUser;
 
@@ -627,7 +627,7 @@ PetscErrorCode receive_data_dependency(Vec NewerDependencies_global, Vec LastIte
     if (SrcIndexDependency >= 0)
     {
         PetscScalar LastIterationRegistered = SrcIteration;
-        PetscInt idx = 0;
+        PetscInt idx = proc_local_rank;
         PetscCall(VecGetValues(LastIteration_global, 1, &idx, &LastIterationRegistered));
 
         if (LastIterationRegistered < SrcIteration && ((state) != VERIFICATION || SrcTag == (PhaseTag)))
@@ -635,8 +635,8 @@ PetscErrorCode receive_data_dependency(Vec NewerDependencies_global, Vec LastIte
             // Put the data in the message at their corresponding place according to SrcIndDep in the local data array used for the computations
             // LastIteration[SrcIndexDependency] = SrcIteration;
             // NewerDependencies[SrcIndexDependency] = PETSC_TRUE;
-            PetscCall(VecSetValueLocal(LastIteration_global, 0, SrcIteration, INSERT_VALUES));
-            PetscCall(VecSetValueLocal(NewerDependencies_global, 0, PETSC_TRUE, INSERT_VALUES));
+            PetscCall(VecSetValueLocal(LastIteration_global, proc_local_rank, SrcIteration, INSERT_VALUES));
+            PetscCall(VecSetValueLocal(NewerDependencies_global, proc_local_rank, PETSC_TRUE, INSERT_VALUES));
         }
     }
 

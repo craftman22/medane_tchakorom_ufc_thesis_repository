@@ -9,7 +9,7 @@
 #define SHARED_CONV_DETECTION_PRIME_FUNCTIONS_H
 
 #define PARAMS                                                                                                         \
-    PetscInt NbNeighbors, PetscBool *UnderThreashold,                                                                  \
+    const PetscInt proc_local_rank, PetscInt NbNeighbors, PetscBool *UnderThreashold,                                  \
         PetscInt NbDependencies, PetscInt *Responses,                                                                  \
         Vec NewerDependencies_global, PetscBool *PseudoPeriodBegin,                                                    \
         Vec LastIteration_global, Vec LastIteration_local,                                                             \
@@ -25,7 +25,7 @@
         MPI_Request *send_CV_request
 
 #define ACTUAL_PARAMS                                                           \
-    NbNeighbors, UnderThreashold,                                               \
+    proc_local_rank, NbNeighbors, UnderThreashold,                              \
         NbDependencies, Responses,                                              \
         NewerDependencies_global, PseudoPeriodBegin,                            \
         LastIteration_global, LastIteration_local,                              \
@@ -41,19 +41,19 @@
         send_CV_request
 
 // Use in main program
-#define ACTUAL_PARAMS_POINTERS                                        \
-    NbNeighbors, &UnderThreashold,                                    \
-        NbDependencies, Responses,                                    \
-        NewerDependencies_global, &PseudoPeriodBegin,                 \
-        LastIteration_global, LastIteration_local,                    \
-        NewerDependencies_local, &PseudoPeriodEnd, ReceivedPartialCV, \
-        &ElectedNode, &PhaseTag, &ResponseSent, &state,               \
-        &LocalCV, &NbNotRecvd, &PartialCVSent,                        \
-        neighbors, UNITARY_VECTOR, NULL_VECTOR,                       \
-        send_verdict_buffer, rcv_verdict_buffer,                      \
-        send_response_buffer, rcv_response_buffer,                    \
-        send_verification_buffer, rcv_verification_buffer,            \
-        send_partialCV_buffer, rcv_partialCV_buffer,                  \
+#define ACTUAL_PARAMS_POINTERS                                                     \
+    proc_local_rank, NbNeighbors, &UnderThreashold,                                \
+        NbDependencies, Responses,                                                 \
+        NewerDependencies_global, &PseudoPeriodBegin,                              \
+        LastIteration_global, LastIteration_local,                                 \
+        NewerDependencies_local, &PseudoPeriodEnd, ReceivedPartialCV,              \
+        &ElectedNode, &PhaseTag, &ResponseSent, &state,                            \
+        &LocalCV, &NbNotRecvd, &PartialCVSent,                                     \
+        neighbors, UNITARY_VECTOR, NULL_VECTOR,                                    \
+        send_verdict_buffer, rcv_verdict_buffer,                                   \
+        send_response_buffer, rcv_response_buffer,                                 \
+        send_verification_buffer, rcv_verification_buffer,                         \
+        send_partialCV_buffer, rcv_partialCV_buffer,                               \
         &send_verdict_request, &send_response_request, &send_verification_request, \
         &send_CV_request
 
@@ -69,7 +69,7 @@ PetscErrorCode reinitialize_pseudo_period(PARAMS);
 PetscErrorCode initialize_verification(PARAMS);
 
 // PetscErrorCode receive_data_dependency(PARAMS);
-PetscErrorCode receive_data_dependency(Vec NewerDependencies_global, Vec LastIteration_global, const State state, const PetscInt PhaseTag,  const PetscInt SrcPhaseTag, const PetscInt SrcCurrentIteration);
+PetscErrorCode receive_data_dependency(Vec NewerDependencies_global, const PetscInt proc_local_rank, Vec LastIteration_global, const State state, const PetscInt PhaseTag, const PetscInt SrcPhaseTag, const PetscInt SrcCurrentIteration);
 
 PetscErrorCode receive_verification(PARAMS);
 
