@@ -84,12 +84,12 @@ int main(int argc, char **argv)
     PetscMPIInt vec_local_size = ZERO;
     PetscScalar *send_buffer = NULL;
     PetscScalar *rcv_buffer = NULL;
-    PetscScalar *temp_buffer = NULL;
     MPI_Request send_data_request = MPI_REQUEST_NULL;
-    PetscMPIInt send_data_flag = ZERO;
-    PetscMPIInt rcv_data_flag = ZERO;
     Vec local_iterates_difference;
     Vec x_block_jacobi_previous_iterate = NULL;
+    // PetscScalar *temp_buffer = NULL;
+    // PetscMPIInt send_data_flag = ZERO;
+    // PetscMPIInt rcv_data_flag = ZERO;
 
     // PetscInt *LastIteration = NULL;
     // PetscBool *NewerDependencies = NULL;
@@ -126,24 +126,35 @@ int main(int argc, char **argv)
     MPI_Request send_verdict_request = MPI_REQUEST_NULL;
     MPI_Request send_response_request = MPI_REQUEST_NULL;
     MPI_Request send_verification_request = MPI_REQUEST_NULL;
+    MPI_Request send_CV_request = MPI_REQUEST_NULL;
+    PetscInt dependency_received = 0;
+    PetscInt neighbor_current_iteration = 0;
+    char *send_pack_buffer = NULL;
+    char *rcv_pack_buffer = NULL;
 
-    NbDependencies = nprocs;
+    NbDependencies = nprocs / 2;
     PetscCall(create_vector(comm_jacobi_block, &NewerDependencies_global, NbDependencies, VECMPI));
     PetscCall(VecSet(NewerDependencies_global, PETSC_FALSE)); // Meaning petsc_false
     PetscCall(create_vector(comm_jacobi_block, &LastIteration_global, NbDependencies, VECMPI));
     PetscCall(VecSet(LastIteration_global, -1));
+
+    VecScatter scatter_ctx;
+    PetscCall(VecScatterCreateToZero(NewerDependencies_global, &scatter_ctx, &NewerDependencies_local));
+    PetscCall(VecSet(NewerDependencies_local, PETSC_FALSE)); // Meaning petsc_false
+
     if (proc_local_rank == 0)
     {
+
         NbNeighbors = 1;
 
         PetscCall(PetscMalloc1(NbNeighbors, &neighbors));
         PetscCall(PetscArrayfill_custom_int(neighbors, -11, NbNeighbors));
 
         PetscCall(PetscMalloc1(NbNeighbors, &Responses));
-        PetscCall(PetscArrayfill_custom_int(Responses, 0, NbNeighbors));
+        PetscCall(PetscArrayfill_custom_int(Responses, RESPONSE_NEUTRAL, NbNeighbors));
 
-        PetscCall(create_vector(comm_jacobi_block, &NewerDependencies_local, NbDependencies, VECSEQ));
-        PetscCall(VecSet(NewerDependencies_local, PETSC_FALSE)); // Meaning petsc_false
+        // PetscCall(create_vector(comm_jacobi_block, &NewerDependencies_local, NbDependencies, VECSEQ));
+        // PetscCall(VecSet(NewerDependencies_local, PETSC_FALSE)); // Meaning petsc_false
 
         PetscCall(create_vector(comm_jacobi_block, &UNITARY_VECTOR, NbDependencies, VECSEQ));
         PetscCall(VecSet(UNITARY_VECTOR, PETSC_TRUE)); // Meaning petsc_false
@@ -155,24 +166,28 @@ int main(int argc, char **argv)
         PetscCall(VecSet(LastIteration_local, -1));
 
         PetscCall(PetscMalloc1(2, &send_verdict_buffer));
-        PetscCall(PetscArrayfill_custom_int(send_verdict_buffer, 0, NbDependencies));
+        PetscCall(PetscArrayfill_custom_int(send_verdict_buffer, 0, 2));
+
         PetscCall(PetscMalloc1(2, &rcv_verdict_buffer));
-        PetscCall(PetscArrayfill_custom_int(rcv_verdict_buffer, 0, NbDependencies));
+        PetscCall(PetscArrayfill_custom_int(rcv_verdict_buffer, 0, 2));
 
         PetscCall(PetscMalloc1(2, &send_response_buffer));
-        PetscCall(PetscArrayfill_custom_int(send_response_buffer, 0, NbDependencies));
+        PetscCall(PetscArrayfill_custom_int(send_response_buffer, 0, 2));
+
         PetscCall(PetscMalloc1(2, &rcv_response_buffer));
-        PetscCall(PetscArrayfill_custom_int(rcv_response_buffer, 0, NbDependencies));
+        PetscCall(PetscArrayfill_custom_int(rcv_response_buffer, 0, 2));
 
         PetscCall(PetscMalloc1(1, &send_verification_buffer));
-        PetscCall(PetscArrayfill_custom_int(send_verification_buffer, 0, NbDependencies));
+        PetscCall(PetscArrayfill_custom_int(send_verification_buffer, 0, 1));
+
         PetscCall(PetscMalloc1(1, &rcv_verification_buffer));
-        PetscCall(PetscArrayfill_custom_int(rcv_verification_buffer, 0, NbDependencies));
+        PetscCall(PetscArrayfill_custom_int(rcv_verification_buffer, 0, 1));
 
         PetscCall(PetscMalloc1(1, &send_partialCV_buffer));
-        PetscCall(PetscArrayfill_custom_int(send_partialCV_buffer, 0, NbDependencies));
+        PetscCall(PetscArrayfill_custom_int(send_partialCV_buffer, 0, 1));
+
         PetscCall(PetscMalloc1(1, &rcv_partialCV_buffer));
-        PetscCall(PetscArrayfill_custom_int(rcv_partialCV_buffer, 0, NbDependencies));
+        PetscCall(PetscArrayfill_custom_int(rcv_partialCV_buffer, 0, 1));
 
         PetscCall(PetscMalloc1(NbNeighbors, &ReceivedPartialCV));
         PetscCall(PetscArrayfill_custom_bool(ReceivedPartialCV, PETSC_FALSE, NbNeighbors));
@@ -185,59 +200,9 @@ int main(int argc, char **argv)
         PhaseTag = 0;
     }
 
-    // PetscInt nbNeigNotLCV = ZERO;
-    // PetscInt nbIterPreLocalCV = ZERO;
-    // PetscBool preLocalCV = PETSC_FALSE;
-    // PetscBool sLocalCV = PETSC_FALSE;
-    // PetscBool globalCV = PETSC_FALSE;
-    // PetscInt THRESHOLD_SLCV = MIN_CONVERGENCE_COUNT;
-    // PetscInt *neighbors = NULL;    /* array containing all the node neighbors */
-    // PetscInt nbNeighbors = ZERO;   /* number of node neighbors */
-    // PetscInt *prevIterNumS = NULL; /* array containing previous iteration at witch node "i" notify convergence */
-    // PetscInt *prevIterNumC = NULL; /* array containing previous iteration at witch node "i" notify convergence CANCELING */
-    // PetscMPIInt dest_node = -1;
-    // PetscInt cancelSPartialBuffer;
-    // MPI_Request cancelSPartialRequest = MPI_REQUEST_NULL;
-    // MPI_Request sendSPartialRequest = MPI_REQUEST_NULL;
-    // PetscInt sendSPartialBuffer;
-    // PetscLogDouble time_period_with_globalCV __attribute__((unused)) = 0.0;
-    // PetscLogDouble globalCV_timer = 0.0;
-    // PetscLogDouble MAX_TRAVERSAL_TIME __attribute__((unused)) = 0.0; // 13.21 ms
-    // PetscInt MAX_NEIGHBORS = nprocs;
-
-    // PetscCall(PetscBarrier(NULL));
-    // if (proc_local_rank == 0)
-    // {
-    //     PetscCall(PetscPrintf(PETSC_COMM_WORLD, "Starting latency checking .... \n"));
-    //     PetscMPIInt proc_rank_node_1 = 0;
-    //     PetscMPIInt proc_rank_node_2 = nprocs_per_jacobi_block;
-    //     PetscCall(comm_sync_measure_latency_between_two_nodes(proc_rank_node_1, proc_rank_node_2, proc_global_rank, &MAX_TRAVERSAL_TIME));
-    // }
-
-    // PetscCallMPI(MPI_Bcast(&MAX_TRAVERSAL_TIME, 1, MPI_DOUBLE, ROOT_NODE, PETSC_COMM_WORLD));
-
-    // PetscCall(PetscPrintf(comm_jacobi_block, "MAX_TRAVERSAL_TIME = %e \n", MAX_TRAVERSAL_TIME));
-
-    // if (proc_local_rank == 0)
-    // {
-    //     PetscCall(PetscMalloc1(1, &neighbors));
-    //     PetscCall(PetscArrayfill_custom(neighbors, -11, 1));
-
-    //     PetscCall(PetscMalloc1(MAX_NEIGHBORS, &prevIterNumS));
-    //     PetscCall(PetscArrayfill_custom(prevIterNumS, -1, MAX_NEIGHBORS));
-
-    //     PetscCall(PetscMalloc1(MAX_NEIGHBORS, &prevIterNumC));
-    //     PetscCall(PetscArrayfill_custom(prevIterNumC, 0, MAX_NEIGHBORS));
-
-    // PetscCall(build_spanning_tree(rank_jacobi_block, neighbors, &nbNeighbors, proc_local_rank, nprocs_per_jacobi_block));
-    //     nbNeigNotLCV = nbNeighbors;
-    //     nbIterPreLocalCV = 0;
-    //     preLocalCV = PETSC_FALSE;
-    //     sLocalCV = PETSC_FALSE;
-    // }
-    // globalCV = PETSC_FALSE;
-
     PetscCall(PetscBarrier(NULL));
+
+    PetscCall(PetscPrintf(MPI_COMM_SELF, " this is rank %d with neighbor %d\n\n", proc_global_rank, neighbors[0]));
 
     PetscCall(VecCreate(comm_jacobi_block, &x));
     PetscCall(VecSetSizes(x, PETSC_DECIDE, n_mesh_points));
@@ -320,16 +285,17 @@ int main(int argc, char **argv)
     PetscCall(VecDuplicate(x_block_jacobi[idx_non_current_block], &local_residual));
     PetscScalar local_norm = PETSC_MAX_REAL;
     PetscScalar local_norm_0 = 0.0;
-    PetscCall(updateLocalRHS(A_block_jacobi_subMat[idx_non_current_block], x_block_jacobi[idx_non_current_block], b_block_jacobi[rank_jacobi_block], local_right_side_vector));
-    PetscCall(MatResidual(A_block_jacobi_subMat[rank_jacobi_block], local_right_side_vector, x_block_jacobi[rank_jacobi_block], local_residual)); // r_i = b_i - (A_i * x_i)
+    PetscCall(MatResidual(A_block_jacobi, b_block_jacobi[rank_jacobi_block], x, local_residual));
     PetscCall(VecNorm(local_residual, NORM_2, &local_norm_0));
+    // PetscCall(updateLocalRHS(A_block_jacobi_subMat[idx_non_current_block], x_block_jacobi[idx_non_current_block], b_block_jacobi[rank_jacobi_block], local_right_side_vector));
+    // PetscCall(MatResidual(A_block_jacobi_subMat[rank_jacobi_block], local_right_side_vector, x_block_jacobi[rank_jacobi_block], local_residual)); // r_i = b_i - (A_i * x_i)
+    // PetscCall(VecNorm(local_residual, NORM_2, &local_norm_0));
+
     PetscCall(PetscPrintf(comm_jacobi_block, "Rank block %d [local] b norm : %e \n", rank_jacobi_block, local_norm_0));
 
-    {
-        PetscScalar global_norm_0 = 0.0;
-        PetscCall(computeFinalResidualNorm(comm_jacobi_block, comm_local_roots, A_block_jacobi, x, b_block_jacobi, local_residual, rank_jacobi_block, proc_local_rank, &global_norm_0));
-        PetscCall(PetscPrintf(comm_jacobi_block, "Rank block %d [global] b norm : %e \n", rank_jacobi_block, global_norm_0));
-    }
+    PetscScalar global_norm_0 = 0.0;
+    PetscCall(computeFinalResidualNorm(comm_jacobi_block, comm_local_roots, A_block_jacobi, x, b_block_jacobi, local_residual, rank_jacobi_block, proc_local_rank, &global_norm_0));
+    PetscCall(PetscPrintf(comm_jacobi_block, "Rank block %d [global] b norm : %e \n", rank_jacobi_block, global_norm_0));
 
     PetscCall(PetscBarrier(NULL));
     double start_time, end_time;
@@ -341,15 +307,21 @@ int main(int argc, char **argv)
         message_received = 0;
         inner_solver_iterations = 0;
 
-        PetscCall(comm_async_probe_and_receive(x_block_jacobi, rcv_buffer, vec_local_size, rcv_data_flag, message_source, idx_non_current_block, &message_received, NULL, NULL));
+        PetscCall(comm_async_probe_and_receive_prime(x_block_jacobi,
+                                                     rcv_buffer, vec_local_size, message_source, idx_non_current_block,
+                                                     &dependency_received, &neighbor_current_iteration,
+                                                     &rcv_pack_buffer, NewerDependencies_global, LastIteration_global,
+                                                     state, PhaseTag, &scatter_ctx, NewerDependencies_local));
+
+        // PetscCall(PetscPrintf(MPI_COMM_SELF, "[rank %d] Another Another hot spot!\n", proc_global_rank));
 
         PetscCall(updateLocalRHS(A_block_jacobi_subMat[idx_non_current_block], x_block_jacobi[idx_non_current_block], b_block_jacobi[rank_jacobi_block], local_right_side_vector));
 
         PetscCall(inner_solver(comm_jacobi_block, inner_ksp, A_block_jacobi_subMat, x_block_jacobi, b_block_jacobi, local_right_side_vector, rank_jacobi_block, &inner_solver_iterations, number_of_iterations));
 
-        PetscCall(comm_async_test_and_send(x_block_jacobi, send_buffer, temp_buffer, &send_data_request, vec_local_size, send_data_flag, message_dest, rank_jacobi_block, NULL, NULL));
-
-        // PetscCall(comm_async_probe_and_receive(x_block_jacobi, rcv_buffer, vec_local_size, rcv_data_flag, message_source, idx_non_current_block, &message_received, NULL, NULL));
+        PetscCall(comm_async_test_and_send_prime(PhaseTag, number_of_iterations, x_block_jacobi, send_buffer,
+                                                 &send_data_request, vec_local_size, message_dest,
+                                                 rank_jacobi_block, &send_pack_buffer));
 
         PetscCall(VecScatterBegin(scatter_jacobi_vec_part_to_merged_vec[rank_jacobi_block], x_block_jacobi[rank_jacobi_block], x, INSERT_VALUES, SCATTER_FORWARD));
         PetscCall(VecScatterEnd(scatter_jacobi_vec_part_to_merged_vec[rank_jacobi_block], x_block_jacobi[rank_jacobi_block], x, INSERT_VALUES, SCATTER_FORWARD));
@@ -364,7 +336,7 @@ int main(int argc, char **argv)
         if (proc_local_rank == 0) // ONLY root node from each block check for convergence
         {
 
-            if (local_norm <= PetscMax(absolute_tolerance, relative_tolerance * local_norm_0))
+            if (local_norm <= PetscMax(absolute_tolerance, (relative_tolerance / PetscSqrtScalar(2.0)) * 0.7 * global_norm_0))
             {
 
                 UnderThreashold = PETSC_TRUE;
@@ -372,25 +344,59 @@ int main(int argc, char **argv)
             else
             {
                 UnderThreashold = PETSC_FALSE;
+                // UnderThreashold = PETSC_TRUE;
             }
 
+            // PseudoPeriodBegin = PETSC_TRUE;
+            // PseudoPeriodEnd = PETSC_TRUE;
+
+            // Main convergence detection mechanism
             PetscCall(comm_async_convDetection_prime(ACTUAL_PARAMS_POINTERS));
 
-            // cancelSPartialBuffer = number_of_iterations;
-            // sendSPartialBuffer = number_of_iterations;
+            // local convergence
+            PetscCall(receive_partial_CV(ACTUAL_PARAMS_POINTERS, proc_global_rank));
 
-            // PetscCall(comm_async_convDetection(rank_jacobi_block, nbNeighbors, &nbNeigNotLCV, neighbors, prevIterNumS, prevIterNumC, &nbIterPreLocalCV, &preLocalCV, &sLocalCV, &globalCV, &dest_node, THRESHOLD_SLCV, number_of_iterations, &cancelSPartialBuffer, &cancelSPartialRequest, &sendSPartialBuffer, &sendSPartialRequest));
+            // receive verificication phase
+            PetscCall(receive_verification(ACTUAL_PARAMS_POINTERS));
 
-            // PetscCall(comm_async_recvSPartialCV(rank_jacobi_block, &nbNeigNotLCV, prevIterNumS, prevIterNumC));
+            // response after verificiation
+            PetscCall(receive_response(ACTUAL_PARAMS_POINTERS));
 
-            // PetscCall(comm_async_recvCancelSPartialCV(rank_jacobi_block, &nbNeigNotLCV, nbNeighbors, prevIterNumS, prevIterNumC, &globalCV));
-
-            // PetscCall(comm_async_recvGlobalCV(rank_jacobi_block, &globalCV));
+            // receive final verdict
+            PetscCall(receive_verdict(ACTUAL_PARAMS_POINTERS));
         }
 
-        number_of_iterations = number_of_iterations + 1;
+        PetscCallMPI(MPI_Bcast(&state, 1, MPIU_INT, LOCAL_ROOT_NODE, comm_jacobi_block));
+        PetscCallMPI(MPI_Bcast(&PhaseTag, 1, MPIU_INT, LOCAL_ROOT_NODE, comm_jacobi_block));
 
-    } while (state == FINISHED);
+        PetscCall(PetscPrintf(comm_jacobi_block, "[rank %d]   STATE %d ELECTED %d\n", proc_global_rank, state, ElectedNode));
+
+        // PetscCall(PetscPrintf(comm_jacobi_block, "[rank %d]   hot spot!\n", proc_global_rank));
+        // if (state == VERIFICATION )
+        // {
+
+        //     PetscScalar LastIterationRegistered = -2;
+        //     PetscInt idx = 0;
+        //     PetscCall(VecGetValues(LastIteration_global, 1, &idx, &LastIterationRegistered));
+        //     PetscCall(PetscPrintf(MPI_COMM_SELF, "[rank %d iteration %d] last new depedency received at iteration: %e\n", proc_global_rank, number_of_iterations, LastIterationRegistered));
+        //     PetscCall(PetscSleep(1000));
+        // }
+        // PetscCall(PetscPrintf(comm_jacobi_block, "[rank %d]  Another hot spot!\n", proc_global_rank));
+
+        number_of_iterations = number_of_iterations + 1;
+        // if (number_of_iterations >= 10)
+        //     PetscCall(PetscSleep(100));
+        // if (number_of_iterations >= 20)
+        // {
+
+        //     PetscScalar LastIterationRegistered = -2;
+        //     PetscInt idx = 0;
+        //     PetscCall(VecGetValues(LastIteration_global, 1, &idx, &LastIterationRegistered));
+        //     PetscCall(PetscPrintf(MPI_COMM_SELF, "[rank %d iteration %d] last new depedency received at iteration: %e\n", proc_global_rank,number_of_iterations, LastIterationRegistered));
+        //     PetscCall(PetscSleep(1000));
+        // }
+
+    } while (state != FINISHED);
 
     // MPI_Request requests[nbNeighbors];
     // // for (PetscInt i = 0; i < nbNeighbors; i++)
@@ -406,6 +412,12 @@ int main(int argc, char **argv)
     end_time = MPI_Wtime();
     PetscCall(printElapsedTime(start_time, end_time));
     PetscCall(printTotalNumberOfIterations(comm_jacobi_block, rank_jacobi_block, number_of_iterations));
+
+    PetscCall(PetscBarrier(NULL));
+
+    PetscCall(MatResidual(A_block_jacobi, b_block_jacobi[rank_jacobi_block], x, local_residual));
+    PetscCall(VecNorm(local_residual, NORM_2, &local_norm));
+    PetscCall(PetscPrintf(comm_jacobi_block, "[Rank %d] Local norm_2 FINISHED  = %e \n", rank_jacobi_block, local_norm));
 
     PetscCall(PetscBarrier(NULL));
 
