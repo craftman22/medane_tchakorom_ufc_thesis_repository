@@ -340,11 +340,6 @@ int main(int argc, char **argv)
                                                  &send_data_request, vec_local_size, message_dest,
                                                  rank_jacobi_block, &send_pack_buffer));
 
-        PetscCall(VecScatterBegin(scatter_jacobi_vec_part_to_merged_vec[rank_jacobi_block], x_block_jacobi[rank_jacobi_block], x, INSERT_VALUES, SCATTER_FORWARD));
-        PetscCall(VecScatterEnd(scatter_jacobi_vec_part_to_merged_vec[rank_jacobi_block], x_block_jacobi[rank_jacobi_block], x, INSERT_VALUES, SCATTER_FORWARD));
-        PetscCall(VecScatterBegin(scatter_jacobi_vec_part_to_merged_vec[idx_non_current_block], x_block_jacobi[idx_non_current_block], x, INSERT_VALUES, SCATTER_FORWARD));
-        PetscCall(VecScatterEnd(scatter_jacobi_vec_part_to_merged_vec[idx_non_current_block], x_block_jacobi[idx_non_current_block], x, INSERT_VALUES, SCATTER_FORWARD));
-
         PetscCall(MatResidual(A_block_jacobi_subMat[rank_jacobi_block], local_right_side_vector, x_block_jacobi[rank_jacobi_block], local_residual));
         PetscCall(VecNorm(local_residual, NORM_2, &local_norm));
 
@@ -388,12 +383,9 @@ int main(int argc, char **argv)
 
         PetscCall(PetscPrintf(comm_jacobi_block, "[rank %d]   STATE %d ELECTED %d\n", proc_global_rank, state, ElectedNode));
 
-
         number_of_iterations = number_of_iterations + 1;
 
-
     } while (state != FINISHED);
-
 
     PetscCall(PetscPrintf(comm_jacobi_block, "Rank %d: PROGRAMME TERMINE\n", rank_jacobi_block));
     PetscCall(PetscBarrier(NULL));
@@ -404,31 +396,38 @@ int main(int argc, char **argv)
 
     PetscCall(PetscBarrier(NULL));
 
-    PetscCall(MatResidual(A_block_jacobi, b_block_jacobi[rank_jacobi_block], x, local_residual));
-    PetscCall(VecNorm(local_residual, NORM_2, &local_norm));
-    PetscCall(PetscPrintf(comm_jacobi_block, "[Rank %d] Local norm_2 FINISHED  = %e \n", rank_jacobi_block, local_norm));
+    PetscBool ElectedBlock = PETSC_FALSE;
+    PetscCallMPI(MPI_Allreduce(&ElectedNode, &ElectedBlock, 1, MPIU_BOOL, MPI_SUM, comm_jacobi_block));
+
+    if (ElectedBlock == PETSC_TRUE)
+    {
+
+        PetscCall(VecScatterBegin(scatter_jacobi_vec_part_to_merged_vec[rank_jacobi_block], x_block_jacobi[rank_jacobi_block], x, INSERT_VALUES, SCATTER_FORWARD));
+        PetscCall(VecScatterEnd(scatter_jacobi_vec_part_to_merged_vec[rank_jacobi_block], x_block_jacobi[rank_jacobi_block], x, INSERT_VALUES, SCATTER_FORWARD));
+        PetscCall(VecScatterBegin(scatter_jacobi_vec_part_to_merged_vec[idx_non_current_block], x_block_jacobi[idx_non_current_block], x, INSERT_VALUES, SCATTER_FORWARD));
+        PetscCall(VecScatterEnd(scatter_jacobi_vec_part_to_merged_vec[idx_non_current_block], x_block_jacobi[idx_non_current_block], x, INSERT_VALUES, SCATTER_FORWARD));
+        // PetscCall(MatResidual(A_block_jacobi, b_block_jacobi[rank_jacobi_block], x, local_residual));
+        // PetscCall(VecNorm(local_residual, NORM_2, &local_norm));
+        // PetscCall(PetscPrintf(comm_jacobi_block, "[Block Rank %d] Local norm_2 FINISHED  = %e \n", rank_jacobi_block, local_norm));
+
+        // PetscScalar norm;
+        // PetscCall(computeFinalResidualNorm(comm_jacobi_block, comm_local_roots, A_block_jacobi, x, b_block_jacobi, local_residual, rank_jacobi_block, proc_local_rank, &norm));
+        // PetscCall(printFinalResidualNorm(norm));
+
+
+        PetscCall(PetscPrintf(comm_jacobi_block, "Elected Block = Block %d \n", rank_jacobi_block));
+        PetscScalar norm;
+        norm = PetscSqrtScalar(2.0) * local_norm;
+        PetscCall(PetscPrintf(comm_jacobi_block, "Final residual norm 2 = %e \n", norm));
+        PetscScalar error;
+        PetscCall(computeError(x, u, &error));
+        PetscCall(PetscPrintf(comm_jacobi_block, "Erreur : %e \n", error));
+    }
 
     PetscCall(PetscBarrier(NULL));
-
-    PetscCall(comm_sync_send_and_receive_final(x_block_jacobi, vec_local_size, message_dest, message_source, rank_jacobi_block, idx_non_current_block));
-    PetscCall(VecScatterBegin(scatter_jacobi_vec_part_to_merged_vec[rank_jacobi_block], x_block_jacobi[rank_jacobi_block], x, INSERT_VALUES, SCATTER_FORWARD));
-    PetscCall(VecScatterEnd(scatter_jacobi_vec_part_to_merged_vec[rank_jacobi_block], x_block_jacobi[rank_jacobi_block], x, INSERT_VALUES, SCATTER_FORWARD));
-    PetscCall(VecScatterBegin(scatter_jacobi_vec_part_to_merged_vec[idx_non_current_block], x_block_jacobi[idx_non_current_block], x, INSERT_VALUES, SCATTER_FORWARD));
-    PetscCall(VecScatterEnd(scatter_jacobi_vec_part_to_merged_vec[idx_non_current_block], x_block_jacobi[idx_non_current_block], x, INSERT_VALUES, SCATTER_FORWARD));
-
-    PetscScalar norm;
-    PetscCall(computeFinalResidualNorm(comm_jacobi_block, comm_local_roots, A_block_jacobi, x, b_block_jacobi, local_residual, rank_jacobi_block, proc_local_rank, &norm));
-    PetscCall(printFinalResidualNorm(norm));
-
-    PetscScalar error;
-    PetscCall(computeError(x, u, &error));
-    PetscCall(PetscPrintf(PETSC_COMM_WORLD, "Erreur : %e \n", error));
-
     // END OF PROGRAM  - FREE MEMORY
     // Discard any pending message
     PetscCall(comm_discard_pending_messages());
-
-
 
     if (send_verdict_request != MPI_REQUEST_NULL)
     {
@@ -474,9 +473,6 @@ int main(int argc, char **argv)
         PetscCall(VecScatterDestroy(&scatter_jacobi_vec_part_to_merged_vec[i]));
     }
 
-
-
-
     PetscCall(PetscFree(Responses));
     PetscCall(PetscFree(ReceivedPartialCV));
     PetscCall(PetscFree(neighbors));
@@ -488,12 +484,10 @@ int main(int argc, char **argv)
     PetscCall(PetscFree(send_verification_buffer));
     PetscCall(PetscFree(rcv_verification_buffer));
 
-
     PetscCall(PetscFree(send_partialCV_buffer));
     PetscCall(PetscFree(rcv_partialCV_buffer));
     PetscCall(PetscFree(send_pack_buffer));
     PetscCall(PetscFree(rcv_pack_buffer));
-
 
     PetscCall(PetscFree(rcv_buffer));
     PetscCall(PetscFree(send_buffer));
@@ -507,8 +501,6 @@ int main(int argc, char **argv)
     PetscCall(VecDestroy(&local_residual));
     PetscCall(MatDestroy(&A_block_jacobi));
     PetscCall(KSPDestroy(&inner_ksp));
-
-
 
     PetscCall(PetscSubcommDestroy(&sub_comm_context));
     PetscCall(PetscCommDestroy(&dcomm));

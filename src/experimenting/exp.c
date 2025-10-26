@@ -69,62 +69,77 @@ int main(int argc, char **argv)
     PetscCallMPI(MPI_Comm_rank(PETSC_COMM_WORLD, &proc_global_rank));
     PetscCallMPI(MPI_Comm_size(PETSC_COMM_WORLD, &nprocs));
 
+    Vec vector;
+    PetscCall(create_vector(MPI_COMM_WORLD, &vector, 5, VECMPI));
+    PetscRandom random;
+    PetscCall(PetscRandomCreate(MPI_COMM_WORLD, &random));
+    PetscCall(PetscRandomSetType(random, PETSCRAND48));
+
+    PetscCall(VecSetRandom(vector, random));
+    PetscCall(VecAssemblyBegin(vector));
+    PetscCall(VecAssemblyEnd(vector));
+
+    PetscCall(VecView(vector, PETSC_VIEWER_STDOUT_WORLD));
+
+    PetscCall(PetscRandomDestroy(&random));
+    PetscCall(VecDestroy(&vector));
+
     // PetscMPIInt first_place_size;
     // PetscCallMPI(MPI_Pack_size(1, MPIU_INT, MPI_COMM_WORLD, &first_place_size));
     // PetscCall(PetscPrintf(PETSC_COMM_SELF, "size: %d\n", first_place_size));
 
-    const PetscInt arr_size = 6;
-    MPI_Request request = MPI_REQUEST_NULL;
-    if (proc_global_rank == 0)
-    {
-        PetscInt a = 666;
-        PetscInt b = 111;
-        PetscScalar *arr = NULL;
-        PetscCall(PetscMalloc1(arr_size, &arr));
+    // const PetscInt arr_size = 6;
+    // MPI_Request request = MPI_REQUEST_NULL;
+    // if (proc_global_rank == 0)
+    // {
+    //     PetscInt a = 666;
+    //     PetscInt b = 111;
+    //     PetscScalar *arr = NULL;
+    //     PetscCall(PetscMalloc1(arr_size, &arr));
 
-        arr[0] = 23;
-        arr[1] = -4;
-        arr[2] = 1.99;
-        arr[3] = 344;
-        arr[4] = 99;
-        arr[5] = 110;
+    //     arr[0] = 23;
+    //     arr[1] = -4;
+    //     arr[2] = 1.99;
+    //     arr[3] = 344;
+    //     arr[4] = 99;
+    //     arr[5] = 110;
 
-        char *pack_buffer = NULL;
-        PetscMPIInt position = 0;
+    //     char *pack_buffer = NULL;
+    //     PetscMPIInt position = 0;
 
-        PetscCall(foo(&a, &b, arr_size, arr, &pack_buffer, &position));
-        if (pack_buffer == NULL)
-        {
-            PetscCall(PetscPrintf(MPI_COMM_SELF, "still NULL \n"));
-        }
-        else
-        {
-            PetscCall(PetscPrintf(MPI_COMM_SELF, "not NULL \n"));
-        }
+    //     PetscCall(foo(&a, &b, arr_size, arr, &pack_buffer, &position));
+    //     if (pack_buffer == NULL)
+    //     {
+    //         PetscCall(PetscPrintf(MPI_COMM_SELF, "still NULL \n"));
+    //     }
+    //     else
+    //     {
+    //         PetscCall(PetscPrintf(MPI_COMM_SELF, "not NULL \n"));
+    //     }
 
-        PetscCallMPI(MPI_Isend(pack_buffer, position, MPI_PACKED, 1, 0, MPI_COMM_WORLD, &request));
-        PetscCallMPI(MPI_Wait(&request, MPI_STATUS_IGNORE));
-    }
+    //     PetscCallMPI(MPI_Isend(pack_buffer, position, MPI_PACKED, 1, 0, MPI_COMM_WORLD, &request));
+    //     PetscCallMPI(MPI_Wait(&request, MPI_STATUS_IGNORE));
+    // }
 
-    if (proc_global_rank == 1)
-    {
-        PetscInt a = -1;
-        PetscInt b = -1;
-        PetscScalar *arr = NULL;
-        PetscCall(PetscMalloc1(arr_size, &arr));
+    // if (proc_global_rank == 1)
+    // {
+    //     PetscInt a = -1;
+    //     PetscInt b = -1;
+    //     PetscScalar *arr = NULL;
+    //     PetscCall(PetscMalloc1(arr_size, &arr));
 
-        char *pack_buffer = NULL;
-        PetscCall(PetscMalloc1(56, &pack_buffer));
+    //     char *pack_buffer = NULL;
+    //     PetscCall(PetscMalloc1(56, &pack_buffer));
 
-        PetscCall(PetscPrintf(PETSC_COMM_SELF, "AVANT: a = %d && b = %d\n", a, b));
-        PetscCallMPI(MPI_Recv(pack_buffer, 56, MPI_PACKED, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE));
-        PetscCall(unpack_computed_data_dependency(&a, &b, arr_size, arr, &pack_buffer, 56));
-        PetscCall(PetscPrintf(PETSC_COMM_SELF, "APRES: a = %d && b = %d\n", a, b));
-        for (PetscInt idx = 0; idx < arr_size; idx++)
-        {
-            PetscCall(PetscPrintf(PETSC_COMM_SELF, "Valeur %d = %e \n", idx, arr[idx]));
-        }
-    }
+    //     PetscCall(PetscPrintf(PETSC_COMM_SELF, "AVANT: a = %d && b = %d\n", a, b));
+    //     PetscCallMPI(MPI_Recv(pack_buffer, 56, MPI_PACKED, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE));
+    //     PetscCall(unpack_computed_data_dependency(&a, &b, arr_size, arr, &pack_buffer, 56));
+    //     PetscCall(PetscPrintf(PETSC_COMM_SELF, "APRES: a = %d && b = %d\n", a, b));
+    //     for (PetscInt idx = 0; idx < arr_size; idx++)
+    //     {
+    //         PetscCall(PetscPrintf(PETSC_COMM_SELF, "Valeur %d = %e \n", idx, arr[idx]));
+    //     }
+    // }
 
     PetscCall(PetscFinalize());
     return 0;
