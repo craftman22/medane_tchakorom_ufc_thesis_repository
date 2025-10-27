@@ -8,8 +8,6 @@
 
 */
 
-// TODO: il n'ya pas moyen de passer de wait4verification à l'etat NORMAL ???? : peut etre le verdict
-
 PetscErrorCode comm_async_convDetection_prime(PARAMS)
 {
     PetscFunctionBeginUser;
@@ -72,12 +70,9 @@ PetscErrorCode comm_async_convDetection_prime(PARAMS)
                     /*if all the cells of NewerDep[] are true then*/
                     PetscBool all_cells_true = PETSC_FALSE;
                     PetscCall(VecEqual(NewerDependencies_local, UNITARY_VECTOR, &all_cells_true));
-                    // PetscCall(VecView(NewerDependencies_local, PETSC_VIEWER_STDOUT_SELF));
                     /* if new data from all dependency arrived*/
                     if (all_cells_true == PETSC_TRUE)
                     {
-                        // PetscCall(PetscPrintf(MPI_COMM_SELF,"they are equal\n"));
-                        // PetscCall(PetscPrintf(MPI_COMM_SELF, "pseudo period end!\n"));
                         (*PseudoPeriodEnd) = PETSC_TRUE;
                     }
                 }
@@ -95,15 +90,13 @@ PetscErrorCode comm_async_convDetection_prime(PARAMS)
     {
         if ((*ElectedNode) == PETSC_TRUE)
         {
-            // XXX: passe ici
-            // PetscCall(PetscSleep(100));
+
             // or at least one cell of Resps[] is negative
             PetscBool found_negative_response = PETSC_FALSE;
             PetscCall(find_value_in_responses_array(ACTUAL_PARAMS, RESPONSE_NEGATIVE, &found_negative_response, NULL));
             if (UnderThreashold == PETSC_FALSE || (*LocalCV) == PETSC_FALSE || found_negative_response == PETSC_TRUE)
             {
 
-                // XXX: ne passe pas ici
                 (*PhaseTag) = (*PhaseTag) + 1;
                 // Broadcast a negative verdict message to all its neighbors
                 send_verdict_buffer[0] = (*PhaseTag);
@@ -116,12 +109,9 @@ PetscErrorCode comm_async_convDetection_prime(PARAMS)
             }
             else
             {
-                // XXX: passe par ici
 
                 if ((*PseudoPeriodEnd) == PETSC_TRUE)
                 {
-
-                    // XXX: passe par ici
                     /*there are no more 0 in Resps[]*/
                     PetscBool found_neutral_response = PETSC_TRUE;
                     PetscCall(find_value_in_responses_array(ACTUAL_PARAMS, RESPONSE_NEUTRAL, &found_neutral_response, NULL));
@@ -173,15 +163,10 @@ PetscErrorCode comm_async_convDetection_prime(PARAMS)
         }
         else
         {
-            // XXX: ne passe pas par ici
-            // PetscInt proc;
-            // PetscCallMPI(MPI_Comm_rank(PETSC_COMM_WORLD, &proc));
-
-            // PetscCall(PetscPrintf(MPI_COMM_SELF, "this is rank %d \n", proc));
-            // PetscCall(PetscSleep(100));
 
             if ((*ResponseSent) == PETSC_FALSE)
             {
+
                 PetscBool found_negative_response = PETSC_FALSE;
                 PetscCall(find_value_in_responses_array(ACTUAL_PARAMS, RESPONSE_NEGATIVE, &found_negative_response, NULL));
                 /* or at least one cell of Resps[] is negative*/
@@ -200,6 +185,8 @@ PetscErrorCode comm_async_convDetection_prime(PARAMS)
                             break;
                         }
                     }
+
+                    PetscCall(PetscPrintf(MPI_COMM_SELF, "\n\n\n\n\nJE NE SUIS PLUS D'ACCORD\n\n\n\n\n"));
                     (*ResponseSent) = PETSC_TRUE;
                 }
                 else
@@ -358,7 +345,7 @@ PetscErrorCode receive_partial_CV(PARAMS, PetscInt proc_global_rank)
 
         if (SrcIndexNeighbor >= 0 && SrcTag == (*PhaseTag))
         {
-            ReceivedPartialCV[SrcIndexNeighbor] = PETSC_TRUE;
+            ReceivedPartialCV[SrcIndexNeighbor] = PETSC_TRUE; // TODO: ici cela donne l'impression que les  2 noeuds implique auront reçus des partials CV venant l'un de l'autre
             (*NbNotRecvd) = (*NbNotRecvd) - 1;
             PetscInt leader = SrcNode;
             PetscCall(choose_leader(proc_global_rank, SrcNode, &leader));
@@ -619,7 +606,7 @@ PetscErrorCode receive_data_dependency(Vec NewerDependencies_global, const Petsc
 
     // Extract SrcNode, SrcIter and SrcTag from the message
     // PetscInt SrcNode = SrcNode_param;
-     (*copy_data_dependency) = PETSC_FALSE;
+    (*copy_data_dependency) = PETSC_FALSE;
     PetscInt SrcTag = SrcPhaseTag;
     PetscInt SrcIteration = SrcCurrentIteration;
     // corresponding index of SrcNode in the list of dependencies of the current node (−1 if not in the list)
