@@ -613,12 +613,13 @@ PetscErrorCode unpack_computed_data_dependency(PetscInt *SrcPhaseTag, PetscInt *
 // }
 
 // called by all rank in the sub_communicator
-PetscErrorCode receive_data_dependency(Vec NewerDependencies_global, const PetscInt proc_local_rank, Vec LastIteration_global, const State state, const PetscInt PhaseTag, const PetscInt SrcPhaseTag, const PetscInt SrcCurrentIteration)
+PetscErrorCode receive_data_dependency(Vec NewerDependencies_global, const PetscInt proc_local_rank, Vec LastIteration_global, const State state, const PetscInt PhaseTag, const PetscInt SrcPhaseTag, const PetscInt SrcCurrentIteration, PetscBool *copy_data_dependency)
 {
     PetscFunctionBeginUser;
 
     // Extract SrcNode, SrcIter and SrcTag from the message
     // PetscInt SrcNode = SrcNode_param;
+     (*copy_data_dependency) = PETSC_FALSE;
     PetscInt SrcTag = SrcPhaseTag;
     PetscInt SrcIteration = SrcCurrentIteration;
     // corresponding index of SrcNode in the list of dependencies of the current node (−1 if not in the list)
@@ -630,13 +631,14 @@ PetscErrorCode receive_data_dependency(Vec NewerDependencies_global, const Petsc
         PetscInt idx = proc_local_rank;
         PetscCall(VecGetValues(LastIteration_global, 1, &idx, &LastIterationRegistered));
 
-        if (LastIterationRegistered < SrcIteration && ((state) != VERIFICATION || SrcTag == (PhaseTag)))
+        if ((LastIterationRegistered < SrcIteration) && ((state) != VERIFICATION || SrcTag == (PhaseTag)))
         {
             // Put the data in the message at their corresponding place according to SrcIndDep in the local data array used for the computations
             // LastIteration[SrcIndexDependency] = SrcIteration;
             // NewerDependencies[SrcIndexDependency] = PETSC_TRUE;
             PetscCall(VecSetValueLocal(LastIteration_global, proc_local_rank, SrcIteration, INSERT_VALUES));
             PetscCall(VecSetValueLocal(NewerDependencies_global, proc_local_rank, PETSC_TRUE, INSERT_VALUES));
+            (*copy_data_dependency) = PETSC_TRUE;
         }
     }
 

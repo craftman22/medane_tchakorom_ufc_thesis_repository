@@ -470,21 +470,33 @@ PetscErrorCode comm_async_probe_and_receive_prime(Vec *x_block_jacobi,
             PetscCallMPI(MPI_Iprobe(message_source, TAG_MULTISPLITTING_DATA, MPI_COMM_WORLD, &rcv_data_flag, MPI_STATUS_IGNORE));
         } while (rcv_data_flag);
 
-        PetscCall(VecGetArrayWrite(x_block_jacobi[idx_non_current_block], &rcv_buffer));
-        PetscCall(unpack_computed_data_dependency(&SrcPhaseTag, &SrcCurrentIteration, vec_local_size, rcv_buffer, pack_buffer, pack_buffer_size));
-        PetscCall(VecRestoreArrayWrite(x_block_jacobi[idx_non_current_block], &rcv_buffer));
+        // PetscCall(VecGetArrayWrite(x_block_jacobi[idx_non_current_block], &rcv_buffer));
+        // PetscCall(unpack_computed_data_dependency(&SrcPhaseTag, &SrcCurrentIteration, vec_local_size, rcv_buffer, pack_buffer, pack_buffer_size));
+        // PetscCall(VecRestoreArrayWrite(x_block_jacobi[idx_non_current_block], &rcv_buffer));
 
         if (message_received != NULL)
         {
             (*message_received) = 1;
         }
-        
+
         RcvMessage = PETSC_TRUE;
     }
 
     if (RcvMessage == PETSC_TRUE)
     {
-        PetscCall(receive_data_dependency(NewerDependencies_global, proc_local_rank, LastIteration_global, state, PhaseTag, SrcPhaseTag, SrcCurrentIteration));
+        PetscScalar *tmp_buffer = NULL;
+        PetscCall(PetscMalloc1(vec_local_size, &tmp_buffer));
+        PetscCall(unpack_computed_data_dependency(&SrcPhaseTag, &SrcCurrentIteration, vec_local_size, tmp_buffer, pack_buffer, pack_buffer_size));
+        PetscBool copy_data_dependency = PETSC_FALSE;
+        PetscCall(receive_data_dependency(NewerDependencies_global, proc_local_rank, LastIteration_global, state, PhaseTag, SrcPhaseTag, SrcCurrentIteration, &copy_data_dependency));
+
+        if (copy_data_dependency == PETSC_TRUE)
+        {
+            PetscCall(VecGetArrayWrite(x_block_jacobi[idx_non_current_block], &rcv_buffer));
+            PetscCall(PetscArraycpy(rcv_buffer, tmp_buffer, vec_local_size));
+            PetscCall(VecRestoreArrayWrite(x_block_jacobi[idx_non_current_block], &rcv_buffer));
+        }
+        PetscCall(PetscFree(tmp_buffer));
     }
 
     PetscCall(VecAssemblyBegin(LastIteration_global));

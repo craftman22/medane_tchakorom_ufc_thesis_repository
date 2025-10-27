@@ -343,7 +343,7 @@ int main(int argc, char **argv)
         PetscCall(MatResidual(A_block_jacobi_subMat[rank_jacobi_block], local_right_side_vector, x_block_jacobi[rank_jacobi_block], local_residual));
         PetscCall(VecNorm(local_residual, NORM_2, &local_norm));
 
-        PetscCall(PetscPrintf(comm_jacobi_block, "[Rank %d] Local norm_2 block  = %e \n", rank_jacobi_block, local_norm));
+        PetscCall(PetscPrintf(comm_jacobi_block, "[Rank %d iteration %d] Local norm_2 block  = %e \n", rank_jacobi_block, number_of_iterations, local_norm));
 
         if (proc_local_rank == 0) // ONLY root node from each block check for convergence
         {
@@ -356,11 +356,9 @@ int main(int argc, char **argv)
             else
             {
                 UnderThreashold = PETSC_FALSE;
-                // UnderThreashold = PETSC_TRUE;
             }
 
-            // PseudoPeriodBegin = PETSC_TRUE;
-            // PseudoPeriodEnd = PETSC_TRUE;
+
 
             // Main convergence detection mechanism
             PetscCall(comm_async_convDetection_prime(ACTUAL_PARAMS_POINTERS));
@@ -408,7 +406,7 @@ int main(int argc, char **argv)
     PetscScalar *rcv_tmp_buffer = NULL;
     Vec x1, x2;
     PetscInt vec_size;
-    PetscCall(VecGetSize(x, &vec_size));
+    PetscCall(VecGetLocalSize(x, &vec_size));
     PetscCall(VecDuplicate(x, &x1));
     PetscCall(VecDuplicate(x, &x2));
     PetscCall(VecCopy(x, x1));

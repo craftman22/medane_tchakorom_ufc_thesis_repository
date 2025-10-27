@@ -69,7 +69,7 @@ PetscErrorCode reinitialize_pseudo_period(PARAMS);
 PetscErrorCode initialize_verification(PARAMS);
 
 // PetscErrorCode receive_data_dependency(PARAMS);
-PetscErrorCode receive_data_dependency(Vec NewerDependencies_global, const PetscInt proc_local_rank, Vec LastIteration_global, const State state, const PetscInt PhaseTag, const PetscInt SrcPhaseTag, const PetscInt SrcCurrentIteration);
+PetscErrorCode receive_data_dependency(Vec NewerDependencies_global, const PetscInt proc_local_rank, Vec LastIteration_global, const State state, const PetscInt PhaseTag, const PetscInt SrcPhaseTag, const PetscInt SrcCurrentIteration, PetscBool *copy_data_dependency);
 
 PetscErrorCode receive_verification(PARAMS);
 
