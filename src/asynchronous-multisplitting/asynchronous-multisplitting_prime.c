@@ -358,8 +358,6 @@ int main(int argc, char **argv)
                 UnderThreashold = PETSC_FALSE;
             }
 
-
-
             // Main convergence detection mechanism
             PetscCall(comm_async_convDetection_prime(ACTUAL_PARAMS_POINTERS));
 
@@ -428,6 +426,22 @@ int main(int argc, char **argv)
     PetscCall(PetscPrintf(comm_jacobi_block, "[Block Rank %d] Local norm_2 with x2  = %e \n", rank_jacobi_block, local_norm));
 
     PetscCall(PetscPrintf(comm_jacobi_block, "\n\n\n\n\n\n"));
+
+    if (rank_jacobi_block == 1)
+    {
+        PetscCall(PetscSleep(10));
+    }
+    PetscCall(VecView(LastIteration_global, PETSC_VIEWER_STDOUT_(comm_jacobi_block)));
+
+    PetscCall(PetscBarrier(NULL));
+    PetscCall(comm_sync_send_and_receive_final_inverse(x_block_jacobi, vec_local_size, message_dest, message_source, rank_jacobi_block, idx_non_current_block));
+    PetscCall(VecScatterBegin(scatter_jacobi_vec_part_to_merged_vec[rank_jacobi_block], x_block_jacobi[rank_jacobi_block], x, INSERT_VALUES, SCATTER_FORWARD));
+    PetscCall(VecScatterEnd(scatter_jacobi_vec_part_to_merged_vec[rank_jacobi_block], x_block_jacobi[rank_jacobi_block], x, INSERT_VALUES, SCATTER_FORWARD));
+    PetscCall(VecScatterBegin(scatter_jacobi_vec_part_to_merged_vec[idx_non_current_block], x_block_jacobi[idx_non_current_block], x, INSERT_VALUES, SCATTER_FORWARD));
+    PetscCall(VecScatterEnd(scatter_jacobi_vec_part_to_merged_vec[idx_non_current_block], x_block_jacobi[idx_non_current_block], x, INSERT_VALUES, SCATTER_FORWARD));
+    PetscCall(MatResidual(A_block_jacobi, b_block_jacobi[rank_jacobi_block], x, local_residual));
+    PetscCall(VecNorm(local_residual, NORM_2, &local_norm));
+    PetscCall(PetscPrintf(comm_jacobi_block, "[Block Rank %d] Local norm_2 with x  = %e \n", rank_jacobi_block, local_norm));
 
     // if (ElectedBlock == PETSC_TRUE)
     // {

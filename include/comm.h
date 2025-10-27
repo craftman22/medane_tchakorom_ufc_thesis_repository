@@ -48,4 +48,7 @@ PetscErrorCode comm_async_test_and_send_prime(PetscInt PhaseTag_param, PetscInt 
                                               PetscScalar *send_buffer, MPI_Request *send_data_request, PetscMPIInt vec_local_size, PetscMPIInt message_dest,
                                               PetscMPIInt rank_jacobi_block, char **pack_buffer);
 
+PetscErrorCode comm_sync_send_and_receive_final_inverse(Vec *x_block_jacobi, PetscMPIInt vec_local_size, PetscMPIInt message_dest, PetscMPIInt message_source, PetscMPIInt rank_jacobi_block, PetscMPIInt idx_non_current_block);
+
+
 #endif // SHARED_COMM_FUNCTIONS_H

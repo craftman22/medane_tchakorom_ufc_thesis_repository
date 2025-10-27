@@ -212,6 +212,25 @@ PetscErrorCode comm_sync_send_and_receive_final(Vec *x_block_jacobi, PetscMPIInt
     PetscFunctionReturn(PETSC_SUCCESS);
 }
 
+PetscErrorCode comm_sync_send_and_receive_final_inverse(Vec *x_block_jacobi, PetscMPIInt vec_local_size, PetscMPIInt message_dest, PetscMPIInt message_source, PetscMPIInt rank_jacobi_block, PetscMPIInt idx_non_current_block)
+{
+    PetscFunctionBeginUser;
+    PetscScalar *send_multisplitting_data_buffer = NULL;
+    PetscScalar *rcv_multisplitting_data_buffer = NULL;
+
+    PetscCall(VecGetArray(x_block_jacobi[idx_non_current_block], &send_multisplitting_data_buffer));
+    PetscCall(VecGetArray(x_block_jacobi[rank_jacobi_block], &rcv_multisplitting_data_buffer));
+
+    PetscCallMPI(MPI_Sendrecv(send_multisplitting_data_buffer, vec_local_size, MPIU_SCALAR, message_dest, (TAG_FINAL_DATA_EXCHANGE + idx_non_current_block),
+                              rcv_multisplitting_data_buffer, vec_local_size, MPIU_SCALAR, message_source, (TAG_FINAL_DATA_EXCHANGE + rank_jacobi_block),
+                              MPI_COMM_WORLD, MPI_STATUS_IGNORE));
+
+    PetscCall(VecRestoreArray(x_block_jacobi[idx_non_current_block], &send_multisplitting_data_buffer));
+    PetscCall(VecRestoreArray(x_block_jacobi[rank_jacobi_block], &rcv_multisplitting_data_buffer));
+
+    PetscFunctionReturn(PETSC_SUCCESS);
+}
+
 PetscErrorCode comm_sync_convergence_detection(PetscMPIInt *broadcast_message, PetscMPIInt send_signal, PetscMPIInt rcv_signal, PetscMPIInt message_dest, PetscMPIInt message_source, PetscMPIInt rank_jacobi_block, PetscMPIInt idx_non_current_block, PetscMPIInt proc_local_rank)
 {
     PetscFunctionBeginUser;
