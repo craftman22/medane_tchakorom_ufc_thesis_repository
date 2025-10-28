@@ -331,19 +331,18 @@ int main(int argc, char **argv)
                                                      &rcv_pack_buffer, NewerDependencies_global, LastIteration_global,
                                                      state, PhaseTag, &scatter_ctx, NewerDependencies_local, proc_local_rank));
 
+        PetscCall(updateLocalRHS(A_block_jacobi_subMat[idx_non_current_block], x_block_jacobi[idx_non_current_block], b_block_jacobi[rank_jacobi_block], local_right_side_vector));
         PetscCall(inner_solver(comm_jacobi_block, inner_ksp, A_block_jacobi_subMat, x_block_jacobi, b_block_jacobi, local_right_side_vector, rank_jacobi_block, &inner_solver_iterations, number_of_iterations));
 
         PetscCall(comm_async_test_and_send_prime(PhaseTag, number_of_iterations, x_block_jacobi, send_buffer,
                                                  &send_data_request, vec_local_size, message_dest,
                                                  rank_jacobi_block, &send_pack_buffer));
 
-        PetscCall(comm_async_probe_and_receive_prime(x_block_jacobi,
-                                                     rcv_buffer, vec_local_size, message_source, idx_non_current_block,
-                                                     &dependency_received, &neighbor_current_iteration,
-                                                     &rcv_pack_buffer, NewerDependencies_global, LastIteration_global,
-                                                     state, PhaseTag, &scatter_ctx, NewerDependencies_local, proc_local_rank));
-
-        PetscCall(updateLocalRHS(A_block_jacobi_subMat[idx_non_current_block], x_block_jacobi[idx_non_current_block], b_block_jacobi[rank_jacobi_block], local_right_side_vector));
+        // PetscCall(comm_async_probe_and_receive_prime(x_block_jacobi,
+        //                                              rcv_buffer, vec_local_size, message_source, idx_non_current_block,
+        //                                              &dependency_received, &neighbor_current_iteration,
+        //                                              &rcv_pack_buffer, NewerDependencies_global, LastIteration_global,
+        //                                              state, PhaseTag, &scatter_ctx, NewerDependencies_local, proc_local_rank));
 
         PetscCall(MatResidual(A_block_jacobi_subMat[rank_jacobi_block], local_right_side_vector, x_block_jacobi[rank_jacobi_block], local_residual));
         PetscCall(VecNorm(local_residual, NORM_2, &local_norm));
