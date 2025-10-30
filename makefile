@@ -113,7 +113,8 @@ print:
 #SRC_DIRS :=   src/asynchronous-multisplitting src/asynchronous-multisplitting-asynchronous-minimization-global src/asynchronous-multisplitting-asynchronous-minimization-local src/asynchronous-multisplitting-asynchronous-minimization-semi-local src/gmres_solution
 
 #experimenting
-SRC_DIRS :=    src/asynchronous-multisplitting src/synchronous-multisplitting
+SRC_DIRS :=     src/asynchronous-multisplitting-asynchronous-minimization-global src/synchronous-multisplitting-synchronous-minimization-global
+# SRC_DIRS :=    src/asynchronous-multisplitting src/synchronous-multisplitting  src/synchronous-multisplitting-synchronous-minimization-global src/asynchronous-multisplitting-asynchronous-minimization-global
 # SRC_DIRS :=  src/asynchronous-multisplitting src/experimenting
 # SRC_DIRS :=  src/synchronous-multisplitting src/asynchronous-multisplitting    src/synchronous-multisplitting-synchronous-minimization-global  src/asynchronous-multisplitting-asynchronous-minimization-global  src/gmres_solution 
 # SRC_DIRS :=  src/synchronous-multisplitting-synchronous-minimization-global src/synchronous-multisplitting src/gmres_solution src/synchronous-multisplitting-synchronous-minimization-local src/synchronous-multisplitting-synchronous-minimization-semi-local
@@ -143,13 +144,19 @@ all: $(BINARIES)
 build: all
 
 # Rule to compile each binary
+
 $(BIN_DIR)/%: src/%.c | $(BIN_DIR)
-	@if echo "$(@)" | grep -q "asynchronous"; then \
-		$(LINK.c) -DVERSION_1_0 src/utils/utils.c src/utils/comm.c src/utils/conv_detection.c src/utils/conv_detection_prime.c  $^ $(LOADLIBES) $(LDLIBS) -I./include   -o $(BIN_DIR)/$(notdir $@)"-v1.0"; \
-		$(LINK.c) -DVERSION_1_1 src/utils/utils.c src/utils/comm.c src/utils/conv_detection.c src/utils/conv_detection_prime.c $^ $(LOADLIBES) $(LDLIBS) -I./include   -o $(BIN_DIR)/$(notdir $@)"-v1.1"; \
-	else \
-		$(LINK.c) -DVERSION_1_0 src/utils/utils.c src/utils/comm.c src/utils/conv_detection.c src/utils/conv_detection_prime.c $^ $(LOADLIBES) $(LDLIBS) -I./include   -o $(BIN_DIR)/$(notdir $@)"-v1.0"; \
-	fi
+	@$(LINK.c)  src/utils/utils.c src/utils/comm.c src/utils/conv_detection.c src/utils/conv_detection_prime.c  $^ $(LOADLIBES) $(LDLIBS) -I./include   -o $(BIN_DIR)/$(notdir $@); 
+
+
+
+# $(BIN_DIR)/%: src/%.c | $(BIN_DIR)
+# 	@if echo "$(@)" | grep -q "asynchronous"; then \
+# 		$(LINK.c) -DVERSION_1_0 src/utils/utils.c src/utils/comm.c src/utils/conv_detection.c src/utils/conv_detection_prime.c  $^ $(LOADLIBES) $(LDLIBS) -I./include   -o $(BIN_DIR)/$(notdir $@)"-v1.0"; \
+# 		$(LINK.c) -DVERSION_1_1 src/utils/utils.c src/utils/comm.c src/utils/conv_detection.c src/utils/conv_detection_prime.c $^ $(LOADLIBES) $(LDLIBS) -I./include   -o $(BIN_DIR)/$(notdir $@)"-v1.1"; \
+# 	else \
+# 		$(LINK.c) -DVERSION_1_0 src/utils/utils.c src/utils/comm.c src/utils/conv_detection.c src/utils/conv_detection_prime.c $^ $(LOADLIBES) $(LDLIBS) -I./include   -o $(BIN_DIR)/$(notdir $@)"-v1.0"; \
+# 	fi
 
 
 

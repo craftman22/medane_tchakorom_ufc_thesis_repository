@@ -295,19 +295,12 @@ PetscErrorCode comm_async_probe_and_receive_min(Mat R, PetscScalar *rcv_minimiza
 
         do
         {
-            // printf("=============Block rank %d START minimization RCV communication\n", rank_jacobi_block);
             PetscCallMPI(MPI_Recv(rcv_minimization_data_buffer, R_local_values_count, MPIU_SCALAR, message_source, (TAG_MINIMIZATION_DATA + idx_non_current_block), MPI_COMM_WORLD, MPI_STATUS_IGNORE));
-            // printf("=============Block rank %d END minimization RCV communication\n", rank_jacobi_block);
-            // loop_counter++;
-            // if (loop_counter >= 2) // TODO: remember this, possibly make it an argument of the program
-            // {
-            //     break;
-            // }
-
             PetscCallMPI(MPI_Iprobe(message_source, (TAG_MINIMIZATION_DATA + idx_non_current_block), MPI_COMM_WORLD, &rcv_minimization_data_flag, MPI_STATUS_IGNORE));
         } while (rcv_minimization_data_flag);
 
         PetscCall(MatDenseGetArray(R, &temp_minimization_data_buffer));
+
         if (rstart < (n_mesh_points / 2) && (n_mesh_points / 2) < rend)
         {
             for (PetscInt j = 0; j < s; j++)
@@ -326,10 +319,9 @@ PetscErrorCode comm_async_probe_and_receive_min(Mat R, PetscScalar *rcv_minimiza
         {
             PetscCall(PetscArraycpy(temp_minimization_data_buffer, rcv_minimization_data_buffer, R_local_values_count));
         }
+
         PetscCall(MatDenseRestoreArray(R, &temp_minimization_data_buffer));
     }
-
-    // printf("=============Block rank %d END RCV minimization communication function\n", rank_jacobi_block);
 
     PetscFunctionReturn(PETSC_SUCCESS);
 }
@@ -338,7 +330,7 @@ PetscErrorCode comm_async_test_and_send_min(Mat R, PetscScalar *send_minimizatio
 {
     PetscFunctionBeginUser;
     PetscMPIInt send_minimization_data_flag = 0;
-    // FIXME: ici, la variable send_minimization_data_request devrait etre crée dans le programme global, et envoyé ici
+
     if ((*send_minimization_data_request) != MPI_REQUEST_NULL)
         PetscCallMPI(MPI_Test(send_minimization_data_request, &send_minimization_data_flag, MPI_STATUS_IGNORE));
     else
@@ -346,6 +338,7 @@ PetscErrorCode comm_async_test_and_send_min(Mat R, PetscScalar *send_minimizatio
 
     if (send_minimization_data_flag)
     {
+
         PetscCall(MatDenseGetArray(R, &temp_minimization_data_buffer));
         PetscCall(PetscArraycpy(send_minimization_data_buffer, temp_minimization_data_buffer, R_local_values_count));
 
@@ -554,3 +547,72 @@ PetscErrorCode comm_async_test_and_send_prime(PetscInt PhaseTag_param, PetscInt 
 
     PetscFunctionReturn(PETSC_SUCCESS);
 }
+
+// PetscErrorCode comm_async_probe_and_receive_min_prime(Mat R, PetscScalar *rcv_minimization_data_buffer,
+//                                                       PetscScalar *temp_minimization_data_buffer, PetscMPIInt R_local_values_count, PetscMPIInt rcv_minimization_data_flag,
+//                                                       PetscMPIInt message_source, PetscMPIInt rank_jacobi_block, PetscMPIInt idx_non_current_block, PetscInt n_mesh_points,
+//                                                       PetscInt rstart, PetscInt rend, PetscInt lda, PetscInt s)
+// {
+//     PetscFunctionBeginUser;
+
+//     PetscCallMPI(MPI_Iprobe(message_source, (TAG_MINIMIZATION_DATA + idx_non_current_block), MPI_COMM_WORLD, &rcv_minimization_data_flag, MPI_STATUS_IGNORE));
+//     if (rcv_minimization_data_flag)
+//     {
+
+//         do
+//         {
+//             PetscCallMPI(MPI_Recv(rcv_minimization_data_buffer, R_local_values_count, MPIU_SCALAR, message_source, (TAG_MINIMIZATION_DATA + idx_non_current_block), MPI_COMM_WORLD, MPI_STATUS_IGNORE));
+//             PetscCallMPI(MPI_Iprobe(message_source, (TAG_MINIMIZATION_DATA + idx_non_current_block), MPI_COMM_WORLD, &rcv_minimization_data_flag, MPI_STATUS_IGNORE));
+//         } while (rcv_minimization_data_flag);
+
+//         PetscCall(MatDenseGetArray(R, &temp_minimization_data_buffer));
+
+//         if (rstart < (n_mesh_points / 2) && (n_mesh_points / 2) < rend)
+//         {
+//             for (PetscInt j = 0; j < s; j++)
+//             {
+//                 PetscInt idx = (idx_non_current_block * (lda / 2)) + (j * lda);
+//                 PetscCall(PetscArraycpy(&temp_minimization_data_buffer[idx], &rcv_minimization_data_buffer[idx], lda / 2));
+//             }
+//         }
+
+//         if (rstart >= (n_mesh_points / 2) && rank_jacobi_block == BLOCK_RANK_ZERO)
+//         {
+//             PetscCall(PetscArraycpy(temp_minimization_data_buffer, rcv_minimization_data_buffer, R_local_values_count));
+//         }
+
+//         if (rend <= (n_mesh_points / 2) && rank_jacobi_block == BLOCK_RANK_ONE)
+//         {
+//             PetscCall(PetscArraycpy(temp_minimization_data_buffer, rcv_minimization_data_buffer, R_local_values_count));
+//         }
+
+//         PetscCall(MatDenseRestoreArray(R, &temp_minimization_data_buffer));
+//     }
+
+//     PetscFunctionReturn(PETSC_SUCCESS);
+// }
+
+// PetscErrorCode comm_async_test_and_send_min_prime(Mat R, PetscScalar *send_minimization_data_buffer,
+//                                                   PetscScalar *temp_minimization_data_buffer, MPI_Request *send_minimization_data_request,
+//                                                   PetscMPIInt R_local_values_count, PetscMPIInt message_dest, PetscMPIInt rank_jacobi_block)
+// {
+//     PetscFunctionBeginUser;
+//     PetscMPIInt send_minimization_data_flag = 0;
+
+//     if ((*send_minimization_data_request) != MPI_REQUEST_NULL)
+//         PetscCallMPI(MPI_Test(send_minimization_data_request, &send_minimization_data_flag, MPI_STATUS_IGNORE));
+//     else
+//         send_minimization_data_flag = 1;
+
+//     if (send_minimization_data_flag)
+//     {
+
+//         PetscCall(MatDenseGetArray(R, &temp_minimization_data_buffer));
+//         PetscCall(PetscArraycpy(send_minimization_data_buffer, temp_minimization_data_buffer, R_local_values_count));
+
+//         PetscCall(MatDenseRestoreArray(R, &temp_minimization_data_buffer));
+//         PetscCallMPI(MPI_Isend(send_minimization_data_buffer, R_local_values_count, MPIU_SCALAR, message_dest, (TAG_MINIMIZATION_DATA + rank_jacobi_block), MPI_COMM_WORLD, send_minimization_data_request));
+//     }
+
+//     PetscFunctionReturn(PETSC_SUCCESS);
+// }
