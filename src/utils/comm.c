@@ -161,6 +161,7 @@ PetscErrorCode comm_sync_send_and_receive_alpha(Vec alpha, PetscMPIInt message_d
     // PetscCall(VecView(alpha, PETSC_VIEWER_STDOUT_SELF));
 
     PetscCall(VecAXPBY(alpha, 0.5, 0.5, alpha_other_block));
+    // PetscCall(VecAXPBY(alpha, 1, 1, alpha_other_block));
 
     // PetscCall(VecView(alpha, PETSC_VIEWER_STDOUT_(MPI_COMM_SELF)));
 

@@ -17,7 +17,6 @@ PetscErrorCode PetscArrayfill_custom_int(PetscInt *x, PetscInt val, PetscInt n)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-
 PetscErrorCode PetscArrayfill_custom_bool(PetscBool *x, PetscBool val, PetscInt n)
 {
   PetscFunctionBeginUser;
@@ -955,7 +954,7 @@ PetscErrorCode inner_solver(MPI_Comm comm_jacobi_block, KSP ksp, Mat *A_block_ja
 
   // PetscCall(KSPConvergedDefaultSetConvergedMaxits(ksp, PETSC_TRUE));
   PetscCall(KSPConvergedDefaultSetUIRNorm(ksp));
-  PetscCall(KSPSetInitialGuessNonzero(ksp, PETSC_TRUE));
+  PetscCall(KSPSetInitialGuessNonzero(ksp, PETSC_TRUE)); //
   PetscCall(KSPSolve(ksp, local_right_side_vector, x_block_jacobi[rank_jacobi_block]));
   PetscInt n_iterations = 0;
   PetscCall(KSPGetIterationNumber(ksp, &n_iterations));

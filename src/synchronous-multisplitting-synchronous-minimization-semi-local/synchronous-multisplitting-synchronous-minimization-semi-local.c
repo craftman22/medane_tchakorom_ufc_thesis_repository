@@ -179,7 +179,7 @@ int main(int argc, char **argv)
     ksp_prefix = "inner2_";
     pc_prefix = "inner2_";
   }
-  PetscCall(initializeKSP(comm_jacobi_block, &inner_ksp, A_block_jacobi_subMat[rank_jacobi_block], rank_jacobi_block, PETSC_FALSE,  ksp_prefix, pc_prefix));
+  PetscCall(initializeKSP(comm_jacobi_block, &inner_ksp, A_block_jacobi_subMat[rank_jacobi_block], rank_jacobi_block, PETSC_FALSE, ksp_prefix, pc_prefix));
 
   if (rank_jacobi_block == 0)
   {
@@ -310,17 +310,22 @@ int main(int argc, char **argv)
 
     PetscCall(MatMatMult(A_block_jacobi, S, MAT_REUSE_MATRIX, PETSC_DETERMINE, &R));
 
-    PetscCall(PetscLogEventBegin(USER_EVENT, 0, 0, 0, 0));
-    PetscCall(outer_solver_norm_equation_modify(comm_jacobi_block, outer_ksp, x_minimized, R, S, alpha, b_block_jacobi[rank_jacobi_block], rank_jacobi_block, number_of_iterations, message_dest, message_source));
-    PetscCall(PetscLogEventEnd(USER_EVENT, 0, 0, 0, 0));
+    PetscCall(outer_solver_norm_equation_modify(comm_jacobi_block, outer_ksp, x_minimized, R, S,
+                                                alpha, b_block_jacobi[rank_jacobi_block], rank_jacobi_block,
+                                                number_of_iterations, message_dest, message_source));
 
-    PetscCall(VecScatterBegin(scatter_jacobi_vec_part_to_merged_vec[idx_non_current_block], x_minimized, x_block_jacobi[idx_non_current_block], INSERT_VALUES, SCATTER_REVERSE));
-    PetscCall(VecScatterEnd(scatter_jacobi_vec_part_to_merged_vec[idx_non_current_block], x_minimized, x_block_jacobi[idx_non_current_block], INSERT_VALUES, SCATTER_REVERSE));
-    PetscCall(VecScatterBegin(scatter_jacobi_vec_part_to_merged_vec[rank_jacobi_block], x_block_jacobi[rank_jacobi_block], x_minimized, INSERT_VALUES, SCATTER_FORWARD));
-    PetscCall(VecScatterEnd(scatter_jacobi_vec_part_to_merged_vec[rank_jacobi_block], x_block_jacobi[rank_jacobi_block], x_minimized, INSERT_VALUES, SCATTER_FORWARD));
+    PetscCall(VecScatterBegin(scatter_jacobi_vec_part_to_merged_vec[idx_non_current_block], x_minimized, x_block_jacobi[idx_non_current_block],
+                              INSERT_VALUES, SCATTER_REVERSE));
 
+    PetscCall(VecScatterEnd(scatter_jacobi_vec_part_to_merged_vec[idx_non_current_block], x_minimized, x_block_jacobi[idx_non_current_block],
+                            INSERT_VALUES, SCATTER_REVERSE));
 
-    
+    PetscCall(VecScatterBegin(scatter_jacobi_vec_part_to_merged_vec[rank_jacobi_block], x_minimized, x_block_jacobi[rank_jacobi_block],
+                              INSERT_VALUES, SCATTER_REVERSE));
+
+    PetscCall(VecScatterEnd(scatter_jacobi_vec_part_to_merged_vec[rank_jacobi_block], x_minimized, x_block_jacobi[rank_jacobi_block],
+                            INSERT_VALUES, SCATTER_REVERSE));
+
     PetscCall(computeFinalResidualNorm(comm_jacobi_block, comm_local_roots, A_block_jacobi, x_minimized, b_block_jacobi, local_residual, rank_jacobi_block, proc_local_rank, &norm));
     PetscCall(printFinalResidualNorm(norm));
     if (norm <= PetscMax(absolute_tolerance, relative_tolerance * global_norm_0))
@@ -356,7 +361,7 @@ int main(int argc, char **argv)
 
   PetscScalar error;
   PetscCall(computeError(x, u, &error));
-  PetscCall(PetscPrintf(PETSC_COMM_WORLD, "Erreur : %e \n", error));
+  PetscCall(PetscPrintf(comm_jacobi_block, "[Block rank %d] Erreur : %e \n", rank_jacobi_block, error));
 
   for (PetscInt i = 0; i < njacobi_blocks; i++)
   {
