@@ -325,11 +325,11 @@ PetscErrorCode receive_partial_CV(PARAMS, PetscInt proc_global_rank)
     PetscCall(MPI_Iprobe(MPI_ANY_SOURCE, TAG_SEND_RCV_PARTIAL_CV, MPI_COMM_WORLD, &flag, MPI_STATUS_IGNORE));
     if (flag)
     {
-        // do
-        // {
-        PetscCallMPI(MPI_Recv(rcv_partialCV_buffer, 1, MPIU_INT, MPI_ANY_SOURCE, TAG_SEND_RCV_PARTIAL_CV, MPI_COMM_WORLD, &status));
-        //     PetscCall(MPI_Iprobe(MPI_ANY_SOURCE, TAG_SEND_RCV_PARTIAL_CV, MPI_COMM_WORLD, &flag, MPI_STATUS_IGNORE));
-        // } while (flag);
+        do
+        {
+            PetscCallMPI(MPI_Recv(rcv_partialCV_buffer, 1, MPIU_INT, MPI_ANY_SOURCE, TAG_SEND_RCV_PARTIAL_CV, MPI_COMM_WORLD, &status));
+            PetscCall(MPI_Iprobe(MPI_ANY_SOURCE, TAG_SEND_RCV_PARTIAL_CV, MPI_COMM_WORLD, &flag, MPI_STATUS_IGNORE));
+        } while (flag);
 
         SrcNode = status.MPI_SOURCE;
         SrcTag = rcv_partialCV_buffer[0];
@@ -380,12 +380,12 @@ PetscErrorCode receive_verification(PARAMS)
     PetscCall(MPI_Iprobe(MPI_ANY_SOURCE, TAG_SEND_RCV_VERIFICATION, MPI_COMM_WORLD, &flag, MPI_STATUS_IGNORE));
     if (flag)
     {
-        // do
-        // {
-        // TODO: changer le buffer si necessaire
-        PetscCallMPI(MPI_Recv(rcv_verification_buffer, 1, MPIU_INT, MPI_ANY_SOURCE, TAG_SEND_RCV_VERIFICATION, MPI_COMM_WORLD, &status));
-        //     PetscCall(MPI_Iprobe(MPI_ANY_SOURCE, TAG_SEND_RCV_VERIFICATION, MPI_COMM_WORLD, &flag, MPI_STATUS_IGNORE));
-        // } while (flag);
+        do
+        {
+            // TODO: changer le buffer si necessaire
+            PetscCallMPI(MPI_Recv(rcv_verification_buffer, 1, MPIU_INT, MPI_ANY_SOURCE, TAG_SEND_RCV_VERIFICATION, MPI_COMM_WORLD, &status));
+            PetscCall(MPI_Iprobe(MPI_ANY_SOURCE, TAG_SEND_RCV_VERIFICATION, MPI_COMM_WORLD, &flag, MPI_STATUS_IGNORE));
+        } while (flag);
 
         PetscInt SrcNode = status.MPI_SOURCE;
         SrcTag = rcv_verification_buffer[0];
@@ -426,12 +426,12 @@ PetscErrorCode receive_response(PARAMS)
 
     if (flag)
     {
-        // do
-        // {
-        PetscCallMPI(MPI_Recv(rcv_response_buffer, 2, MPIU_INT, MPI_ANY_SOURCE, TAG_SEND_RCV_RESPONSE, MPI_COMM_WORLD, &status));
-        // PetscCall(MPI_Iprobe(MPI_ANY_SOURCE, TAG_SEND_RCV_RESPONSE, MPI_COMM_WORLD, &flag, MPI_STATUS_IGNORE));
+        do
+        {
+            PetscCallMPI(MPI_Recv(rcv_response_buffer, 2, MPIU_INT, MPI_ANY_SOURCE, TAG_SEND_RCV_RESPONSE, MPI_COMM_WORLD, &status));
+            PetscCall(MPI_Iprobe(MPI_ANY_SOURCE, TAG_SEND_RCV_RESPONSE, MPI_COMM_WORLD, &flag, MPI_STATUS_IGNORE));
 
-        // } while (flag);
+        } while (flag);
 
         SrcNode = status.MPI_SOURCE;
         SrcTag = rcv_response_buffer[0];
@@ -461,13 +461,13 @@ PetscErrorCode receive_verdict(PARAMS)
     PetscCall(MPI_Iprobe(MPI_ANY_SOURCE, TAG_SEND_RCV_VERDICT, MPI_COMM_WORLD, &flag, MPI_STATUS_IGNORE));
     if (flag)
     {
-        // XXX: ne passe pas ici
+
         // PetscCall(PetscSleep(1000));
-        // do
-        // {
-        PetscCallMPI(MPI_Recv(rcv_verdict_buffer, 2, MPIU_INT, MPI_ANY_SOURCE, TAG_SEND_RCV_VERDICT, MPI_COMM_WORLD, &status));
-        //     PetscCall(MPI_Iprobe(MPI_ANY_SOURCE, TAG_SEND_RCV_VERDICT, MPI_COMM_WORLD, &flag, MPI_STATUS_IGNORE));
-        // } while (flag);
+        do
+        {
+            PetscCallMPI(MPI_Recv(rcv_verdict_buffer, 2, MPIU_INT, MPI_ANY_SOURCE, TAG_SEND_RCV_VERDICT, MPI_COMM_WORLD, &status));
+            PetscCall(MPI_Iprobe(MPI_ANY_SOURCE, TAG_SEND_RCV_VERDICT, MPI_COMM_WORLD, &flag, MPI_STATUS_IGNORE));
+        } while (flag);
 
         SrcNode = status.MPI_SOURCE;
         SrcTag = rcv_verdict_buffer[0];
