@@ -499,7 +499,7 @@ PetscErrorCode comm_async_probe_and_receive_prime(Vec *x_block_jacobi,
     {
         PetscInt rankooo = -1;
         PetscCallMPI(MPI_Comm_rank(PETSC_COMM_WORLD, &rankooo));
-        PetscCall(PetscPrintf(MPI_COMM_SELF, "Message reçu par rank %d , iteration \n", rankooo));
+        // PetscCall(PetscPrintf(MPI_COMM_SELF, "Message reçu par rank %d , iteration \n", rankooo));
 
         PetscScalar *tmp_buffer = NULL;
         PetscCall(PetscMalloc1(vec_local_size, &tmp_buffer));
