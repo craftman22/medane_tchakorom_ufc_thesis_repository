@@ -486,7 +486,26 @@ int main(int argc, char **argv)
 
     PetscCall(PetscBarrier(NULL));
 
-    // PetscCall(comm_sync_send_and_receive_final(x_block_jacobi, vec_local_size, message_dest, message_source, rank_jacobi_block, idx_non_current_block));
+    /////
+    PetscCall(MatResidual(A_block_jacobi, b_block_jacobi[rank_jacobi_block], x_minimized, local_residual));
+    PetscCall(VecNorm(local_residual, NORM_2, &local_norm));
+    PetscCall(PetscPrintf(comm_jacobi_block, "[Block Rank %d] Local norm_2 with x before exchange or average = %e \n", rank_jacobi_block, local_norm));
+
+    PetscCall(VecScatterBegin(scatter_jacobi_vec_part_to_merged_vec[idx_non_current_block], x_minimized, x_block_jacobi[idx_non_current_block], INSERT_VALUES, SCATTER_REVERSE));
+    PetscCall(VecScatterEnd(scatter_jacobi_vec_part_to_merged_vec[idx_non_current_block], x_minimized, x_block_jacobi[idx_non_current_block], INSERT_VALUES, SCATTER_REVERSE));
+    PetscCall(VecScatterBegin(scatter_jacobi_vec_part_to_merged_vec[rank_jacobi_block], x_minimized, x_block_jacobi[rank_jacobi_block], INSERT_VALUES, SCATTER_REVERSE));
+    PetscCall(VecScatterEnd(scatter_jacobi_vec_part_to_merged_vec[rank_jacobi_block], x_minimized, x_block_jacobi[rank_jacobi_block], INSERT_VALUES, SCATTER_REVERSE));
+    PetscCall(comm_sync_send_and_receive_final(x_block_jacobi, vec_local_size, message_dest, message_source, rank_jacobi_block, idx_non_current_block));
+    PetscCall(VecScatterBegin(scatter_jacobi_vec_part_to_merged_vec[rank_jacobi_block], x_block_jacobi[rank_jacobi_block], x, INSERT_VALUES, SCATTER_FORWARD));
+    PetscCall(VecScatterEnd(scatter_jacobi_vec_part_to_merged_vec[rank_jacobi_block], x_block_jacobi[rank_jacobi_block], x, INSERT_VALUES, SCATTER_FORWARD));
+    PetscCall(VecScatterBegin(scatter_jacobi_vec_part_to_merged_vec[idx_non_current_block], x_block_jacobi[idx_non_current_block], x, INSERT_VALUES, SCATTER_FORWARD));
+    PetscCall(VecScatterEnd(scatter_jacobi_vec_part_to_merged_vec[idx_non_current_block], x_block_jacobi[idx_non_current_block], x, INSERT_VALUES, SCATTER_FORWARD));
+
+    PetscCall(MatResidual(A_block_jacobi, b_block_jacobi[rank_jacobi_block], x, local_residual));
+    PetscCall(VecNorm(local_residual, NORM_2, &local_norm));
+    PetscCall(PetscPrintf(comm_jacobi_block, "[Block Rank %d] Local norm_2 with x after exchange = %e \n", rank_jacobi_block, local_norm));
+
+    ///////////
     Vec x_minimized_opposite_block;
     PetscCall(VecDuplicate(x_minimized, &x_minimized_opposite_block));
     PetscCall(VecCopy(x_minimized, x_minimized_opposite_block));
@@ -509,6 +528,10 @@ int main(int argc, char **argv)
 
     PetscCall(VecAXPY(x_minimized, 1.0, x_minimized_opposite_block));
     PetscCall(VecScale(x_minimized, 0.5));
+
+    PetscCall(MatResidual(A_block_jacobi, b_block_jacobi[rank_jacobi_block], x_minimized, local_residual));
+    PetscCall(VecNorm(local_residual, NORM_2, &local_norm));
+    PetscCall(PetscPrintf(comm_jacobi_block, "[Block Rank %d] Local norm_2 with x after average  = %e \n", rank_jacobi_block, local_norm));
 
     PetscScalar norm;
     PetscCall(computeFinalResidualNorm(comm_jacobi_block, comm_local_roots, A_block_jacobi, x_minimized, b_block_jacobi, local_residual, rank_jacobi_block, proc_local_rank, &norm));
