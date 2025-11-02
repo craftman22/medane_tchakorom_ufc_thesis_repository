@@ -41,6 +41,7 @@ int main(int argc, char **argv)
 
     IS is_jacobi_vec_parts;
     PetscInt number_of_iterations = ZERO;
+    PetscInt number_of_inner_times_outer_iterations = ZERO;
     PetscMPIInt idx_non_current_block;
     KSP inner_ksp = NULL;
     KSP outer_ksp = NULL;
@@ -389,7 +390,7 @@ int main(int argc, char **argv)
             PetscCall(inner_solver(comm_jacobi_block, inner_ksp, A_block_jacobi_subMat, x_block_jacobi, b_block_jacobi,
                                    local_right_side_vector, rank_jacobi_block, &inner_solver_iterations, number_of_iterations));
 
-            PetscCall(comm_async_test_and_send_prime(PhaseTag, number_of_iterations, x_block_jacobi, send_buffer,
+            PetscCall(comm_async_test_and_send_prime(PhaseTag, number_of_inner_times_outer_iterations, x_block_jacobi, send_buffer,
                                                      &send_data_request, vec_local_size, message_dest,
                                                      rank_jacobi_block, &send_pack_buffer));
 
@@ -411,6 +412,7 @@ int main(int argc, char **argv)
             PetscCall(MatSetValuesLocal(S, x_local_size, vec_local_idx, ONE, &n_vectors_inserted, vector_to_insert_into_S, INSERT_VALUES));
 
             n_vectors_inserted++;
+            number_of_inner_times_outer_iterations++;
         }
 
         PetscCall(MatAssemblyBegin(S, MAT_FINAL_ASSEMBLY));
@@ -446,7 +448,7 @@ int main(int argc, char **argv)
 
             if (local_norm <= PetscMax(absolute_tolerance, (relative_tolerance / PetscSqrtScalar(2.0)) * 1.0 * global_norm_0))
             {
-                PetscCall(PetscPrintf(comm_jacobi_block, "[Rank %d] Under the threashold  = %e \n", rank_jacobi_block, local_norm));
+                // PetscCall(PetscPrintf(comm_jacobi_block, "[Rank %d] Under the threashold  = %e \n", rank_jacobi_block, local_norm));
                 UnderThreashold = PETSC_TRUE;
             }
             else
@@ -468,6 +470,7 @@ int main(int argc, char **argv)
 
             // receive final verdict
             PetscCall(receive_verdict(ACTUAL_PARAMS_POINTERS));
+
         }
 
         PetscCallMPI(MPI_Bcast(&state, 1, MPIU_INT, LOCAL_ROOT_NODE, comm_jacobi_block));
@@ -483,55 +486,30 @@ int main(int argc, char **argv)
     end_time = MPI_Wtime();
     PetscCall(printElapsedTime(start_time, end_time));
     PetscCall(printTotalNumberOfIterations_2(comm_jacobi_block, rank_jacobi_block, number_of_iterations, s));
+    // PetscCall(PetscPrintf(comm_jacobi_block, "Rank %d: Number of inner x outer iterations %d\n", rank_jacobi_block, number_of_inner_times_outer_iterations));
 
     PetscCall(PetscBarrier(NULL));
 
     /////
-    PetscCall(MatResidual(A_block_jacobi, b_block_jacobi[rank_jacobi_block], x_minimized, local_residual));
-    PetscCall(VecNorm(local_residual, NORM_2, &local_norm));
-    PetscCall(PetscPrintf(comm_jacobi_block, "[Block Rank %d] Local norm_2 with x before exchange or average = %e \n", rank_jacobi_block, local_norm));
+    // PetscCall(MatResidual(A_block_jacobi, b_block_jacobi[rank_jacobi_block], x_minimized, local_residual));
+    // PetscCall(VecNorm(local_residual, NORM_2, &local_norm));
+    // PetscCall(PetscPrintf(comm_jacobi_block, "[Block Rank %d] Local norm_2 with x before exchange or average = %e \n", rank_jacobi_block, local_norm));
 
     PetscCall(VecScatterBegin(scatter_jacobi_vec_part_to_merged_vec[idx_non_current_block], x_minimized, x_block_jacobi[idx_non_current_block], INSERT_VALUES, SCATTER_REVERSE));
     PetscCall(VecScatterEnd(scatter_jacobi_vec_part_to_merged_vec[idx_non_current_block], x_minimized, x_block_jacobi[idx_non_current_block], INSERT_VALUES, SCATTER_REVERSE));
     PetscCall(VecScatterBegin(scatter_jacobi_vec_part_to_merged_vec[rank_jacobi_block], x_minimized, x_block_jacobi[rank_jacobi_block], INSERT_VALUES, SCATTER_REVERSE));
     PetscCall(VecScatterEnd(scatter_jacobi_vec_part_to_merged_vec[rank_jacobi_block], x_minimized, x_block_jacobi[rank_jacobi_block], INSERT_VALUES, SCATTER_REVERSE));
+
     PetscCall(comm_sync_send_and_receive_final(x_block_jacobi, vec_local_size, message_dest, message_source, rank_jacobi_block, idx_non_current_block));
-    PetscCall(VecScatterBegin(scatter_jacobi_vec_part_to_merged_vec[rank_jacobi_block], x_block_jacobi[rank_jacobi_block], x, INSERT_VALUES, SCATTER_FORWARD));
-    PetscCall(VecScatterEnd(scatter_jacobi_vec_part_to_merged_vec[rank_jacobi_block], x_block_jacobi[rank_jacobi_block], x, INSERT_VALUES, SCATTER_FORWARD));
-    PetscCall(VecScatterBegin(scatter_jacobi_vec_part_to_merged_vec[idx_non_current_block], x_block_jacobi[idx_non_current_block], x, INSERT_VALUES, SCATTER_FORWARD));
-    PetscCall(VecScatterEnd(scatter_jacobi_vec_part_to_merged_vec[idx_non_current_block], x_block_jacobi[idx_non_current_block], x, INSERT_VALUES, SCATTER_FORWARD));
 
-    PetscCall(MatResidual(A_block_jacobi, b_block_jacobi[rank_jacobi_block], x, local_residual));
-    PetscCall(VecNorm(local_residual, NORM_2, &local_norm));
-    PetscCall(PetscPrintf(comm_jacobi_block, "[Block Rank %d] Local norm_2 with x after exchange = %e \n", rank_jacobi_block, local_norm));
-
-    ///////////
-    Vec x_minimized_opposite_block;
-    PetscCall(VecDuplicate(x_minimized, &x_minimized_opposite_block));
-    PetscCall(VecCopy(x_minimized, x_minimized_opposite_block));
-    PetscInt local_size;
-    PetscCall(VecGetLocalSize(x_minimized, &local_size));
-
-    PetscScalar *send_buffer_c = NULL;
-    PetscScalar *rcv_buffer_c = NULL;
-
-    PetscCall(VecGetArray(x_minimized, &send_buffer_c));
-    PetscCall(VecGetArray(x_minimized_opposite_block, &rcv_buffer_c));
-
-    PetscCallMPI(MPI_Sendrecv(send_buffer_c, local_size, MPIU_SCALAR, message_dest, (TAG_FINAL_DATA_EXCHANGE + rank_jacobi_block), rcv_buffer_c, local_size, MPIU_SCALAR, message_source, (TAG_FINAL_DATA_EXCHANGE + idx_non_current_block), MPI_COMM_WORLD, MPI_STATUS_IGNORE));
-
-    PetscCall(VecRestoreArray(x_minimized, &send_buffer_c));
-    PetscCall(VecRestoreArray(x_minimized_opposite_block, &rcv_buffer_c));
-
-    PetscCall(PetscFree(send_buffer_c));
-    PetscCall(PetscFree(rcv_buffer_c));
-
-    PetscCall(VecAXPY(x_minimized, 1.0, x_minimized_opposite_block));
-    PetscCall(VecScale(x_minimized, 0.5));
+    PetscCall(VecScatterBegin(scatter_jacobi_vec_part_to_merged_vec[rank_jacobi_block], x_block_jacobi[rank_jacobi_block], x_minimized, INSERT_VALUES, SCATTER_FORWARD));
+    PetscCall(VecScatterEnd(scatter_jacobi_vec_part_to_merged_vec[rank_jacobi_block], x_block_jacobi[rank_jacobi_block], x_minimized, INSERT_VALUES, SCATTER_FORWARD));
+    PetscCall(VecScatterBegin(scatter_jacobi_vec_part_to_merged_vec[idx_non_current_block], x_block_jacobi[idx_non_current_block], x_minimized, INSERT_VALUES, SCATTER_FORWARD));
+    PetscCall(VecScatterEnd(scatter_jacobi_vec_part_to_merged_vec[idx_non_current_block], x_block_jacobi[idx_non_current_block], x_minimized, INSERT_VALUES, SCATTER_FORWARD));
 
     PetscCall(MatResidual(A_block_jacobi, b_block_jacobi[rank_jacobi_block], x_minimized, local_residual));
     PetscCall(VecNorm(local_residual, NORM_2, &local_norm));
-    PetscCall(PetscPrintf(comm_jacobi_block, "[Block Rank %d] Local norm_2 with x after average  = %e \n", rank_jacobi_block, local_norm));
+    PetscCall(PetscPrintf(comm_jacobi_block, "[Block Rank %d] Local norm_2 with x after exchange = %e \n", rank_jacobi_block, local_norm));
 
     PetscScalar norm;
     PetscCall(computeFinalResidualNorm(comm_jacobi_block, comm_local_roots, A_block_jacobi, x_minimized, b_block_jacobi, local_residual, rank_jacobi_block, proc_local_rank, &norm));
@@ -547,6 +525,12 @@ int main(int argc, char **argv)
     PetscCall(comm_discard_pending_messages());
 
     PetscCall(PetscBarrier(NULL));
+
+    if (rank_jacobi_block == 1)
+        PetscCall(PetscSleep(2));
+
+    PetscCall(PetscObjectSetName((PetscObject)LastIteration_global, "Vec_global Iterations of last reception"));
+    PetscCall(VecView(LastIteration_global, PETSC_VIEWER_STDOUT_(comm_jacobi_block)));
 
     PetscCall(comm_discard_pending_messages());
 
@@ -636,7 +620,6 @@ int main(int argc, char **argv)
     PetscCall(ISDestroy(&is_jacobi_vec_parts));
     PetscCall(VecDestroy(&x));
     PetscCall(VecDestroy(&x_minimized));
-    PetscCall(VecDestroy(&x_minimized_opposite_block));
     PetscCall(VecDestroy(&b));
     PetscCall(VecDestroy(&u));
     PetscCall(MatDestroy(&A_block_jacobi));
@@ -673,3 +656,31 @@ int main(int argc, char **argv)
 // PetscScalar direct_residual_norm;
 // PetscCall(computeFinalResidualNorm(A_block_jacobi, x_minimized, b_block_jacobi, rank_jacobi_block, proc_local_rank, &direct_residual_norm));
 // PetscCall(printFinalResidualNorm(direct_residual_norm));
+
+///////////
+// Vec x_minimized_opposite_block;
+// PetscCall(VecDuplicate(x_minimized, &x_minimized_opposite_block));
+// PetscCall(VecCopy(x_minimized, x_minimized_opposite_block));
+// PetscInt local_size;
+// PetscCall(VecGetLocalSize(x_minimized, &local_size));
+
+// PetscScalar *send_buffer_c = NULL;
+// PetscScalar *rcv_buffer_c = NULL;
+
+// PetscCall(VecGetArray(x_minimized, &send_buffer_c));
+// PetscCall(VecGetArray(x_minimized_opposite_block, &rcv_buffer_c));
+
+// PetscCallMPI(MPI_Sendrecv(send_buffer_c, local_size, MPIU_SCALAR, message_dest, (TAG_FINAL_DATA_EXCHANGE + rank_jacobi_block), rcv_buffer_c, local_size, MPIU_SCALAR, message_source, (TAG_FINAL_DATA_EXCHANGE + idx_non_current_block), MPI_COMM_WORLD, MPI_STATUS_IGNORE));
+
+// PetscCall(VecRestoreArray(x_minimized, &send_buffer_c));
+// PetscCall(VecRestoreArray(x_minimized_opposite_block, &rcv_buffer_c));
+
+// PetscCall(PetscFree(send_buffer_c));
+// PetscCall(PetscFree(rcv_buffer_c));
+
+// PetscCall(VecAXPY(x_minimized, 1.0, x_minimized_opposite_block));
+// PetscCall(VecScale(x_minimized, 0.5));
+
+// PetscCall(MatResidual(A_block_jacobi, b_block_jacobi[rank_jacobi_block], x_minimized, local_residual));
+// PetscCall(VecNorm(local_residual, NORM_2, &local_norm));
+// PetscCall(PetscPrintf(comm_jacobi_block, "[Block Rank %d] Local norm_2 with x after average  = %e \n", rank_jacobi_block, local_norm));

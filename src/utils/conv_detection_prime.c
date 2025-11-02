@@ -161,7 +161,7 @@ PetscErrorCode comm_async_convDetection_prime(PARAMS)
                 }
             }
         }
-        else
+        else // if NON ElectedNode
         {
 
             if ((*ResponseSent) == PETSC_FALSE)
