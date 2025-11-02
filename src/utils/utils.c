@@ -1081,7 +1081,7 @@ PetscErrorCode outer_solver_norm_equation_modify(MPI_Comm comm_jacobi_block, KSP
 {
 
   PetscFunctionBegin;
-  PetscInt idx_non_current_block = (rank_jacobi_block == ZERO) ? ONE : ZERO;
+  // PetscInt idx_non_current_block = (rank_jacobi_block == ZERO) ? ONE : ZERO;
 
   PetscCall(KSPConvergedDefaultSetUIRNorm(outer_ksp));
   PetscCall(KSPSetOperators(outer_ksp, R, R)); // R = A * S
@@ -1095,7 +1095,7 @@ PetscErrorCode outer_solver_norm_equation_modify(MPI_Comm comm_jacobi_block, KSP
 
   // PetscCall(VecView(intermediate_solution_alpha, PETSC_VIEWER_STDOUT_(comm_jacobi_block)));
 
-  PetscCall(comm_sync_send_and_receive_alpha(intermediate_solution_alpha, message_dest, message_source, rank_jacobi_block, idx_non_current_block));
+  // PetscCall(comm_sync_send_and_receive_alpha(intermediate_solution_alpha, message_dest, message_source, rank_jacobi_block, idx_non_current_block));
 
   PetscCall(MatMult(S, intermediate_solution_alpha, final_solution));
 
