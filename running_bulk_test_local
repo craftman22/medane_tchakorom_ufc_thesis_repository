@@ -244,13 +244,13 @@ set -x  # Enable command tracing
 # -outer2_ksp_type lsqr -outer2_ksp_convergence_test default  -outer2_ksp_atol 1e-100 -outer2_ksp_rtol 1e-14 -outer2_ksp_max_it 70 -outer2_pc_type none -outer2_ksp_norm_type UNPRECONDITIONED       \
 #  > ./tmp/exp/res_semi.jl 2>&1 
 
-timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION bash \
-petscmpiexec -n 8 ./bin/synchronous-multisplitting-synchronous-minimization-semi-local  -npb 4 \
--m 512 -n 512  -s 4 -rtol 1.e-3  \
--inner1_ksp_type gmres -inner1_ksp_gmres_preallocate -inner1_ksp_gmres_restart 30 -inner1_ksp_atol 1e-100 -inner1_ksp_rtol 1e-10 -inner1_ksp_max_it 5 -inner1_pc_type none -inner1_ksp_norm_type UNPRECONDITIONED  -inner1_ksp_converged_use_initial_residual_norm \
--inner2_ksp_type gmres -inner2_ksp_gmres_preallocate -inner2_ksp_gmres_restart 30 -inner2_ksp_atol 1e-100 -inner2_ksp_rtol 1e-10 -inner2_ksp_max_it 5 -inner2_pc_type none -inner2_ksp_norm_type UNPRECONDITIONED  -inner2_ksp_converged_use_initial_residual_norm \
--outer1_ksp_type lsqr -outer1_ksp_convergence_test default  -outer1_ksp_atol 1e-100 -outer1_ksp_rtol 1e-14 -outer1_ksp_max_it 40 -outer1_pc_type none -outer1_ksp_norm_type UNPRECONDITIONED       \
--outer2_ksp_type lsqr -outer2_ksp_convergence_test default  -outer2_ksp_atol 1e-100 -outer2_ksp_rtol 1e-14 -outer2_ksp_max_it 40 -outer2_pc_type none -outer2_ksp_norm_type UNPRECONDITIONED       \
+# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION bash \
+# petscmpiexec -n 8 ./bin/synchronous-multisplitting-synchronous-minimization-semi-local  -npb 4 \
+# -m 512 -n 512  -s 4 -rtol 1.e-3  \
+# -inner1_ksp_type gmres -inner1_ksp_gmres_preallocate -inner1_ksp_gmres_restart 30 -inner1_ksp_atol 1e-100 -inner1_ksp_rtol 1e-10 -inner1_ksp_max_it 5 -inner1_pc_type none -inner1_ksp_norm_type UNPRECONDITIONED  -inner1_ksp_converged_use_initial_residual_norm \
+# -inner2_ksp_type gmres -inner2_ksp_gmres_preallocate -inner2_ksp_gmres_restart 30 -inner2_ksp_atol 1e-100 -inner2_ksp_rtol 1e-10 -inner2_ksp_max_it 5 -inner2_pc_type none -inner2_ksp_norm_type UNPRECONDITIONED  -inner2_ksp_converged_use_initial_residual_norm \
+# -outer1_ksp_type lsqr -outer1_ksp_convergence_test default  -outer1_ksp_atol 1e-100 -outer1_ksp_rtol 1e-14 -outer1_ksp_max_it 40 -outer1_pc_type none -outer1_ksp_norm_type UNPRECONDITIONED       \
+# -outer2_ksp_type lsqr -outer2_ksp_convergence_test default  -outer2_ksp_atol 1e-100 -outer2_ksp_rtol 1e-14 -outer2_ksp_max_it 40 -outer2_pc_type none -outer2_ksp_norm_type UNPRECONDITIONED       \
 #  > ./tmp/exp/res_semi.jl 2>&1 
 
 # -options_view -options_left -log_view
@@ -281,13 +281,13 @@ petscmpiexec -n 8 ./bin/synchronous-multisplitting-synchronous-minimization-semi
 # ==================================================================================================
 # -m 512 -n 512  -s 5 -rtol 9.e-6 
 
-# timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION bash \
-# petscmpiexec -n 4 ./bin/asynchronous-multisplitting-asynchronous-minimization-semi-local-v1.0  -npb 2 \
-# -m 32 -n 32  -s 4 -rtol 1.e-3  \
-# -inner1_ksp_type gmres -inner1_ksp_gmres_preallocate -inner1_ksp_gmres_restart 30 -inner1_ksp_atol 1e-100 -inner1_ksp_rtol 1e-10 -inner1_ksp_max_it 20 -inner1_pc_type none -inner1_ksp_norm_type UNPRECONDITIONED  \
-# -inner2_ksp_type gmres -inner2_ksp_gmres_preallocate -inner2_ksp_gmres_restart 30 -inner2_ksp_atol 1e-100 -inner2_ksp_rtol 1e-10 -inner2_ksp_max_it 20 -inner2_pc_type none -inner2_ksp_norm_type UNPRECONDITIONED   \
-# -outer1_ksp_type lsqr  -outer1_ksp_lsqr_exact_mat_norm -outer1_ksp_atol 1e-100 -outer1_ksp_rtol 1e-20 -outer1_ksp_max_it 70 -outer1_pc_type none -outer1_ksp_norm_type UNPRECONDITIONED       \
-# -outer2_ksp_type lsqr  -outer2_ksp_lsqr_exact_mat_norm -outer2_ksp_atol 1e-100 -outer2_ksp_rtol 1e-20 -outer2_ksp_max_it 70 -outer2_pc_type none -outer2_ksp_norm_type UNPRECONDITIONED       \
+timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION bash \
+petscmpiexec -n 4 ./bin/asynchronous-multisplitting-asynchronous-minimization-semi-local_prime -npb 2 \
+-m 512 -n 512  -s 4 -rtol 1.e-3  \
+-inner1_ksp_type gmres -inner1_ksp_gmres_preallocate -inner1_ksp_gmres_restart 30 -inner1_ksp_atol 1e-100 -inner1_ksp_rtol 1e-10 -inner1_ksp_max_it 10 -inner1_pc_type none -inner1_ksp_norm_type UNPRECONDITIONED  \
+-inner2_ksp_type gmres -inner2_ksp_gmres_preallocate -inner2_ksp_gmres_restart 30 -inner2_ksp_atol 1e-100 -inner2_ksp_rtol 1e-10 -inner2_ksp_max_it 10 -inner2_pc_type none -inner2_ksp_norm_type UNPRECONDITIONED   \
+-outer1_ksp_type lsqr   -outer1_ksp_atol 1e-100 -outer1_ksp_rtol 1e-20 -outer1_ksp_max_it 40 -outer1_pc_type none -outer1_ksp_norm_type UNPRECONDITIONED       \
+-outer2_ksp_type lsqr   -outer2_ksp_atol 1e-100 -outer2_ksp_rtol 1e-20 -outer2_ksp_max_it 40 -outer2_pc_type none -outer2_ksp_norm_type UNPRECONDITIONED       \
 # -options_view -options_left -log_view
 
 # timeout -k $ADDITIONAL_GRACE_PERIOD $TIMEOUT_DURATION bash \
