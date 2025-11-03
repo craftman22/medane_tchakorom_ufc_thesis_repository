@@ -40,6 +40,7 @@ int main(int argc, char **argv)
 
     IS is_jacobi_vec_parts;
     PetscInt number_of_iterations = ZERO;
+    PetscInt number_of_inner_times_outer_iterations = ZERO;
     PetscMPIInt idx_non_current_block;
     KSP inner_ksp = NULL;
     KSP outer_ksp = NULL;
@@ -380,7 +381,7 @@ int main(int argc, char **argv)
             PetscCall(inner_solver(comm_jacobi_block, inner_ksp, A_block_jacobi_subMat, x_block_jacobi, b_block_jacobi,
                                    local_right_side_vector, rank_jacobi_block, &inner_solver_iterations, number_of_iterations));
 
-            PetscCall(comm_async_test_and_send_prime(PhaseTag, number_of_iterations, x_block_jacobi, send_buffer,
+            PetscCall(comm_async_test_and_send_prime(PhaseTag, number_of_inner_times_outer_iterations, x_block_jacobi, send_buffer,
                                                      &send_data_request, vec_local_size, message_dest,
                                                      rank_jacobi_block, &send_pack_buffer));
 
@@ -390,6 +391,7 @@ int main(int argc, char **argv)
             PetscCall(MatSetValues(S, x_part_local_size, vec_local_idx, ONE, &n_vectors_inserted, vector_to_insert_into_S, INSERT_VALUES));
 
             n_vectors_inserted++;
+            number_of_inner_times_outer_iterations++;
         }
 
         PetscCall(MatAssemblyBegin(S, MAT_FINAL_ASSEMBLY));
@@ -522,7 +524,6 @@ int main(int argc, char **argv)
         PetscCall(ISDestroy(&is_merged_vec[i]));
     }
 
-
     PetscCall(VecScatterDestroy(&scatter_ctx));
     PetscCall(VecDestroy(&LastIteration_global));
     PetscCall(VecDestroy(&NewerDependencies_global));
@@ -531,7 +532,7 @@ int main(int argc, char **argv)
     PetscCall(VecDestroy(&UNITARY_VECTOR));
     PetscCall(VecDestroy(&NULL_VECTOR));
 
-     PetscCall(PetscFree(Responses));
+    PetscCall(PetscFree(Responses));
     PetscCall(PetscFree(ReceivedPartialCV));
     PetscCall(PetscFree(neighbors));
     PetscCall(PetscFree(send_verdict_buffer));
@@ -549,7 +550,6 @@ int main(int argc, char **argv)
 
     PetscCall(PetscFree(rcv_buffer));
     PetscCall(PetscFree(send_buffer));
-    
 
     PetscFree(vec_local_idx);
     PetscFree(vector_to_insert_into_S);
