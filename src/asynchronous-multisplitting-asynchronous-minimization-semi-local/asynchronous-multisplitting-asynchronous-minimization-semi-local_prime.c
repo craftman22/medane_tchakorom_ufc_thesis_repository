@@ -382,20 +382,22 @@ int main(int argc, char **argv)
             PetscCall(MatSetValuesLocal(S, x_local_size, vec_local_idx, ONE, &n_vectors_inserted, vector_to_insert_into_S, INSERT_VALUES));
 
             n_vectors_inserted++;
+            number_of_inner_times_outer_iterations++;
         }
 
         PetscCall(MatAssemblyBegin(S, MAT_FINAL_ASSEMBLY));
         PetscCall(MatAssemblyEnd(S, MAT_FINAL_ASSEMBLY));
 
-        PetscCall(MatMatMult(A_block_jacobi_subMat[rank_jacobi_block], S, MAT_REUSE_MATRIX, PETSC_DETERMINE, &R));
+        PetscCall(MatMatMult(A_block_jacobi, S, MAT_REUSE_MATRIX, PETSC_DETERMINE, &R));
 
-        PetscCall(updateLocalRHS(A_block_jacobi_subMat[idx_non_current_block], x_block_jacobi[idx_non_current_block], b_block_jacobi[rank_jacobi_block], local_right_side_vector));
+        PetscCall(outer_solver_norm_equation_modify(comm_jacobi_block, outer_ksp, x_minimized, R, S,
+                                                    alpha, b_block_jacobi[rank_jacobi_block], rank_jacobi_block,
+                                                    number_of_iterations, message_dest, message_source));
 
-        PetscCall(outer_solver_norm_equation(comm_jacobi_block, outer_ksp, x_block_jacobi[rank_jacobi_block], R, S, alpha, local_right_side_vector, rank_jacobi_block, number_of_iterations));
-
+        // PetscCall(computeFinalResidualNorm(comm_jacobi_block, comm_local_roots, A_block_jacobi, x_minimized, b_block_jacobi, local_residual, rank_jacobi_block, proc_local_rank, &local_norm));
         PetscCall(MatResidual(A_block_jacobi_subMat[rank_jacobi_block], local_right_side_vector, x_block_jacobi[rank_jacobi_block], local_residual));
         PetscCall(VecNorm(local_residual, NORM_2, &local_norm));
-        PetscCall(PetscPrintf(MPI_COMM_SELF, "Local norm_2 [block rank %d] = %e \n", rank_jacobi_block, local_norm));
+        PetscCall(PetscPrintf(comm_jacobi_block, "[Rank %d iteration %d] Local norm_2 block  = %e \n", rank_jacobi_block, number_of_iterations, local_norm));
 
         if (proc_local_rank == 0) // ONLY root node from each block check for convergence
         {
