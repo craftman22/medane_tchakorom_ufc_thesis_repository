@@ -262,9 +262,9 @@ int main(int argc, char **argv)
     PetscCall(MatResidual(A_block_jacobi_subMat[rank_jacobi_block], local_right_side_vector, x_block_jacobi[rank_jacobi_block], local_residual));
     PetscCall(VecNorm(local_residual, NORM_2, &local_norm));
 
-    PetscCall(PetscPrintf(MPI_COMM_SELF, "Local norm_2 [block rank %d] = %e \n", rank_jacobi_block, local_norm));
+    PetscCall(PetscPrintf(comm_jacobi_block, "Local norm_2 [block rank %d] = %e \n", rank_jacobi_block, local_norm));
 
-    if (local_norm <= PetscMax(absolute_tolerance, (relative_tolerance / PetscSqrtScalar(2.0)) * 1.0 * global_norm_0))
+    if (local_norm <= PetscMax(absolute_tolerance, (relative_tolerance / PetscSqrtScalar(2.0)) * 0.7 * global_norm_0))
     {
       send_signal = CONVERGENCE_SIGNAL;
     }
