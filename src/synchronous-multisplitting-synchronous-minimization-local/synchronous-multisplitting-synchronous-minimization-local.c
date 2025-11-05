@@ -264,7 +264,7 @@ int main(int argc, char **argv)
 
     PetscCall(PetscPrintf(comm_jacobi_block, "Local norm_2 [block rank %d] = %e \n", rank_jacobi_block, local_norm));
 
-    if (local_norm <= PetscMax(absolute_tolerance, (relative_tolerance / PetscSqrtScalar(2.0)) * 0.7 * global_norm_0))
+    if (local_norm <= PetscMax(absolute_tolerance, (relative_tolerance / PetscSqrtScalar(2.0)) * 1.0 * global_norm_0))
     {
       send_signal = CONVERGENCE_SIGNAL;
     }
